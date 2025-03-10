@@ -1,3 +1,5 @@
+import Test from "../components/VendorComponents/Test/Test";
+import DashboardPage from "../pages/Admin/DashboardPage/DashboardPage";
 import HomePage from "../pages/Customer/HomePage/HomePage";
 import OrderPage from "../pages/Customer/OrderPage/OrderPage";
 import ProductsPage from "../pages/Customer/ProductsPage/ProductsPage";
@@ -27,7 +29,22 @@ export const routes = [
         
     },
     // vendor
+    {
+        
+        path: '/vendor',
+        page: Test,
+        isShowHeaderVendor: true
+        
+    },
     // admin
+    {
+        
+        path: '/admin',
+        page: DashboardPage,
+        isShowHeaderAdmin: true
+        
+    },
+    // not found page
     {
         
         path: '*',

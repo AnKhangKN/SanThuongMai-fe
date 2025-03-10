@@ -1,7 +1,7 @@
 import React from "react";
 import HeaderComponent from "../HeaderComponent/HeaderComponent";
 
-const DefaultComponent = ({ children }) => {
+const CustomerLayout = ({ children }) => {
   return (
     <div>
       <HeaderComponent />
@@ -10,4 +10,4 @@ const DefaultComponent = ({ children }) => {
   );
 };
 
-export default DefaultComponent;
+export default CustomerLayout;
