@@ -1,7 +1,6 @@
 import styled from "styled-components";
 
-export const Wrapper = styled.div`
-    width: 250px;  
+export const Wrapper = styled.div`  
     background-color: rgb(255, 255, 255);
     overflow-y: auto; // có thể kéo
     transition: width 0.3s ease-in-out;
