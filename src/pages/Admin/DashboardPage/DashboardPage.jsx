@@ -1,7 +1,8 @@
 import React from "react";
+import { Wrapper } from "./style";
 
 const DashboardPage = () => {
-  return <div>DashboardPage</div>;
+  return <Wrapper> tổng quan</Wrapper>;
 };
 
 export default DashboardPage;

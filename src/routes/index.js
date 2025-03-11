@@ -41,7 +41,8 @@ export const routes = [
         
         path: '/admin',
         page: DashboardPage,
-        isShowHeaderAdmin: true
+        isShowHeaderAdmin: true,
+        isShowSidebarAdmin: true
         
     },
     // not found page
