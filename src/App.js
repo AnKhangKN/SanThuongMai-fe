@@ -15,8 +15,14 @@ function App() {
 
           // Xác định layout phù hợp
           let Layout = React.Fragment; // Mặc định không có layout
+          // Customer layout
           if (route.isShowHeader) Layout = CustomerLayout;
+          
+          // Admin layout
           if (route.isShowHeaderAdmin) Layout = AdminLayout;
+          if (route.isShowSidebarAdmin) Layout = AdminLayout;
+
+          // Vendor lay out
           if (route.isShowHeaderVendor) Layout = VendorLayout;
           
           return (
