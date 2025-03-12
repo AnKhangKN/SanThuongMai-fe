@@ -11,5 +11,5 @@ export const Wrapper = styled.div`
 export const WrapperTitle = styled.div`
     display: flex;
     font-size: 20px;
-    height: 60px;
+    height: 70px;
 `

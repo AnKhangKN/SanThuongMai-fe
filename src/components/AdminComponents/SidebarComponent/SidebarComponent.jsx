@@ -22,6 +22,16 @@ const SidebarComponent = () => {
           <p style={{ padding: 0, margin: 0 }}>HKN</p>
         </div>
       </WrapperTitle>
+
+      <div>
+        <ul>
+          <li>Trang chủ</li>
+          <li>Sản phẩm</li>
+          <li>Khách hàng</li>
+          <li>Sản phẩm</li>
+          <li>Đon hàng</li>
+        </ul>
+      </div>
     </Wrapper>
   );
 };

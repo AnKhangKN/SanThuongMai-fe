@@ -5,6 +5,11 @@ export const Wrapper = styled.div`
 `
 
 export const WrapperSidebar = styled.div`
-    background-color: #2c3e50;
     height: 100vh;
+`
+
+export const WrapperMain = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 `
