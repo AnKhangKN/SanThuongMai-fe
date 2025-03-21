@@ -2,6 +2,7 @@ import React from "react";
 import { Wrapper, WrapperTitle } from "./style";
 
 import Logo_Trang from "../../../assets/images/Logo_Trang.jpg";
+import SidebarActionListComponent from "../SidebarActionListComponent/SidebarActionListComponent";
 
 const SidebarComponent = () => {
   return (
@@ -23,15 +24,7 @@ const SidebarComponent = () => {
         </div>
       </WrapperTitle>
 
-      <div>
-        <ul>
-          <li>Trang chủ</li>
-          <li>Sản phẩm</li>
-          <li>Khách hàng</li>
-          <li>Sản phẩm</li>
-          <li>Đon hàng</li>
-        </ul>
-      </div>
+      <SidebarActionListComponent />
     </Wrapper>
   );
 };

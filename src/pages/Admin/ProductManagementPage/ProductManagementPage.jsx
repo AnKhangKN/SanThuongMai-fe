@@ -1,7 +1,12 @@
 import React from "react";
+import { Wrapper } from "./style";
 
 const ProductManagementPage = () => {
-  return <div>ProductManagementPage</div>;
+  return (
+    <>
+      <Wrapper>ProductManagementPage</Wrapper>
+    </>
+  );
 };
 
 export default ProductManagementPage;
