@@ -1,41 +1,11 @@
-import { Col } from "antd";
 import React from "react";
-import { IconContainer, WrapperHeader } from "./style";
-import { RiBarChartHorizontalLine } from "react-icons/ri";
-import SearchBarComponent from "../SearchBarComponent/SearchBarComponent";
-import ActionHeaderComponent from "../ActionHeaderComponent/ActionHeaderComponent";
+import { IoMenu } from "react-icons/io5";
 
-const HeaderComponent = () => {
+const HeaderComponent = ({ toggleSidebar }) => {
   return (
-    <div>
-      <WrapperHeader>
-        <Col
-          span={12}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "25px",
-            paddingLeft: "25px",
-            color: " #6c757d",
-          }}
-        >
-          <IconContainer>
-            <RiBarChartHorizontalLine />
-          </IconContainer>
-          <SearchBarComponent />
-        </Col>
-        <Col
-          span={12}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            color: " #6c757d",
-          }}
-        >
-          <ActionHeaderComponent />
-        </Col>
-      </WrapperHeader>
+    <div style={{ display: "flex", alignItems: "center", padding: "10px" }}>
+      <IoMenu size={24} style={{ cursor: "pointer" }} onClick={toggleSidebar} />
+      <h2 style={{ marginLeft: "10px" }}>Admin Dashboard</h2>
     </div>
   );
 };

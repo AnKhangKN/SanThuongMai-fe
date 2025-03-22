@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { IconContainer, OptionContainer, OptionSelect, Wrapper } from "./style";
 import { BiSolidDashboard } from "react-icons/bi";
 import { AiFillProduct } from "react-icons/ai";
@@ -7,69 +7,93 @@ import { IoWarning } from "react-icons/io5";
 import { FaChartPie } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
-const SidebarActionListComponent = () => {
+const SidebarActionListComponent = ({ isCollapsed }) => {
+  const [isShowAccountOptions, setIsShowAccountOptions] = useState(false);
+  const [isShowProductOptions, setIsShowProductOptions] = useState(false);
+
   return (
     <Wrapper>
+      {/* Trang chủ */}
       <OptionContainer>
         <Link to="/admin" style={{ textDecoration: "none", color: "#333" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             <IconContainer>
               <BiSolidDashboard />
             </IconContainer>
-
-            <div style={{ padding: "0px 0px 0px 10px" }}>Trang chủ</div>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Trang chủ</div>
+            )}
           </div>
         </Link>
       </OptionContainer>
 
+      {/* Quản lý tài khoản */}
       <OptionContainer>
-        <OptionSelect>
+        <OptionSelect
+          onClick={() => setIsShowAccountOptions(!isShowAccountOptions)}
+        >
           <IconContainer>
             <MdAccountBox />
           </IconContainer>
-
-          <div style={{ padding: "0px 0px 0px 10px" }}>Quản lý tài khoản</div>
+          {!isCollapsed && (
+            <div style={{ paddingLeft: "10px" }}>Quản lý tài khoản</div>
+          )}
         </OptionSelect>
 
-        <Link
-          to="/admin/vendors"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
-          <div style={{ padding: "20px 0px 0px 30px" }}>Công tác viên</div>
-        </Link>
+        {!isCollapsed && isShowAccountOptions && (
+          <>
+            <Link
+              to="/admin/vendors"
+              style={{ textDecoration: "none", color: "#333" }}
+            >
+              <div style={{ padding: "10px 0px 20px 30px" }}>Cộng tác viên</div>
+            </Link>
 
-        <Link
-          to="/admin/customers"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
-          <div style={{ padding: "20px 0px 0px 30px" }}>Khách hàng</div>
-        </Link>
+            <Link
+              to="/admin/customers"
+              style={{ textDecoration: "none", color: "#333" }}
+            >
+              <div style={{ paddingLeft: "30px" }}>Khách hàng</div>
+            </Link>
+          </>
+        )}
       </OptionContainer>
 
+      {/* Quản lý sản phẩm */}
       <OptionContainer>
-        <OptionSelect>
+        <OptionSelect
+          onClick={() => setIsShowProductOptions(!isShowProductOptions)}
+        >
           <IconContainer>
             <AiFillProduct />
           </IconContainer>
-
-          <div style={{ padding: "0px 0px 0px 10px" }}> Quản lý sản phẩm</div>
+          {!isCollapsed && (
+            <div style={{ paddingLeft: "10px" }}>Quản lý sản phẩm</div>
+          )}
         </OptionSelect>
 
-        <Link
-          to="/admin/categories"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
-          <div style={{ padding: "20px 0px 0px 30px" }}>Danh mục sản phẩm</div>
-        </Link>
+        {!isCollapsed && isShowProductOptions && (
+          <>
+            <Link
+              to="/admin/categories"
+              style={{ textDecoration: "none", color: "#333" }}
+            >
+              <div style={{ padding: "20px 0px 20px 30px" }}>
+                Danh mục sản phẩm
+              </div>
+            </Link>
 
-        <Link
-          to="/admin/products"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
-          <div style={{ padding: "20px 0px 0px 30px" }}>Sản phẩm</div>
-        </Link>
+            <Link
+              to="/admin/products"
+              style={{ textDecoration: "none", color: "#333" }}
+            >
+              <div style={{ paddingLeft: "30px" }}>Sản phẩm</div>
+            </Link>
+          </>
+        )}
       </OptionContainer>
 
+      {/* Quản lý đơn hàng */}
       <OptionContainer>
         <Link
           to="/admin/orders"
@@ -79,12 +103,14 @@ const SidebarActionListComponent = () => {
             <IconContainer>
               <MdShoppingCart />
             </IconContainer>
-
-            <div style={{ padding: "0px 0px 0px 10px" }}>Quản lý đơn hàng</div>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Quản lý đơn hàng</div>
+            )}
           </div>
         </Link>
       </OptionContainer>
 
+      {/* Quản lý vi phạm */}
       <OptionContainer>
         <Link
           to="/admin/reports"
@@ -94,12 +120,14 @@ const SidebarActionListComponent = () => {
             <IconContainer>
               <IoWarning />
             </IconContainer>
-
-            <div style={{ padding: "0px 0px 0px 10px" }}>Quản lý vi phạm</div>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Quản lý vi phạm</div>
+            )}
           </div>
         </Link>
       </OptionContainer>
 
+      {/* Thống kê */}
       <OptionContainer>
         <Link
           to="/admin/statistics"
@@ -109,8 +137,9 @@ const SidebarActionListComponent = () => {
             <IconContainer>
               <FaChartPie />
             </IconContainer>
-
-            <div style={{ padding: "0px 0px 0px 10px" }}>Thống kê</div>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Thống kê</div>
+            )}
           </div>
         </Link>
       </OptionContainer>
