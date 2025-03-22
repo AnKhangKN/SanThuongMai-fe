@@ -102,8 +102,7 @@ const columns = [
 ];
 
 const VendorManagementPage = () => {
-  // selectedStatus,
-  const [setSelectedStatus] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [filteredData, setFilteredData] = useState(allData);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
