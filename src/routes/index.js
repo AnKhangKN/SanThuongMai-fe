@@ -32,13 +32,13 @@ export const routes = [
   },
   // vendor
   {
-    path: "/vendor/register/",
+    path: "/vendor/register",
     page: register,
     isShowHeaderVendor: true,
   },
 
   {
-    path: "/vendor/register-form/",
+    path: "/vendor/register-form",
     page: registerForm,
     isShowHeaderVendor: true,
   },
