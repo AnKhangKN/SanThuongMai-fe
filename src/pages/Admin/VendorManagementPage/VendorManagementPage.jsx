@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag } from "antd";
+import { Select, Table, Tag, Modal, Input, Button } from "antd";
 
 const allData = [
   {
@@ -20,7 +20,7 @@ const allData = [
     phone: "0987654321",
     shopId: "5",
     shopName: "Alice's Store",
-    status: "inactive",
+    status: "pending",
     createAt: "2023-02-15",
   },
   {
@@ -29,48 +29,58 @@ const allData = [
     email: "bob@gmail.com",
     phone: "1122334455",
     shopId: "7",
-    shopName: "Bob's Mart",
-    status: "pending",
+    shopName: "Bob's Market",
+    status: "active",
     createAt: "2023-03-10",
   },
   {
     key: "4",
+    name: "Charlie",
+    email: "charlie@gmail.com",
+    phone: "2233445566",
+    shopId: "9",
+    shopName: "Charlie's Goods",
+    status: "inactive",
+    createAt: "2023-04-05",
+  },
+  {
+    key: "5",
     name: "David",
     email: "david@gmail.com",
-    phone: "2233445566",
-    shopId: "10",
-    shopName: "David's Store",
+    phone: "3344556677",
+    shopId: "11",
+    shopName: "David's Boutique",
     status: "active",
     createAt: "2023-05-20",
+  },
+  {
+    key: "6",
+    name: "Emma",
+    email: "emma@gmail.com",
+    phone: "4455667788",
+    shopId: "13",
+    shopName: "Emma's Essentials",
+    status: "inactive",
+    createAt: "2023-06-30",
+  },
+  {
+    key: "7",
+    name: "Frank",
+    email: "frank@gmail.com",
+    phone: "5566778899",
+    shopId: "15",
+    shopName: "Frank's Emporium",
+    status: "active",
+    createAt: "2023-07-25",
   },
 ];
 
 const columns = [
-  {
-    title: "ID",
-    dataIndex: "key",
-    sorter: (a, b) => a.key - b.key,
-  },
-  {
-    title: "Name",
-    dataIndex: "name",
-  },
-  {
-    title: "Email",
-    dataIndex: "email",
-  },
-  {
-    title: "Phone",
-    dataIndex: "phone",
-  },
-  {
-    title: "Shop ID",
-    dataIndex: "shopId",
-  },
-  {
-    title: "Shop Name",
-    dataIndex: "shopName",
-  },
+  { title: "ID", dataIndex: "key", sorter: (a, b) => a.key - b.key },
+  { title: "Name", dataIndex: "name" },
+  { title: "Email", dataIndex: "email" },
+  { title: "Phone", dataIndex: "phone" },
+  { title: "Shop Name", dataIndex: "shopName" },
   {
     title: "Status",
     dataIndex: "status",
@@ -83,43 +93,19 @@ const columns = [
           : "orange";
       return <Tag color={color}>{status.toUpperCase()}</Tag>;
     },
-    sorter: (a, b) => a.status.localeCompare(b.status),
   },
   {
     title: "Create At",
     dataIndex: "createAt",
     sorter: (a, b) => new Date(a.createAt) - new Date(b.createAt),
-    render: (date) => new Date(date).toLocaleDateString("vi-VN"),
   },
 ];
-
-const options = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
-
-const labelRender = (option) => (
-  <span
-    style={{
-      color:
-        option.value === "pending"
-          ? "orange"
-          : option.value === "inactive"
-          ? "red"
-          : option.value === "active"
-          ? "green"
-          : "black",
-    }}
-  >
-    {option.label}
-  </span>
-);
 
 const VendorManagementPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [filteredData, setFilteredData] = useState(allData);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
@@ -130,9 +116,19 @@ const VendorManagementPage = () => {
     }
   };
 
+  const handleRowClick = (record) => {
+    setSelectedUser(record);
+    setModalVisible(true);
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+    setSelectedUser(null);
+  };
+
   return (
     <Wrapper>
-      <h1 style={{ marginBottom: "30px" }}>Cộng tác viên</h1>
+      <h1>Cộng tác viên</h1>
       <div
         style={{
           backgroundColor: "#fff",
@@ -145,25 +141,82 @@ const VendorManagementPage = () => {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            margin: "30px 0px",
+            marginBottom: "20px",
           }}
         >
           <h2>Danh sách Cộng tác viên</h2>
-          <div>
-            <Select
-              labelRender={labelRender}
-              defaultValue="all"
-              style={{ width: "120px" }}
-              options={options}
-              onChange={handleFilterChange}
-            />
-          </div>
+          <Select
+            defaultValue="all"
+            style={{ width: "120px" }}
+            options={[
+              { value: "all", label: "All" },
+              { value: "active", label: "Active" },
+              { value: "pending", label: "Pending" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+            onChange={handleFilterChange}
+          />
         </div>
-        <div>
-          <Table columns={columns} dataSource={filteredData} />
-        </div>
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+          })}
+          pagination={{
+            pageSize: 5,
+          }}
+        />
       </div>
+
+      {/* Modal xem/sửa thông tin */}
+      <Modal
+        title="Thông tin Cộng tác viên"
+        visible={modalVisible}
+        onCancel={handleModalCancel}
+        footer={[
+          <Button key="cancel" onClick={handleModalCancel}>
+            Đóng
+          </Button>,
+          <Button key="save" type="primary">
+            Lưu
+          </Button>,
+        ]}
+      >
+        {selectedUser && (
+          <div>
+            <p>
+              <strong>ID:</strong> {selectedUser.key}
+            </p>
+            <p>
+              <strong>Name:</strong> {selectedUser.name}
+            </p>
+            <p>
+              <strong>Shop Name:</strong> {selectedUser.shopName}
+            </p>
+            <div>
+              <Select
+                defaultValue={selectedUser.status}
+                style={{ width: "120px" }}
+                options={[
+                  selectedUser.status === "active" && {
+                    value: "inactive",
+                    label: "Inactive",
+                  },
+                  selectedUser.status === "inactive" && {
+                    value: "active",
+                    label: "Active",
+                  },
+                  selectedUser.status === "pending" && {
+                    value: "active",
+                    label: "Active",
+                  },
+                ].filter(Boolean)} // Lọc bỏ giá trị `false` hoặc `null`
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </Wrapper>
   );
 };
