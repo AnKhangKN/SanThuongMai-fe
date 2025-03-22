@@ -118,7 +118,8 @@ const labelRender = (option) => (
 );
 
 const VendorManagementPage = () => {
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  // selectedStatus,
+  const [setSelectedStatus] = useState("all");
   const [filteredData, setFilteredData] = useState(allData);
 
   const handleFilterChange = (value) => {
