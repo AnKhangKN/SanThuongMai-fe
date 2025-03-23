@@ -13,7 +13,7 @@ const VendorLayout = ({ children }) => {
 
         {children}
         </WrapperColLeft>
-        <Col span={1} style={{right: 0}}><NavbarOfVendorComponent /></Col>
+        <Col span={1} style={{flex: 0}}><NavbarOfVendorComponent /></Col>
       </WrapperBody>
     </div>
   );
