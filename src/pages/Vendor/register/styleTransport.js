@@ -19,7 +19,7 @@ export const WrapperStepsPadding = styled.div`
 export const WrapperFormVendor = styled.div`
   position: relative;
   max-width: 944px;
-  margin: 48px auto 40px;
+  margin: 18px auto 40px;
   min-height: 198px;
 `;
 
@@ -30,30 +30,32 @@ export const WrapperPositionButtonVendor = styled.div`
   border-top: 1px solid #e5e5e5;
   -webkit-box-pack: justify;
   -ms-flex-pack: justify;
-  justify-content: right;
+  justify-content: space-between;
   padding: 24px 0;
   margin: 0 24px;
   text-align: right;
 `;
 
-export const WrapperVendorInfoTax = styled.div`
-  max-width: 944px;
-  margin: 0 auto;
-  margin-bottom: 24px;
-  margin-top: 28px;
+export const WrapperVendordescribeTransport = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 `;
 
-export const WrapperVendorInfoTaxIn = styled.div`
-  position: relative;
-  display: -webkit-box;
-  display: -ms-flexbox;
+export const WrapperVendorTextTransport = styled.div`
+  font-size: 18px;
+  font-weight: bold-for-country;
+  margin-bottom: 4px;
+  text-transform: capitalize;
   display: flex;
-  padding: 11px 16px;
-  color: #666;
-  background: #f2f2f2;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  overflow: auto;
-  background-color: #e5eefb;
-  border-color: #3d72bf;
+`;
+
+export const WrapperVendorItemTransport = styled.div`
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  border: 1px solid #999;
+  padding: 12px;
+  justify-content: space-between;
 `;
