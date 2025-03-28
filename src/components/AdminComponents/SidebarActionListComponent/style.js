@@ -13,6 +13,8 @@ export const IconContainer = styled.div`
 
 export const OptionContainer = styled.div`
   padding: 20px 0px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
 `;
 
 export const OptionSelect = styled.div`

@@ -9,7 +9,6 @@ import { Link } from "react-router-dom";
 
 const SidebarActionListComponent = ({ isCollapsed }) => {
   const [isShowAccountOptions, setIsShowAccountOptions] = useState(false);
-  const [isShowProductOptions, setIsShowProductOptions] = useState(false);
 
   return (
     <Wrapper>
@@ -61,36 +60,19 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
 
       {/* Quản lý sản phẩm */}
       <OptionContainer>
-        <OptionSelect
-          onClick={() => setIsShowProductOptions(!isShowProductOptions)}
+        <Link
+          to="/admin/products"
+          style={{ textDecoration: "none", color: "#333" }}
         >
-          <IconContainer>
-            <AiFillProduct />
-          </IconContainer>
-          {!isCollapsed && (
-            <div style={{ paddingLeft: "10px" }}>Quản lý sản phẩm</div>
-          )}
-        </OptionSelect>
-
-        {!isCollapsed && isShowProductOptions && (
-          <>
-            <Link
-              to="/admin/categories"
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ padding: "20px 0px 20px 30px" }}>
-                Danh mục sản phẩm
-              </div>
-            </Link>
-
-            <Link
-              to="/admin/products"
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ paddingLeft: "30px" }}>Sản phẩm</div>
-            </Link>
-          </>
-        )}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <IconContainer>
+              <AiFillProduct />
+            </IconContainer>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Quản lý sản phẩm</div>
+            )}
+          </div>
+        </Link>
       </OptionContainer>
 
       {/* Quản lý đơn hàng */}

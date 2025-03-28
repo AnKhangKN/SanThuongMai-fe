@@ -4,7 +4,6 @@ import HomePage from "../pages/Customer/HomePage/HomePage";
 import OrderPage from "../pages/Customer/OrderPage/OrderPage";
 import ProductsPage from "../pages/Customer/ProductsPage/ProductsPage";
 import CustomerManagementPage from "../pages/Admin/CustomerManagementPage/CustomerManagementPage";
-import CategoryManagementPage from "../pages/Admin/CategoryManagementPage/CategoryManagementPage";
 import ProductManagementPage from "../pages/Admin/ProductManagementPage/ProductManagementPage";
 import OrderManagementPage from "../pages/Admin/OrderManagementPage/OrderManagementPage";
 import ReportManagementPage from "../pages/Admin/ReportManagementPage/ReportManagementPage";
@@ -58,12 +57,6 @@ export const routes = [
   {
     path: "/admin/customers",
     page: CustomerManagementPage,
-    isShowHeaderAdmin: true,
-    isShowSidebarAdmin: true,
-  },
-  {
-    path: "/admin/categories",
-    page: CategoryManagementPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },

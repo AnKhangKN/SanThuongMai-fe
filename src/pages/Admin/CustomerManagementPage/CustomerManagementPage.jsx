@@ -4,7 +4,11 @@ import { Wrapper } from "./style";
 const CustomerManagementPage = () => {
   return (
     <>
-      <Wrapper>CustomerManagementPage</Wrapper>
+      <Wrapper>
+        <div>Danh sách khách hàng</div>
+        <div>Bình luận của khách hàng</div>
+        <div>Thông báo của khách hàng</div>
+      </Wrapper>
     </>
   );
 };

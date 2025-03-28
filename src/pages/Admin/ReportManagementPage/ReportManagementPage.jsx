@@ -4,7 +4,11 @@ import { Wrapper } from "./style";
 const ReportManagementPage = () => {
   return (
     <>
-      <Wrapper>ReportManagementPage</Wrapper>
+      <Wrapper>
+        <div>Danh sách shop bị report</div>
+        <div>Các bình luận bị report</div>
+        <div></div>
+      </Wrapper>
     </>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag, Modal, Input, Button } from "antd";
+import { Select, Table, Tag, Modal, Button } from "antd";
 
 const allData = [
   {
