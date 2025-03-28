@@ -1,37 +1,25 @@
 import React from "react";
 import { Wrapper, WrapperTitle } from "./style";
-
 import Logo_Trang from "../../../assets/images/Logo_Trang.jpg";
+import SidebarActionListComponent from "../SidebarActionListComponent/SidebarActionListComponent";
 
-const SidebarComponent = () => {
+const SidebarComponent = ({ isCollapsed }) => {
   return (
-    <Wrapper>
+    <Wrapper style={{ width: isCollapsed ? "80px" : "250px" }}>
+      {/* Logo */}
       <WrapperTitle>
-        <div>
-          <div style={{ width: "50px" }}>
-            <img
-              style={{ width: "100%", height: "100%" }}
-              src={Logo_Trang}
-              alt=""
-              srcset=""
-            />
-          </div>
+        <div style={{ width: "50px", height: "30px" }}>
+          <img
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            src={Logo_Trang}
+            alt="logo"
+          />
         </div>
-
-        <div>
-          <p style={{ padding: 0, margin: 0 }}>HKN</p>
-        </div>
+        {!isCollapsed && <p style={{ padding: 0, margin: 0 }}>HKN</p>}
       </WrapperTitle>
 
-      <div>
-        <ul>
-          <li>Trang chủ</li>
-          <li>Sản phẩm</li>
-          <li>Khách hàng</li>
-          <li>Sản phẩm</li>
-          <li>Đon hàng</li>
-        </ul>
-      </div>
+      {/* Danh sách menu */}
+      <SidebarActionListComponent isCollapsed={isCollapsed} />
     </Wrapper>
   );
 };
