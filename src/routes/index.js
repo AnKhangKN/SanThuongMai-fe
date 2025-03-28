@@ -11,6 +11,8 @@ import StatisticsManagementPage from "../pages/Admin/StatisticsManagementPage/St
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import register from "../pages/Vendor/register/register";
 import registerForm from "../pages/Vendor/register/registerForm";
+import registerTransport from "../pages/Vendor/register/registerTransport";
+import registerTax from "../pages/Vendor/register/registerTax";
 
 export const routes = [
   // customer
@@ -39,6 +41,18 @@ export const routes = [
   {
     path: "/vendor/register-form",
     page: registerForm,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/register-transport",
+    page: registerTransport,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/register-tax",
+    page: registerTax,
     isShowHeaderVendor: true,
   },
   // admin
