@@ -5,12 +5,12 @@ import { Wrapper } from "./style";
 const SubHeaderComponent = () => {
   return (
     <Wrapper>
-      <div>kênh bán hàng</div>
-      <div style={{ display: "flex"}}>
+      <div style={{marginLeft:"40px"}}>Kênh bán hàng</div>
+      <div style={{ display: "flex", gap: "20px"}}>
         <div>Theo dõi đơn hàng</div>
         <div>Hỗ trợ</div>
         <div>Đăng kí</div>
-        <div>Đăng nhập</div>
+        <div style={{marginRight:"40px"}}>Đăng nhập</div>
       </div>
       </Wrapper>
   );

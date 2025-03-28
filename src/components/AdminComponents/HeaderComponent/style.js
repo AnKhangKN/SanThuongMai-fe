@@ -6,6 +6,7 @@ export const WrapperHeader = styled(Row)`
     display: flex;
     align-items: center;
     border-bottom: 0.5px solid #f2f4f7;
+    
 `
 
 export const IconContainer = styled.div`
