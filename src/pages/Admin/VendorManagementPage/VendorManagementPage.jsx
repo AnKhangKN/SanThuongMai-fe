@@ -4,7 +4,7 @@ import { Select, Table, Tag, Modal, Button } from "antd";
 
 const allData = [
   {
-    key: "1",
+    key: 1,
     name: "John",
     email: "john@gmail.com",
     phone: "1234567890",
@@ -14,7 +14,7 @@ const allData = [
     createAt: "2023-01-01",
   },
   {
-    key: "2",
+    key: 2,
     name: "Alice",
     email: "alice@gmail.com",
     phone: "0987654321",
@@ -24,7 +24,7 @@ const allData = [
     createAt: "2023-02-15",
   },
   {
-    key: "3",
+    key: 3,
     name: "Bob",
     email: "bob@gmail.com",
     phone: "1122334455",
@@ -34,7 +34,7 @@ const allData = [
     createAt: "2023-03-10",
   },
   {
-    key: "4",
+    key: 4,
     name: "Charlie",
     email: "charlie@gmail.com",
     phone: "2233445566",
@@ -42,36 +42,6 @@ const allData = [
     shopName: "Charlie's Goods",
     status: "inactive",
     createAt: "2023-04-05",
-  },
-  {
-    key: "5",
-    name: "David",
-    email: "david@gmail.com",
-    phone: "3344556677",
-    shopId: "11",
-    shopName: "David's Boutique",
-    status: "active",
-    createAt: "2023-05-20",
-  },
-  {
-    key: "6",
-    name: "Emma",
-    email: "emma@gmail.com",
-    phone: "4455667788",
-    shopId: "13",
-    shopName: "Emma's Essentials",
-    status: "inactive",
-    createAt: "2023-06-30",
-  },
-  {
-    key: "7",
-    name: "Frank",
-    email: "frank@gmail.com",
-    phone: "5566778899",
-    shopId: "15",
-    shopName: "Frank's Emporium",
-    status: "active",
-    createAt: "2023-07-25",
   },
 ];
 
@@ -106,24 +76,36 @@ const VendorManagementPage = () => {
   const [filteredData, setFilteredData] = useState(allData);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [newStatus, setNewStatus] = useState(null);
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
-    if (value === "all") {
-      setFilteredData(allData);
-    } else {
-      setFilteredData(allData.filter((item) => item.status === value));
-    }
+    setFilteredData(
+      value === "all"
+        ? allData
+        : allData.filter((item) => item.status === value)
+    );
   };
 
   const handleRowClick = (record) => {
     setSelectedUser(record);
+    setNewStatus(record.status);
     setModalVisible(true);
   };
 
   const handleModalCancel = () => {
     setModalVisible(false);
     setSelectedUser(null);
+  };
+
+  const handleSaveStatus = () => {
+    if (selectedUser) {
+      const updatedData = filteredData.map((item) =>
+        item.key === selectedUser.key ? { ...item, status: newStatus } : item
+      );
+      setFilteredData(updatedData);
+      setModalVisible(false);
+    }
   };
 
   return (
@@ -148,13 +130,13 @@ const VendorManagementPage = () => {
           <Select
             defaultValue="all"
             style={{ width: "120px" }}
+            onChange={handleFilterChange}
             options={[
               { value: "all", label: "All" },
               { value: "active", label: "Active" },
               { value: "pending", label: "Pending" },
               { value: "inactive", label: "Inactive" },
             ]}
-            onChange={handleFilterChange}
           />
         </div>
         <Table
@@ -163,9 +145,7 @@ const VendorManagementPage = () => {
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
           })}
-          pagination={{
-            pageSize: 5,
-          }}
+          pagination={{ pageSize: 5 }}
         />
       </div>
 
@@ -178,7 +158,7 @@ const VendorManagementPage = () => {
           <Button key="cancel" onClick={handleModalCancel}>
             Đóng
           </Button>,
-          <Button key="save" type="primary">
+          <Button key="save" type="primary" onClick={handleSaveStatus}>
             Lưu
           </Button>,
         ]}
@@ -196,22 +176,14 @@ const VendorManagementPage = () => {
             </p>
             <div>
               <Select
-                defaultValue={selectedUser.status}
+                value={newStatus}
                 style={{ width: "120px" }}
+                onChange={(value) => setNewStatus(value)}
                 options={[
-                  selectedUser.status === "active" && {
-                    value: "inactive",
-                    label: "Inactive",
-                  },
-                  selectedUser.status === "inactive" && {
-                    value: "active",
-                    label: "Active",
-                  },
-                  selectedUser.status === "pending" && {
-                    value: "active",
-                    label: "Active",
-                  },
-                ].filter(Boolean)} // Lọc bỏ giá trị `false` hoặc `null`
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                  { value: "pending", label: "Pending" },
+                ]}
               />
             </div>
           </div>

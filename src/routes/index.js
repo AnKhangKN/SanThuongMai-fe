@@ -3,7 +3,6 @@ import VendorManagementPage from "../pages/Admin/VendorManagementPage/VendorMana
 import HomePage from "../pages/Customer/HomePage/HomePage";
 import OrderPage from "../pages/Customer/OrderPage/OrderPage";
 import ProductsPage from "../pages/Customer/ProductsPage/ProductsPage";
-import CustomerManagementPage from "../pages/Admin/CustomerManagementPage/CustomerManagementPage";
 import ProductManagementPage from "../pages/Admin/ProductManagementPage/ProductManagementPage";
 import OrderManagementPage from "../pages/Admin/OrderManagementPage/OrderManagementPage";
 import ReportManagementPage from "../pages/Admin/ReportManagementPage/ReportManagementPage";
@@ -68,13 +67,6 @@ export const routes = [
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
-  {
-    path: "/admin/customers",
-    page: CustomerManagementPage,
-    isShowHeaderAdmin: true,
-    isShowSidebarAdmin: true,
-  },
-
   {
     path: "/admin/products",
     page: ProductManagementPage,

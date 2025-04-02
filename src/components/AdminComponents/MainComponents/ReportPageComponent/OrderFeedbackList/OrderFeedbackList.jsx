@@ -1,8 +1,7 @@
-import React, { useState } from "react";
 import { Table, Tag, Modal, Button, Select } from "antd";
-import { Wrapper } from "./style";
+import React, { useState } from "react";
 
-const OrderManagementPage = () => {
+const OrderFeedbackList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([
@@ -48,10 +47,7 @@ const OrderManagementPage = () => {
   };
 
   const handleShopStatusChange = (value) => {
-    setSelectedOrder((prev) => ({
-      ...prev,
-      shopStatus: value,
-    }));
+    setSelectedOrder((prev) => ({ ...prev, shopStatus: value }));
   };
 
   const handleSave = () => {
@@ -64,7 +60,7 @@ const OrderManagementPage = () => {
   };
 
   return (
-    <Wrapper>
+    <>
       <Table
         dataSource={orders}
         columns={columns}
@@ -119,8 +115,8 @@ const OrderManagementPage = () => {
           </>
         )}
       </Modal>
-    </Wrapper>
+    </>
   );
 };
 
-export default OrderManagementPage;
+export default OrderFeedbackList;

@@ -26,36 +26,21 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
         </Link>
       </OptionContainer>
 
-      {/* Quản lý tài khoản */}
+      {/* Quản lý vendor */}
       <OptionContainer>
-        <OptionSelect
-          onClick={() => setIsShowAccountOptions(!isShowAccountOptions)}
+        <Link
+          to="/admin/vendors"
+          style={{ textDecoration: "none", color: "#333" }}
         >
-          <IconContainer>
-            <MdAccountBox />
-          </IconContainer>
-          {!isCollapsed && (
-            <div style={{ paddingLeft: "10px" }}>Quản lý tài khoản</div>
-          )}
-        </OptionSelect>
-
-        {!isCollapsed && isShowAccountOptions && (
-          <>
-            <Link
-              to="/admin/vendors"
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ padding: "10px 0px 20px 30px" }}>Cộng tác viên</div>
-            </Link>
-
-            <Link
-              to="/admin/customers"
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ paddingLeft: "30px" }}>Khách hàng</div>
-            </Link>
-          </>
-        )}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <IconContainer>
+              <MdAccountBox />
+            </IconContainer>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Quản lý người dùng</div>
+            )}
+          </div>
+        </Link>
       </OptionContainer>
 
       {/* Quản lý sản phẩm */}
