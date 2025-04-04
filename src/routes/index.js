@@ -4,8 +4,9 @@ import HomePage from "../pages/Customer/HomePage/HomePage";
 import OrderPage from "../pages/Customer/OrderPage/OrderPage";
 import ProductsPage from "../pages/Customer/ProductsPage/ProductsPage";
 import ProductManagementPage from "../pages/Admin/ProductManagementPage/ProductManagementPage";
-import OrderManagementPage from "../pages/Admin/OrderManagementPage/OrderManagementPage";
-import ReportManagementPage from "../pages/Admin/ReportManagementPage/ReportManagementPage";
+import ProductReportPage from "../pages/Admin/ProductReportPage/ProductReportPage";
+import ShopReportPage from "../pages/Admin/ShopReportPage/ShopReportPage";
+import OrderReportPage from "../pages/Admin/OrderReportPage/OrderReportPage";
 import StatisticsManagementPage from "../pages/Admin/StatisticsManagementPage/StatisticsManagementPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import register from "../pages/Vendor/register/register";
@@ -74,14 +75,20 @@ export const routes = [
     isShowSidebarAdmin: true,
   },
   {
-    path: "/admin/orders",
-    page: OrderManagementPage,
+    path: "/admin/report/shops",
+    page: ShopReportPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
   {
-    path: "/admin/reports",
-    page: ReportManagementPage,
+    path: "/admin/report/products",
+    page: ProductReportPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/report/orders",
+    page: OrderReportPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
