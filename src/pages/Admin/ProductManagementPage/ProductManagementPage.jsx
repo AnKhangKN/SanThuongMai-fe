@@ -26,18 +26,18 @@ const ProductManagementPage = () => {
   const [filteredData, setFilteredData] = useState(data);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [tempStatus, setTempStatus] = useState("");
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
-    if (value === "all") {
-      setFilteredData(data);
-    } else {
-      setFilteredData(data.filter((item) => item.status === value));
-    }
+    setFilteredData(
+      value === "all" ? data : data.filter((item) => item.status === value)
+    );
   };
 
   const handleRowClick = (record) => {
-    setSelectedProduct({ ...record }); // copy object tránh mutate trực tiếp
+    setSelectedProduct({ ...record });
+    setTempStatus(record.status);
     setModalVisible(true);
   };
 
@@ -47,7 +47,16 @@ const ProductManagementPage = () => {
   };
 
   const handleStatusChange = (value) => {
-    setSelectedProduct((prev) => ({ ...prev, status: value }));
+    setTempStatus(value);
+  };
+
+  const handleSave = () => {
+    setFilteredData((prevData) =>
+      prevData.map((item) =>
+        item.id === selectedProduct.id ? { ...item, status: tempStatus } : item
+      )
+    );
+    setModalVisible(false);
   };
 
   const columns = [
@@ -60,13 +69,13 @@ const ProductManagementPage = () => {
         <Tooltip title={text}>
           <div
             style={{
-              maxWidth: 150,
+              maxWidth: 100,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
             }}
           >
-            {text}
+            {text.toString().slice(0, 10)}...
           </div>
         </Tooltip>
       ),
@@ -114,7 +123,11 @@ const ProductManagementPage = () => {
             : status === "inactive"
             ? "red"
             : "orange";
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
+        return (
+          <Tooltip title={`Trạng thái: ${status}`}>
+            <Tag color={color}>{status.toUpperCase()}</Tag>
+          </Tooltip>
+        );
       },
       sorter: (a, b) => a.status.localeCompare(b.status),
     },
@@ -162,12 +175,9 @@ const ProductManagementPage = () => {
           columns={columns}
           dataSource={filteredData}
           pagination={{ pageSize: 5 }}
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-          })}
+          onRow={(record) => ({ onClick: () => handleRowClick(record) })}
         />
       </div>
-
       <Modal
         title="Thông tin sản phẩm"
         open={modalVisible}
@@ -176,7 +186,7 @@ const ProductManagementPage = () => {
           <Button key="cancel" onClick={handleModalCancel}>
             Đóng
           </Button>,
-          <Button key="save" type="primary">
+          <Button key="save" type="primary" onClick={handleSave}>
             Lưu
           </Button>,
         ]}
@@ -184,46 +194,18 @@ const ProductManagementPage = () => {
         {selectedProduct && (
           <div>
             <p>
-              <strong>ID:</strong>{" "}
-              <Tooltip title={selectedProduct.id}>
-                <div
-                  style={{
-                    maxWidth: 150,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    display: "inline-block",
-                    verticalAlign: "middle",
-                  }}
-                >
-                  {selectedProduct.id}
-                </div>
-              </Tooltip>
+              <strong>ID:</strong> {selectedProduct.id}
             </p>
             <p>
-              <strong>Tên:</strong>{" "}
-              <Tooltip title={selectedProduct.name}>
-                <div
-                  style={{
-                    maxWidth: 150,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    display: "inline-block",
-                    verticalAlign: "middle",
-                  }}
-                >
-                  {selectedProduct.name}
-                </div>
-              </Tooltip>
+              <strong>Tên:</strong> {selectedProduct.name}
             </p>
             <p>
               <strong>Danh mục:</strong> {selectedProduct.category}
             </p>
             <p>
-              <strong>Trạng thái:</strong>{" "}
+              <strong>Trạng thái:</strong>
               <Select
-                value={selectedProduct.status}
+                value={tempStatus}
                 style={{ width: 200 }}
                 options={[
                   { value: "active", label: "Hoạt động" },

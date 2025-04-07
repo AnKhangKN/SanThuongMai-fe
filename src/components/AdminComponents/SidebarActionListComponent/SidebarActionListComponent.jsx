@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { IconContainer, OptionContainer, OptionSelect, Wrapper } from "./style";
 import { BiSolidDashboard } from "react-icons/bi";
 import { AiFillProduct } from "react-icons/ai";
-import { MdAccountBox, MdShoppingCart } from "react-icons/md";
+import { MdAccountBox } from "react-icons/md";
 import { IoWarning } from "react-icons/io5";
 import { FaChartPie } from "react-icons/fa";
 import { Link } from "react-router-dom";
@@ -26,36 +26,21 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
         </Link>
       </OptionContainer>
 
-      {/* Quản lý tài khoản */}
+      {/* Quản lý vendor */}
       <OptionContainer>
-        <OptionSelect
-          onClick={() => setIsShowAccountOptions(!isShowAccountOptions)}
+        <Link
+          to="/admin/vendors"
+          style={{ textDecoration: "none", color: "#333" }}
         >
-          <IconContainer>
-            <MdAccountBox />
-          </IconContainer>
-          {!isCollapsed && (
-            <div style={{ paddingLeft: "10px" }}>Quản lý tài khoản</div>
-          )}
-        </OptionSelect>
-
-        {!isCollapsed && isShowAccountOptions && (
-          <>
-            <Link
-              to="/admin/vendors"
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ padding: "10px 0px 20px 30px" }}>Cộng tác viên</div>
-            </Link>
-
-            <Link
-              to="/admin/customers"
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ paddingLeft: "30px" }}>Khách hàng</div>
-            </Link>
-          </>
-        )}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <IconContainer>
+              <MdAccountBox />
+            </IconContainer>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Quản lý người dùng</div>
+            )}
+          </div>
+        </Link>
       </OptionContainer>
 
       {/* Quản lý sản phẩm */}
@@ -75,39 +60,66 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
         </Link>
       </OptionContainer>
 
-      {/* Quản lý đơn hàng */}
-      <OptionContainer>
-        <Link
-          to="/admin/orders"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <IconContainer>
-              <MdShoppingCart />
-            </IconContainer>
-            {!isCollapsed && (
-              <div style={{ paddingLeft: "10px" }}>Quản lý đơn hàng</div>
-            )}
-          </div>
-        </Link>
-      </OptionContainer>
-
       {/* Quản lý vi phạm */}
-      <OptionContainer>
-        <Link
-          to="/admin/reports"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
+      <OptionContainer
+        onClick={() => setIsShowAccountOptions(!isShowAccountOptions)}
+      >
+        <OptionSelect>
           <div style={{ display: "flex", alignItems: "center" }}>
             <IconContainer>
               <IoWarning />
             </IconContainer>
+
             {!isCollapsed && (
               <div style={{ paddingLeft: "10px" }}>Quản lý vi phạm</div>
             )}
           </div>
-        </Link>
+        </OptionSelect>
       </OptionContainer>
+
+      {isShowAccountOptions && (
+        <OptionContainer style={{ paddingLeft: "20px" }}>
+          <Link
+            to="/admin/report/shops"
+            style={{ textDecoration: "none", color: "#333" }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>Cửa hàng vi phạm</div>
+              )}
+            </div>
+          </Link>
+        </OptionContainer>
+      )}
+
+      {isShowAccountOptions && (
+        <OptionContainer style={{ paddingLeft: "20px" }}>
+          <Link
+            to="/admin/report/products"
+            style={{ textDecoration: "none", color: "#333" }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>Sản phẩm vi phạm</div>
+              )}
+            </div>
+          </Link>
+        </OptionContainer>
+      )}
+      {isShowAccountOptions && (
+        <OptionContainer style={{ paddingLeft: "20px" }}>
+          <Link
+            to="/admin/report/orders"
+            style={{ textDecoration: "none", color: "#333" }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>Đơn hàng vi phạm</div>
+              )}
+            </div>
+          </Link>
+        </OptionContainer>
+      )}
 
       {/* Thống kê */}
       <OptionContainer>
