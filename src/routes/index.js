@@ -13,6 +13,7 @@ import register from "../pages/Vendor/register/register";
 import registerForm from "../pages/Vendor/register/registerForm";
 import registerTransport from "../pages/Vendor/register/registerTransport";
 import registerTax from "../pages/Vendor/register/registerTax";
+import VendorMain from "../pages/Vendor/VendorMain/VendorMain";
 
 export const routes = [
   // customer
@@ -32,6 +33,12 @@ export const routes = [
     isShowHeader: true,
   },
   // vendor
+  {
+    path: "/vendor",
+    page: VendorMain,
+    isShowHeaderVendor: true,
+  },
+
   {
     path: "/vendor/register",
     page: register,
