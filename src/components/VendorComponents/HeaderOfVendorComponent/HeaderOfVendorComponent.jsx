@@ -9,12 +9,15 @@ import { WrapperHeader, WrapperHeaderImageLogo, WrapperHeaderTextAvatar, Wrapper
 
 
 
-const HeaderOfVendorComponent = () => {
+const HeaderOfVendorComponent = (props) => {
+  const {
+    textHeader
+  } = props
   return (
     <WrapperHeader>
       <Col span={12} style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}}>
         <WrapperHeaderImageLogo src={logo} alt='LogoHKN' preview={false} style={{width: '50px', height: '30px'}}></WrapperHeaderImageLogo>
-        <WrapperHeaderTextLogo>Đăng ký trở thành Người bán HKN</WrapperHeaderTextLogo>
+        <WrapperHeaderTextLogo>{textHeader}</WrapperHeaderTextLogo>
       </Col>
 
       <Col span={12} style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>

@@ -1,6 +1,6 @@
 import React from "react";
 import HeaderOfVendorComponent from "../HeaderOfVendorComponent/HeaderOfVendorComponent";
-import NavbarOfVendorComponent from "../NavbarOfVendorComponent/NavbarOfVendorComponent";
+import NavbarOfVendorRightComponent from "../NavbarOfVendorRightComponent/NavbarOfVendorRightComponent";
 import { Col} from "antd";
 import { WrapperBody, WrapperColLeft } from "./styleOfVendorLayout";
 
@@ -13,7 +13,7 @@ const VendorLayout = ({ children }) => {
 
         {children}
         </WrapperColLeft>
-        <Col span={1} style={{flex: 0}}><NavbarOfVendorComponent /></Col>
+        <Col span={1} style={{flex: 0}}><NavbarOfVendorRightComponent /></Col>
       </WrapperBody>
     </div>
   );
