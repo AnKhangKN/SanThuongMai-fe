@@ -14,6 +14,8 @@ import registerForm from "../pages/Vendor/register/registerForm";
 import registerTransport from "../pages/Vendor/register/registerTransport";
 import registerTax from "../pages/Vendor/register/registerTax";
 import VendorMain from "../pages/Vendor/VendorMain/VendorMain";
+import AddProduct from "../pages/Vendor/ProductManegement/AddProduct";
+import SeeAllProduct from "../pages/Vendor/ProductManegement/SeeAllProduct";
 
 export const routes = [
   // customer
@@ -36,6 +38,18 @@ export const routes = [
   {
     path: "/vendor",
     page: VendorMain,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/add-product",
+    page: AddProduct,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/see-all-product",
+    page: SeeAllProduct,
     isShowHeaderVendor: true,
   },
 
