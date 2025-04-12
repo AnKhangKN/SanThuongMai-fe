@@ -1,13 +1,18 @@
 import React from "react";
-import SubHeaderComponent from "../SubHeaderComponent/SubHeaderComponent";
-import NavbarComponent from "../NavbarComponent/NavbarComponent";
+import HeaderInfoComponent from "../HeaderInfoComponent/HeaderInfoComponent";
+import HeaderNavbarComponent from "../HeaderNavbarComponent/HeaderNavbarComponent";
+import { Wrapper } from "./style";
 
 const HeaderComponent = () => {
   return (
-    <div >
-      <SubHeaderComponent />
-      <NavbarComponent />
-    </div>
+    <>
+      <Wrapper style={{ fontFamily: "sans-serif" }}>
+        <div style={{ width: "1200px", margin: "0 auto" }}>
+          <HeaderNavbarComponent />
+          <HeaderInfoComponent />
+        </div>
+      </Wrapper>
+    </>
   );
 };
 

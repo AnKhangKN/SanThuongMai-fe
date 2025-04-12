@@ -1,14 +1,13 @@
 import React from "react";
-import Banner from "../../../assets/images/Banner/Banner.jpg";
+import SectionComponent from "../../../components/CustomerComponents/HomePageComponent/SectionComponent/SectionComponent";
+import MainComponent from "../../../components/CustomerComponents/HomePageComponent/MainComponent/MainComponent";
+
 const HomePage = () => {
   return (
     <>
-      <div style={{ backgroundColor: "#f5f5f5", height: "80px" }}></div>
-
-      <div style={{ margin: "0px 40px 0px 40px" }}>
-        <div>
-          <img src={Banner} style={{ width: "100%" }} />
-        </div>
+      <div>
+        <SectionComponent />
+        <MainComponent />
       </div>
     </>
   );
