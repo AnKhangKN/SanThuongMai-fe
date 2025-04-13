@@ -10,13 +10,31 @@ export const WrapperBody = styled(Row)`
   background: #f6f6f6;
 `;
 
-export const WrapperColLeft = styled(Col)`
+export const WrapperColCenter = styled(Col)`
   width: 1232px;
   background: #fff;
-  margin: 16px auto;
+  margin: 54px 50px 16px auto;
   -webkit-box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.12);
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.12);
   border-radius: 4px;
   padding: 24px;
+  text-align: center;
+`;
+
+export const WrapperColRight = styled(Col)`
+  flex: 0;
+  margin: 38px 0px 24px 0px;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  top: 0;
+`;
+
+export const WrapperColLeft = styled(Col)`
+  background: #fff;
+  margin: 54px 0 16px 0;
+  -webkit-box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
   text-align: center;
 `;

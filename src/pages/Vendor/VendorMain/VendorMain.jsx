@@ -7,16 +7,13 @@ import { Col } from 'antd'
 //   MessageOutlined,
 // } from '@ant-design/icons';
 import { WrapperItemNumber, WrapperItemText, WrapperVendor, WrapperVendorBackgroundItem, WrapperVendorMain, WrapperVendorMainItem, WrapperVendorTextMain } from './styleVendorMain';
-import MenuVendorComponent from '../../../components/VendorComponents/MenuVendorComponent/MenuVendorComponent';
+// import MenuVendorComponent from '../../../components/VendorComponents/MenuVendorComponent/MenuVendorComponent';
 
 const VendorMain = () => {  
   return (
     <div>
       <WrapperVendor>
-        <Col span={5}>
-          <MenuVendorComponent />
-        </Col>
-        <Col span={19}>
+        <Col span={24}>
           
           <WrapperVendorMain>
             <WrapperVendorTextMain>Danh sách cần làm</WrapperVendorTextMain>

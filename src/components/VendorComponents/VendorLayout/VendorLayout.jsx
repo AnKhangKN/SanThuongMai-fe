@@ -1,19 +1,22 @@
 import React from "react";
 import HeaderOfVendorComponent from "../HeaderOfVendorComponent/HeaderOfVendorComponent";
 import NavbarOfVendorRightComponent from "../NavbarOfVendorRightComponent/NavbarOfVendorRightComponent";
-import { Col} from "antd";
-import { WrapperBody, WrapperColLeft } from "./styleOfVendorLayout";
+import { WrapperBody, WrapperColCenter, WrapperColLeft, WrapperColRight } from "./styleOfVendorLayout";
+// import { Col } from "antd";
+import MenuVendorComponent from "../MenuVendorComponent/MenuVendorComponent";
 
 const VendorLayout = ({ children }) => {
   return (
     <div>
       <HeaderOfVendorComponent />
       <WrapperBody>
-        <WrapperColLeft span={23}>
-
-        {children}
+        <WrapperColLeft span={5}>
+          <MenuVendorComponent />
         </WrapperColLeft>
-        <Col span={1} style={{flex: 0}}><NavbarOfVendorRightComponent /></Col>
+        <WrapperColCenter span={18}>
+          {children}
+        </WrapperColCenter>
+        <WrapperColRight span={1}><NavbarOfVendorRightComponent /></WrapperColRight>
       </WrapperBody>
     </div>
   );
