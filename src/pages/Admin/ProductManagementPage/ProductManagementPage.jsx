@@ -140,7 +140,7 @@ const ProductManagementPage = () => {
 
   return (
     <Wrapper>
-      <h1>Quản lý sản phẩm</h1>
+      <h3>Quản lý sản phẩm</h3>
       <div
         style={{
           backgroundColor: "#fff",
@@ -152,11 +152,12 @@ const ProductManagementPage = () => {
         <div
           style={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "20px",
           }}
         >
+          <h5>Danh sách sản phẩm</h5>
           <Select
             value={selectedStatus}
             style={{ width: 200 }}

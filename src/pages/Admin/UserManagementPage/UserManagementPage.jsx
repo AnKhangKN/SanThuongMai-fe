@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Wrapper } from "./style";
 import { Select, Table, Tag, Modal, Button } from "antd";
 
@@ -78,13 +78,17 @@ const VendorManagementPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
 
+  // Cập nhật dữ liệu mỗi khi selectedStatus thay đổi
+  useEffect(() => {
+    const newData =
+      selectedStatus === "all"
+        ? allData
+        : allData.filter((item) => item.status === selectedStatus);
+    setFilteredData(newData);
+  }, [selectedStatus]);
+
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
-    setFilteredData(
-      value === "all"
-        ? allData
-        : allData.filter((item) => item.status === value)
-    );
   };
 
   const handleRowClick = (record) => {
@@ -100,17 +104,22 @@ const VendorManagementPage = () => {
 
   const handleSaveStatus = () => {
     if (selectedUser) {
-      const updatedData = filteredData.map((item) =>
+      const updatedAllData = allData.map((item) =>
         item.key === selectedUser.key ? { ...item, status: newStatus } : item
       );
-      setFilteredData(updatedData);
+      // Cập nhật lại filteredData dựa vào selectedStatus
+      const updatedFilteredData =
+        selectedStatus === "all"
+          ? updatedAllData
+          : updatedAllData.filter((item) => item.status === selectedStatus);
+      setFilteredData(updatedFilteredData);
       setModalVisible(false);
     }
   };
 
   return (
     <Wrapper>
-      <h1>Cộng tác viên</h1>
+      <h3>Quản lý người dùng</h3>
       <div
         style={{
           backgroundColor: "#fff",
@@ -126,9 +135,9 @@ const VendorManagementPage = () => {
             marginBottom: "20px",
           }}
         >
-          <h2>Danh sách Cộng tác viên</h2>
+          <h5>Danh sách Cộng tác viên</h5>
           <Select
-            defaultValue="all"
+            value={selectedStatus}
             style={{ width: "120px" }}
             onChange={handleFilterChange}
             options={[
@@ -152,7 +161,7 @@ const VendorManagementPage = () => {
       {/* Modal xem/sửa thông tin */}
       <Modal
         title="Thông tin Cộng tác viên"
-        visible={modalVisible}
+        open={modalVisible}
         onCancel={handleModalCancel}
         footer={[
           <Button key="cancel" onClick={handleModalCancel}>

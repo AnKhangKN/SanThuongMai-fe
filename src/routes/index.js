@@ -1,5 +1,5 @@
 import DashboardPage from "../pages/Admin/DashboardPage/DashboardPage";
-import VendorManagementPage from "../pages/Admin/VendorManagementPage/VendorManagementPage";
+import UserManagementPage from "../pages/Admin/UserManagementPage/UserManagementPage";
 import HomePage from "../pages/Customer/HomePage/HomePage";
 import OrderPage from "../pages/Customer/OrderPage/OrderPage";
 import ProductsPage from "../pages/Customer/ProductsPage/ProductsPage";
@@ -16,6 +16,7 @@ import registerTax from "../pages/Vendor/register/registerTax";
 import VendorMain from "../pages/Vendor/VendorMain/VendorMain";
 import AddProduct from "../pages/Vendor/ProductManegement/AddProduct";
 import SeeAllProduct from "../pages/Vendor/ProductManegement/SeeAllProduct";
+import ProductDetailPage from "../pages/Customer/ProductDetailPage/ProductDetailPage";
 
 export const routes = [
   // customer
@@ -27,6 +28,11 @@ export const routes = [
   {
     path: "/products",
     page: ProductsPage,
+    isShowHeader: true,
+  },
+  {
+    path: "/products/:id",
+    page: ProductDetailPage,
     isShowHeader: true,
   },
   {
@@ -85,7 +91,7 @@ export const routes = [
   },
   {
     path: "/admin/vendors",
-    page: VendorManagementPage,
+    page: UserManagementPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
