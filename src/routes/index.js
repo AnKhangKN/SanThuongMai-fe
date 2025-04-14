@@ -17,12 +17,18 @@ import VendorMain from "../pages/Vendor/VendorMain/VendorMain";
 import AddProduct from "../pages/Vendor/ProductManegement/AddProduct";
 import SeeAllProduct from "../pages/Vendor/ProductManegement/SeeAllProduct";
 import ProductDetailPage from "../pages/Customer/ProductDetailPage/ProductDetailPage";
+import SearchPage from "../pages/Customer/SearchPage/SearchPage";
 
 export const routes = [
   // customer
   {
     path: "/",
     page: HomePage,
+    isShowHeader: true,
+  },
+  {
+    path: "/search/:category",
+    page: SearchPage,
     isShowHeader: true,
   },
   {
