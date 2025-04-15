@@ -19,8 +19,8 @@ const MenuVendorComponent = () => {
       children: [
         { key: '/vendor/add-product', label: 'Thêm sản phẩm' },
         { key: '/vendor/see-all-product', label: 'Tất cả sản phẩm' },
-        { key: '/edit-product', label: 'Sửa sản phẩm' },
-        { key: '/delete-product', label: 'Xóa sản phẩm' },
+        // { key: '/edit-product', label: 'Sửa sản phẩm' },
+        // { key: '/delete-product', label: 'Xóa sản phẩm' },
       ],
     },
     {
@@ -28,8 +28,8 @@ const MenuVendorComponent = () => {
       label: 'Quản lý đơn hàng',
       icon: <OrderedListOutlined />,
       children: [
-        { key: '/approve-order', label: 'Duyệt đơn' },
-        { key: '/update-status', label: 'Cập nhật trạng thái' },
+        { key: '/vendor/approve-order', label: 'Duyệt đơn' },
+        { key: '/vendor/update-status', label: 'Cập nhật trạng thái' },
       ],
     },
     {
@@ -37,8 +37,8 @@ const MenuVendorComponent = () => {
       label: 'Quản lý tài chính',
       icon: <DollarCircleOutlined />,
       children: [
-        { key: '/revenue-report', label: 'Thống kê thu nhập' },
-        { key: '/add-payment', label: 'Thêm cổng thanh toán' },
+        { key: '/vendor/revenue-report', label: 'Thống kê thu nhập' },
+        { key: '/vendor/add-payment', label: 'Thêm cổng thanh toán' },
       ],
     },
     {
@@ -46,8 +46,8 @@ const MenuVendorComponent = () => {
       label: 'Tương tác khách hàng',
       icon: <MessageOutlined />,
       children: [
-        { key: '/reply-comment', label: 'Trả lời bình luận' },
-        { key: '/feedback-comment', label: 'Phản hồi bình luận' },
+        { key: '/vendor/reply-comment', label: 'Trả lời bình luận' },
+        { key: '/vendor/feedback-comment', label: 'Phản hồi bình luận' },
       ],
     },
   ];

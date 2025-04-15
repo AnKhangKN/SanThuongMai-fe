@@ -14,8 +14,14 @@ import registerForm from "../pages/Vendor/register/registerForm";
 import registerTransport from "../pages/Vendor/register/registerTransport";
 import registerTax from "../pages/Vendor/register/registerTax";
 import VendorMain from "../pages/Vendor/VendorMain/VendorMain";
-import AddProduct from "../pages/Vendor/ProductManegement/AddProduct";
-import SeeAllProduct from "../pages/Vendor/ProductManegement/SeeAllProduct";
+import AddProduct from "../pages/Vendor/ProductManagement/AddProduct";
+import SeeAllProduct from "../pages/Vendor/ProductManagement/SeeAllProduct";
+import OrderReview from "../pages/Vendor/OrderManagement/OrderReview";
+import UpdateStatus from "../pages/Vendor/OrderManagement/UpdateStatus";
+import IncomeStatisics from "../pages/Vendor/FinancialManagement/IncomeStatistics";
+import AddPaymentGateway from "../pages/Vendor/FinancialManagement/AddPaymentGateway";
+import ReplyToComment from "../pages/Vendor/CustomerInteraction/ReplyToComment";
+import CommentResponse from "../pages/Vendor/CustomerInteraction/CommentResponse";
 
 export const routes = [
   // customer
@@ -41,6 +47,7 @@ export const routes = [
     isShowHeaderVendor: true,
   },
 
+  // Product management
   {
     path: "/vendor/add-product",
     page: AddProduct,
@@ -52,6 +59,47 @@ export const routes = [
     page: SeeAllProduct,
     isShowHeaderVendor: true,
   },
+
+  // Order Management
+  {
+    path: "/vendor/approve-order",
+    page: OrderReview,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/update-status",
+    page: UpdateStatus,
+    isShowHeaderVendor: true,
+  },
+
+  // Financial Management
+  {
+    path: "/vendor/revenue-report",
+    page: IncomeStatisics,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/add-payment",
+    page: AddPaymentGateway,
+    isShowHeaderVendor: true,
+  },
+
+  // Customer Interaction
+  {
+    path: "/vendor/reply-comment",
+    page: ReplyToComment,
+    isShowHeaderVendor: true,
+  },
+
+  {
+    path: "/vendor/feedback-comment",
+    page: CommentResponse,
+    isShowHeaderVendor: true,
+  },
+
+  // Vendor Registration
 
   {
     path: "/vendor/register",

@@ -3,7 +3,8 @@ import styled from "styled-components";
 
 export const WrapperVendor = styled(Row)`
   width: 100%;
-  max-height: 200vh;
+  mix-height: 100vh;
+  max-height: 500vh;
 `;
 
 export const WrapperVendorMainItem = styled.div`
