@@ -13,7 +13,7 @@ const AdminLayout = ({ children }) => {
   return (
     <Wrapper>
       {/* Sidebar */}
-      <WrapperSidebar style={{ width: isCollapsed ? "80px" : "250px" }}>
+      <WrapperSidebar style={{ width: isCollapsed ? "80px" : "260px" }}>
         <SidebarComponent isCollapsed={isCollapsed} />
       </WrapperSidebar>
 

@@ -15,7 +15,7 @@ const LineChartBoxComponent = () => {
             marginBottom: "30px",
           }}
         >
-          <div style={{ fontSize: "18px", fontWeight: "400" }}>Doanh thu</div>
+          <h5>Danh thu</h5>
           <div style={{ fontSize: "18px" }}>
             <IoMdMore />
           </div>
@@ -29,11 +29,11 @@ const LineChartBoxComponent = () => {
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <p>Tuần này</p>
+            <h6>Tuần này</h6>
             <p style={{ fontSize: "30px" }}>230,000</p>
           </div>
           <div style={{ textAlign: "center" }}>
-            <p>Tuần trước</p>
+            <h6>Tuần trước</h6>
             <p style={{ fontSize: "30px" }}>34,000</p>
           </div>
         </div>

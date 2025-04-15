@@ -91,16 +91,35 @@ const ShopReportPage = () => {
 
   return (
     <Wrapper>
-      <div>Biểu đồ quản lý thống kê</div>
-      <Table
-        dataSource={dataSource}
-        columns={columns}
-        pagination={{ pageSize: 5 }}
-        rowKey="key"
-        onRow={(record) => ({
-          onClick: () => handleRowClick(record),
-        })}
-      />
+      <h3>Quản lý vi phạm</h3>
+      <div
+        style={{
+          backgroundColor: "#fff",
+          padding: "20px",
+          borderRadius: "5px",
+          boxShadow: "1px 1px 10px #e9e9e9",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h5>Danh sách cửa hàng vi phạm</h5>
+        </div>
+        <Table
+          dataSource={dataSource}
+          columns={columns}
+          pagination={{ pageSize: 5 }}
+          rowKey="key"
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+          })}
+        />
+      </div>
 
       <Modal
         title="Thông tin chi tiết"

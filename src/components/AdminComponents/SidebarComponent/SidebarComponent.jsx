@@ -5,7 +5,7 @@ import SidebarActionListComponent from "../SidebarActionListComponent/SidebarAct
 
 const SidebarComponent = ({ isCollapsed }) => {
   return (
-    <Wrapper style={{ width: isCollapsed ? "80px" : "250px" }}>
+    <Wrapper style={{ width: isCollapsed ? "80px" : "260px" }}>
       {/* Logo */}
       <WrapperTitle>
         <div style={{ width: "50px", height: "30px" }}>
@@ -15,7 +15,7 @@ const SidebarComponent = ({ isCollapsed }) => {
             alt="logo"
           />
         </div>
-        {!isCollapsed && <p style={{ padding: 0, margin: 0 }}>HKN</p>}
+        {!isCollapsed && <h5 style={{ padding: 0, margin: 0 }}>store</h5>}
       </WrapperTitle>
 
       {/* Danh sách menu */}

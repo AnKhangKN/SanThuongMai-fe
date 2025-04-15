@@ -12,7 +12,8 @@ import { HiMiniBuildingStorefront } from "react-icons/hi2";
 import { BiSolidDollarCircle } from "react-icons/bi";
 import { MdShoppingCart } from "react-icons/md";
 import LineChartBoxComponent from "../../../components/AdminComponents/MainComponents/LineChartBoxComponent/LineChartBoxComponent";
-import CommentBoxComponent from "../../../components/AdminComponents/MainComponents/CommentBoxComponent/CommentBoxComponent";
+import WalletComponent from "../../../components/AdminComponents/MainComponents/WalletComponent/WalletComponent";
+import { Link } from "react-router-dom";
 
 const DashboardPage = () => {
   return (
@@ -20,7 +21,7 @@ const DashboardPage = () => {
       <Wrapper>
         <Row style={{ marginBottom: "30px" }}>
           <Col span={12}>
-            <p style={{ fontSize: "18px" }}>Dashboard</p>
+            <h3>Tổng quan</h3>
           </Col>
           <Col
             span={12}
@@ -38,32 +39,36 @@ const DashboardPage = () => {
 
         <Row gutter={16}>
           <Col className="gutter-row" span={6}>
-            <BoxContainer>
-              <div>
-                <BoxQuantity>343 </BoxQuantity>
-                <BoxName>Khách hàng</BoxName>
-              </div>
-              <IconContainer>
-                <BsFillPeopleFill />
-              </IconContainer>
-            </BoxContainer>
+            <Link to="/admin/vendors">
+              <BoxContainer>
+                <div>
+                  <BoxQuantity>343 </BoxQuantity>
+                  <BoxName>Shop</BoxName>
+                </div>
+                <IconContainer>
+                  <BsFillPeopleFill />
+                </IconContainer>
+              </BoxContainer>
+            </Link>
           </Col>
           <Col className="gutter-row" span={6}>
-            <BoxContainer>
-              <div>
-                <BoxQuantity>34</BoxQuantity>
-                <BoxName>Shop</BoxName>
-              </div>
-              <IconContainer>
-                <HiMiniBuildingStorefront />
-              </IconContainer>
-            </BoxContainer>
+            <Link to="/admin/products">
+              <BoxContainer>
+                <div>
+                  <BoxQuantity>34</BoxQuantity>
+                  <BoxName>Sản phẩm</BoxName>
+                </div>
+                <IconContainer>
+                  <HiMiniBuildingStorefront />
+                </IconContainer>
+              </BoxContainer>
+            </Link>
           </Col>
           <Col className="gutter-row" span={6}>
             <BoxContainer>
               <div>
                 <BoxQuantity>20,000,000</BoxQuantity>
-                <BoxName>Thu nhập</BoxName>
+                <BoxName>Thu nhập/tháng</BoxName>
               </div>
 
               <IconContainer>
@@ -89,7 +94,7 @@ const DashboardPage = () => {
             <LineChartBoxComponent />
           </Col>
           <Col className="gutter-row" span={9}>
-            <CommentBoxComponent />
+            <WalletComponent />
           </Col>
         </Row>
       </Wrapper>

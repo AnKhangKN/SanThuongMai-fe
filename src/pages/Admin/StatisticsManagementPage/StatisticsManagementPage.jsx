@@ -160,29 +160,39 @@ const StatisticsManagementPage = () => {
 
   return (
     <Wrapper>
+      <h3>Quản lý chi phí nền tảng</h3>
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
+          backgroundColor: "#fff",
+          padding: "20px",
+          borderRadius: "5px",
+          boxShadow: "1px 1px 10px #e9e9e9",
         }}
       >
-        <h1>Quản lý chi phí nền tảng</h1>
-        <Button type="primary" onClick={handleOpenAddModal}>
-          Thêm chi phí
-        </Button>
-      </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h5>Danh sách chi phí nền tảng</h5>
+          <Button type="primary" onClick={handleOpenAddModal}>
+            Thêm chi phí
+          </Button>
+        </div>
 
-      <Table
-        dataSource={feeData}
-        columns={columns}
-        pagination={{ pageSize: 5 }}
-        onRow={(record) => ({
-          onClick: () => handleRowClick(record),
-        })}
-        rowKey="key"
-      />
+        <Table
+          dataSource={feeData}
+          columns={columns}
+          pagination={{ pageSize: 5 }}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+          })}
+          rowKey="key"
+        />
+      </div>
 
       {/* Modal xem/sửa trạng thái */}
       <Modal
