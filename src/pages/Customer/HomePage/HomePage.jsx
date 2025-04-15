@@ -7,7 +7,6 @@ const HomePage = () => {
     <>
       <div>
         <SectionComponent />
-        hiih
         <MainComponent />
       </div>
     </>
