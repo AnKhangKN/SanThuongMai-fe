@@ -14,7 +14,7 @@ function App() {
   const dispatch = useDispatch();
 
   // Chú ý: Các hàm phải gọi trước hi sử dụng trong useEffect
-  const handlerDecoded = () => {
+  const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
     let decoded = {};
     if (storageData && isJsonString(storageData)) {
@@ -33,42 +33,32 @@ function App() {
   );
 
   useEffect(() => {
-    const { storageData, decoded } = handlerDecoded();
+    const { storageData, decoded } = handleDecoded();
     if (decoded?.id) {
       handleGetDetailUser(decoded?.id, storageData);
     }
   }, [handleGetDetailUser]);
 
   // Setup Interceptor
-  useEffect(() => {
-    const interceptor = AuthServices.axiosJWT.interceptors.request.use(
-      async (config) => {
-        const currentTime = new Date();
-        const { decoded } = handlerDecoded();
+  AuthServices.axiosJWT.interceptors.request.use(
+    async (config) => {
+      const currentTime = new Date();
+      const { decoded } = handleDecoded();
+      if (decoded?.exp < currentTime.getTime() / 1000) {
+        const data = await AuthServices.refreshToken();
 
-        if (decoded.exp - 60 < currentTime.getTime() / 1000) {
-          const data = await AuthServices.refreshToken();
-          console.log("Dữ liệu nhận được từ refreshToken:", data);
-          localStorage.setItem(
-            "access_token",
-            JSON.stringify(data?.access_token)
-          );
-          config.headers["token"] = `Bearer ${data?.access_token}`;
-        } else {
-          const storageData = localStorage.getItem("access_token");
-          config.headers["token"] = `Bearer ${JSON.parse(storageData)}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
+        console.log("data", data);
+        config.headers["Authorization"] = `Bearer ${data?.access_token}`;
+
+        localStorage.setItem('access_token', JSON.stringify(data?.access_token));
       }
-    );
 
-    return () => {
-      AuthServices.axiosJWT.interceptors.request.eject(interceptor);
-    };
-  }, []);
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
 
   return (
     <Router>
