@@ -1,0 +1,3 @@
+- Khi tìm kiếm thì tìm kiếm bằng danh mục
+- Hiểu thị tất cả các sản phẩm trong danh mục
+- Bấm vào danh mục cũng hiển thị search page
