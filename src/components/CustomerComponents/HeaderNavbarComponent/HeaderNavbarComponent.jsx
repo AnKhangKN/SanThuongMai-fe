@@ -135,12 +135,25 @@ const HeaderNavbarComponent = () => {
             </div>
             <div style={{ marginLeft: "5px" }}>{user.name}</div>
 
-            {/* modal */}
-            <ModalInformation>
-              <Link to="/user/account/profile">Thông tin cá nhân </Link>
-              <Link to="/user/purchase/complete">Đơn mua</Link>
-              <div onClick={handleLogout}>Đăng xuất</div>
-            </ModalInformation>
+            {/* Check nếu là Admin */}
+            {user?.isAdmin ? (
+              <>
+                {/* modal */}
+                <ModalInformation>
+                  <Link to="/admin">Quay về Admin</Link>
+                  <div onClick={handleLogout}>Đăng xuất</div>
+                </ModalInformation>
+              </>
+            ) : (
+              <>
+                {/* modal */}
+                <ModalInformation>
+                  <Link to="/user/account/profile">Thông tin cá nhân </Link>
+                  <Link to="/user/purchase/complete">Đơn mua</Link>
+                  <div onClick={handleLogout}>Đăng xuất</div>
+                </ModalInformation>
+              </>
+            )}
           </InformationWrapper>
         ) : (
           <div style={{ display: "flex", gap: "10px" }}>

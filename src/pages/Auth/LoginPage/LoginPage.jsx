@@ -16,7 +16,7 @@ const LoginPage = () => {
   //lưu
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const dispath = useDispatch();
+  const dispatch = useDispatch(); // ✅ đúng
 
   //call api
   const mutation = useMutationHooks((data) => AuthServices.loginUser(data));
@@ -26,14 +26,18 @@ const LoginPage = () => {
   useEffect(() => {
     if (isSuccess) {
       MessageComponent.success("Đăng nhập thành công");
-      handleNavigateHome();
       localStorage.setItem("access_token", JSON.stringify(data?.access_token));
+
       if (data?.access_token) {
         const decoded = jwtDecode(data?.access_token);
-        console.log("decoded", decoded);
 
         if (decoded?.id) {
-          handleGetDetailUser(decoded?.id, data?.access_token);
+          handleGetDetailUser(
+            decoded?.id,
+            data?.access_token, // đúng nè
+            decoded?.isAdmin,
+            decoded?.isVendor
+          );
         }
       }
     }
@@ -43,9 +47,17 @@ const LoginPage = () => {
     }
   }, [isSuccess, isError]);
 
-  const handleGetDetailUser = async (id, accessToken) => {
+  const handleGetDetailUser = async (id, accessToken, isAdmin, isVendor) => {
     const res = await AuthServices.getDetailUser(id, accessToken);
-    dispath(updateUser({ ...res?.data, access_token: accessToken }));
+    dispatch(updateUser({ ...res?.data, access_token: accessToken }));
+
+    if (isAdmin) {
+      handleNavigateAdminPage();
+    } else if (isVendor) {
+      handleNavigateVendorPage();
+    } else {
+      handleNavigateHome();
+    }
   };
 
   const navigate = useNavigate();
@@ -65,6 +77,14 @@ const LoginPage = () => {
 
   const handleNavigateHome = () => {
     navigate("/");
+  };
+
+  const handleNavigateAdminPage = () => {
+    navigate("/admin");
+  };
+
+  const handleNavigateVendorPage = () => {
+    navigate("/vendor");
   };
 
   // Xử lý
@@ -153,15 +173,14 @@ const LoginPage = () => {
             )}
 
             <Button
+              loading={mutation.isLoading}
               disabled={!email.length || !password.length}
               type="primary"
               block
               size="large"
               style={{
                 backgroundColor:
-                  !email.length || !password.length
-                    ? "#ccc" // màu xám khi bị disable
-                    : "#f53d2d",
+                  !email.length || !password.length ? "#ccc" : "#f53d2d",
                 borderColor:
                   !email.length || !password.length ? "#ccc" : "#f53d2d",
                 color: "#fff",
