@@ -14,6 +14,7 @@ export const WrapperHeader = styled(Row)`
   right: 0;
   z-index: 999;
   line-height: 60px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
 export const WrapperHeaderImageLogo = styled(Image)`

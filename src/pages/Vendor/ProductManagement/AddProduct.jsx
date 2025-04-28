@@ -1,11 +1,11 @@
 import React from 'react'
 import { WrapperVendor } from '../VendorMain/styleVendorMain'
-// import MenuVendorComponent from '../../../components/VendorComponents/MenuVendorComponent/MenuVendorComponent'
 import { Card, Col, Form, List, Typography, Input, Button, Upload, Space, Select } from 'antd'
 import {
   CheckCircleFilled,
   UploadOutlined 
 } from '@ant-design/icons';
+import ColorTableComponent from '../../../components/VendorComponents/ColorTableComponent/ColorTableComponent';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -151,12 +151,8 @@ const AddProduct = () => {
                       </Select>
                     </Form.Item>
 
-                    <Form.Item
-                      name="color"
-                      label="Màu sắc"
-                      rules={[{ required: true, message: 'Vui lòng nhập màu sắc!' }]}
-                    >
-                      <Input placeholder="Nhập màu sắc" />
+                    <Form.Item label="Danh sách màu sắc" name="colors">
+                      <ColorTableComponent name="colors" />
                     </Form.Item>
 
                     {/* GIÁ SẢN PHẨM */}
