@@ -15,7 +15,7 @@ import { PiBellSimpleRingingBold } from "react-icons/pi";
 import { SlQuestion } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import * as AuthServices from "../../../services/shared/AuthServices";
-import { resetUser, updateUser } from "../../../redux/slides/userSlide";
+import { resetUser, updateUser } from "../../../redux/slices/userSlice";
 
 const HeaderNavbarComponent = () => {
   // redux để lưu trạng thái người dùng

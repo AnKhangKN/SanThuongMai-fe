@@ -8,7 +8,7 @@ import { useMutationHooks } from "../../../hook/useMutationHook";
 import * as MessageComponent from "../../../components/CustomerComponents/MessageComponent/MessageComponent";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
-import { updateUser } from "../../../redux/slides/userSlide";
+import { updateUser } from "../../../redux/slices/userSlice";
 
 const { Title, Text, Link: AntLink } = Typography;
 
