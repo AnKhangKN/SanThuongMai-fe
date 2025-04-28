@@ -58,11 +58,17 @@ const HeaderNavbarComponent = () => {
             Kênh Bán Hàng
           </Link>
         </div>
-        <VendorText>
-          <Link to="" style={{ color: "#fff", textDecoration: "none" }}>
-            Trở thành người bán Shopee
-          </Link>
-        </VendorText>
+
+        {user?.isVendor ? (
+          <div style={{ padding: "0px 10px" }}>|</div>
+        ) : (
+          <VendorText>
+            <Link to="" style={{ color: "#fff", textDecoration: "none" }}>
+              Trở thành người bán Shopee
+            </Link>
+          </VendorText>
+        )}
+
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div>Kết nối</div>
           <div>
