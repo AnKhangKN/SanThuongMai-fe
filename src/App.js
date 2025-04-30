@@ -7,11 +7,13 @@ import VendorLayout from "./components/VendorComponents/VendorLayout/VendorLayou
 import { isJsonString } from "./utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "./services/shared/AuthServices";
-import { useDispatch } from "react-redux";
-import { updateUser } from "./redux/slides/userSlide";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUser } from "./redux/slices/userSlice";
+import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 
 function App() {
   const dispatch = useDispatch();
+  const user = useSelector((state) => state.user);
 
   // Chú ý: Các hàm phải gọi trước hi sử dụng trong useEffect
   const handleDecoded = () => {
@@ -50,7 +52,10 @@ function App() {
         console.log("data", data);
         config.headers["Authorization"] = `Bearer ${data?.access_token}`;
 
-        localStorage.setItem('access_token', JSON.stringify(data?.access_token));
+        localStorage.setItem(
+          "access_token",
+          JSON.stringify(data?.access_token)
+        );
       }
 
       return config;
@@ -66,19 +71,31 @@ function App() {
         {routes.map((route, index) => {
           const Page = route.page;
           let Layout = React.Fragment;
+
           if (route.isShowHeader) Layout = CustomerLayout;
           if (route.isShowHeaderAdmin || route.isShowSidebarAdmin)
             Layout = AdminLayout;
           if (route.isShowHeaderVendor) Layout = VendorLayout;
+
+          const checkAuth =
+            (!route.isShowHeaderAdmin &&
+              !route.isShowSidebarAdmin &&
+              !route.isShowHeaderVendor) ||
+            (route.isShowHeaderAdmin && user.isAdmin) ||
+            (route.isShowHeaderVendor && user.isVendor);
 
           return (
             <Route
               key={index}
               path={route.path}
               element={
-                <Layout>
-                  <Page />
-                </Layout>
+                checkAuth ? (
+                  <Layout>
+                    <Page />
+                  </Layout>
+                ) : (
+                  <NotFoundPage />
+                )
               }
             />
           );

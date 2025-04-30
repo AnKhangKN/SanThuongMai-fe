@@ -1,27 +1,66 @@
 import React, { useState, useEffect } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag, Modal, Button, message } from "antd";
-import { useDispatch } from "react-redux";
-import * as UserServices from "../../../services/admin/UserServices";
+import { Select, Table, Tag, Modal, Button } from "antd";
+
+const allData = [
+  {
+    key: 1,
+    name: "John",
+    email: "john@gmail.com",
+    phone: "1234567890",
+    shopId: "3",
+    shopName: "John Shop",
+    status: "active",
+    createAt: "2023-01-01",
+  },
+  {
+    key: 2,
+    name: "Alice",
+    email: "alice@gmail.com",
+    phone: "0987654321",
+    shopId: "5",
+    shopName: "Alice's Store",
+    status: "pending",
+    createAt: "2023-02-15",
+  },
+  {
+    key: 3,
+    name: "Bob",
+    email: "bob@gmail.com",
+    phone: "1122334455",
+    shopId: "7",
+    shopName: "Bob's Market",
+    status: "active",
+    createAt: "2023-03-10",
+  },
+  {
+    key: 4,
+    name: "Charlie",
+    email: "charlie@gmail.com",
+    phone: "2233445566",
+    shopId: "9",
+    shopName: "Charlie's Goods",
+    status: "inactive",
+    createAt: "2023-04-05",
+  },
+];
 
 const columns = [
-  { title: "ID", dataIndex: "key" },
+  { title: "ID", dataIndex: "key", sorter: (a, b) => a.key - b.key },
   { title: "Name", dataIndex: "name" },
   { title: "Email", dataIndex: "email" },
   { title: "Phone", dataIndex: "phone" },
+  { title: "Shop Name", dataIndex: "shopName" },
   {
     title: "Status",
     dataIndex: "status",
     render: (status) => {
-      if (!status) return <Tag color="gray">Unknown</Tag>; // Xử lý trường hợp status là null hoặc undefined
-
       let color =
         status === "active"
           ? "green"
           : status === "inactive"
           ? "red"
           : "orange";
-
       return <Tag color={color}>{status.toUpperCase()}</Tag>;
     },
   },
@@ -33,50 +72,20 @@ const columns = [
 ];
 
 const VendorManagementPage = () => {
-  const [allData, setAllData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [filteredData, setFilteredData] = useState(allData);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // Lấy accessToken từ localStorage hoặc từ Redux store
-        const accessToken = localStorage.getItem("access_token"); // Hoặc lấy từ Redux
-
-        if (!accessToken) {
-          message.error("Không tìm thấy access token");
-          return;
-        }
-
-        // Truyền accessToken vào hàm getAllUsers
-        const res = await UserServices.getAllUsers(accessToken);
-
-        if (res?.data) {
-          const usersWithKey = res.data.map((user) => ({
-            ...user,
-            key: user._id,
-          }));
-          setAllData(usersWithKey);
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách người dùng:", error);
-        message.error("Không thể tải danh sách người dùng");
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
+  // Cập nhật dữ liệu mỗi khi selectedStatus thay đổi
   useEffect(() => {
     const newData =
       selectedStatus === "all"
         ? allData
         : allData.filter((item) => item.status === selectedStatus);
     setFilteredData(newData);
-  }, [selectedStatus, allData]);
+  }, [selectedStatus]);
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
@@ -98,9 +107,13 @@ const VendorManagementPage = () => {
       const updatedAllData = allData.map((item) =>
         item.key === selectedUser.key ? { ...item, status: newStatus } : item
       );
-      setAllData(updatedAllData); // cập nhật local
+      // Cập nhật lại filteredData dựa vào selectedStatus
+      const updatedFilteredData =
+        selectedStatus === "all"
+          ? updatedAllData
+          : updatedAllData.filter((item) => item.status === selectedStatus);
+      setFilteredData(updatedFilteredData);
       setModalVisible(false);
-      message.success("Cập nhật trạng thái thành công");
     }
   };
 
@@ -145,7 +158,7 @@ const VendorManagementPage = () => {
         />
       </div>
 
-      {/* Modal chỉnh sửa trạng thái */}
+      {/* Modal xem/sửa thông tin */}
       <Modal
         title="Thông tin Cộng tác viên"
         open={modalVisible}
@@ -168,9 +181,9 @@ const VendorManagementPage = () => {
               <strong>Name:</strong> {selectedUser.name}
             </p>
             <p>
-              <strong>Email:</strong> {selectedUser.email}
+              <strong>Shop Name:</strong> {selectedUser.shopName}
             </p>
-            <div style={{ marginTop: "10px" }}>
+            <div>
               <Select
                 value={newStatus}
                 style={{ width: "120px" }}

@@ -15,7 +15,7 @@ import { PiBellSimpleRingingBold } from "react-icons/pi";
 import { SlQuestion } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import * as AuthServices from "../../../services/shared/AuthServices";
-import { resetUser, updateUser } from "../../../redux/slides/userSlide";
+import { resetUser, updateUser } from "../../../redux/slices/userSlice";
 
 const HeaderNavbarComponent = () => {
   // redux để lưu trạng thái người dùng
@@ -58,11 +58,17 @@ const HeaderNavbarComponent = () => {
             Kênh Bán Hàng
           </Link>
         </div>
-        <VendorText>
-          <Link to="" style={{ color: "#fff", textDecoration: "none" }}>
-            Trở thành người bán Shopee
-          </Link>
-        </VendorText>
+
+        {user?.isVendor ? (
+          <div style={{ padding: "0px 10px" }}>|</div>
+        ) : (
+          <VendorText>
+            <Link to="" style={{ color: "#fff", textDecoration: "none" }}>
+              Trở thành người bán Shopee
+            </Link>
+          </VendorText>
+        )}
+
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div>Kết nối</div>
           <div>
@@ -129,12 +135,25 @@ const HeaderNavbarComponent = () => {
             </div>
             <div style={{ marginLeft: "5px" }}>{user.name}</div>
 
-            {/* modal */}
-            <ModalInformation>
-              <Link to="/user/account/profile">Thông tin cá nhân </Link>
-              <Link to="/user/purchase/complete">Đơn mua</Link>
-              <div onClick={handleLogout}>Đăng xuất</div>
-            </ModalInformation>
+            {/* Check nếu là Admin */}
+            {user?.isAdmin ? (
+              <>
+                {/* modal */}
+                <ModalInformation>
+                  <Link to="/admin">Quay về Admin</Link>
+                  <div onClick={handleLogout}>Đăng xuất</div>
+                </ModalInformation>
+              </>
+            ) : (
+              <>
+                {/* modal */}
+                <ModalInformation>
+                  <Link to="/user/account/profile">Thông tin cá nhân </Link>
+                  <Link to="/user/purchase/complete">Đơn mua</Link>
+                  <div onClick={handleLogout}>Đăng xuất</div>
+                </ModalInformation>
+              </>
+            )}
           </InformationWrapper>
         ) : (
           <div style={{ display: "flex", gap: "10px" }}>

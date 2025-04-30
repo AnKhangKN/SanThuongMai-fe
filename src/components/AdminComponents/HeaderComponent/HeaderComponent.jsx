@@ -1,13 +1,60 @@
-import React from "react";
-import { AccountText, IconContainer } from "./style";
+import React, { useEffect } from "react";
+import {
+  AccountText,
+  IconContainer,
+  ModalChatBox,
+  ModalInformation,
+  ModalNotification,
+  WrapperChatBox,
+  WrapperInformation,
+  WrapperNotification,
+} from "./style";
 import { HiBars3BottomLeft } from "react-icons/hi2";
 import {
   IoChatboxEllipsesOutline,
   IoNotificationsOutline,
 } from "react-icons/io5";
-import logo_test from "../../../assets/images/Logo_Trang.jpg";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { resetUser } from "../../../redux/slices/userSlice";
 
 const HeaderComponent = ({ toggleSidebar }) => {
+  const user = useSelector((state) => state.user);
+
+  const dispatch = useDispatch();
+
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await AuthServices.logoutUser();
+
+      // Xoá access token localStorage
+      localStorage.removeItem("access_token");
+
+      // Reset redux user state
+      dispatch(resetUser());
+
+      // Điều hướng về trang login
+      handleNavigateLogin();
+    } catch (error) {
+      console.error("Lỗi khi logout:", error);
+    }
+  };
+
+  const handleNavigateDashboard = () => {
+    navigate("/admin");
+  };
+
+  const handleNavigateLogin = () => {
+    navigate("/login");
+  };
+
+  const handleNavigateProfile = () => {
+    navigate("/admin/profile");
+  };
+
   return (
     <div
       style={{
@@ -28,16 +75,42 @@ const HeaderComponent = ({ toggleSidebar }) => {
           <HiBars3BottomLeft />
         </IconContainer>
 
-        <h3 style={{ margin: "0px 0px 0px 20px" }}>HKN store</h3>
+        <h3
+          onClick={handleNavigateDashboard}
+          style={{ margin: "0px 0px 0px 20px", cursor: "pointer" }}
+        >
+          HKN store
+        </h3>
       </div>
       <div style={{ display: "flex", alignItems: "center" }}>
-        <IconContainer>
-          <IoNotificationsOutline />
-        </IconContainer>
-        <IconContainer style={{ margin: "0px 20px" }}>
-          <IoChatboxEllipsesOutline />
-        </IconContainer>
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <WrapperNotification>
+          <IconContainer>
+            <IoNotificationsOutline />
+          </IconContainer>
+
+          {/* modal notification */}
+          <ModalNotification>
+            <div>
+              Shop acb bị khách hàng bca tố cáo
+              hellllllllllllllfskfsjfsfldjsssssssssssss
+            </div>
+            <div>Shop acb bị khách hàng bca tố cáo</div>
+            <div>Shop acb bị khách hàng bca tố cáo</div>
+          </ModalNotification>
+        </WrapperNotification>
+
+        <WrapperChatBox>
+          <IconContainer style={{ margin: "0px 20px" }}>
+            <IoChatboxEllipsesOutline />
+          </IconContainer>
+
+          {/* modal chat box */}
+          <ModalChatBox>
+            <div>admin ơi shop tôi chưa nhận được thông báo đơn hàng mới</div>
+          </ModalChatBox>
+        </WrapperChatBox>
+
+        <WrapperInformation>
           <div
             style={{
               width: "30px",
@@ -54,13 +127,18 @@ const HeaderComponent = ({ toggleSidebar }) => {
                 objectFit: "contain",
                 borderRadius: "50%",
               }}
-              src={logo_test}
+              src={user?.img} // nếu được làm thêm default img admin
               alt=""
-              srcset=""
             />
           </div>
-          <AccountText>Khang</AccountText>
-        </div>
+          <AccountText>{user?.name}</AccountText>
+
+          {/* modal */}
+          <ModalInformation>
+            <div onClick={handleNavigateProfile}>Thông tin cá nhân</div>
+            <div onClick={handleLogout}>Đăng xuất</div>
+          </ModalInformation>
+        </WrapperInformation>
       </div>
     </div>
   );

@@ -40,6 +40,8 @@ import WaitingForDelivery from "../components/CustomerComponents/AccountPageComp
 import WaitingForPayment from "../components/CustomerComponents/AccountPageComponent/OrderComponent/WaitingForPayment/WaitingForPayment";
 import SignupPage from "../pages/Auth/SignupPage/SignupPage";
 import LoginPage from "../pages/Auth/LoginPage/LoginPage";
+import AdminProfilePage from "../pages/Admin/AdminProfilePage/AdminProfilePage";
+import VendorManagementPage from "../pages/Admin/VendorManagementPage/VendorManagementpage";
 
 export const routes = [
   //auth
@@ -208,8 +210,14 @@ export const routes = [
     isShowSidebarAdmin: true,
   },
   {
-    path: "/admin/vendors",
+    path: "/admin/users",
     page: UserManagementPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/vendors",
+    page: VendorManagementPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
@@ -240,6 +248,12 @@ export const routes = [
   {
     path: "/admin/statistics",
     page: StatisticsManagementPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/profile",
+    page: AdminProfilePage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
