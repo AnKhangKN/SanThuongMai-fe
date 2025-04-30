@@ -1,9 +1,13 @@
 import axios from "axios";
 
-export const createProduct = async (data) => {
-  const res = await axios.post(
-    `${process.env.REACT_APP_API_URL}/shared/sign-up`,
-    data
+export const createProduct = async (accessToken, productData) => {
+  return await axios.post(
+    `${process.env.REACT_APP_API_URL}/vendor/add-product`,
+    productData,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
   );
-  return res.data;
 };
