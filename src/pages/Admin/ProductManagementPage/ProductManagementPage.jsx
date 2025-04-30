@@ -1,38 +1,70 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag, Tooltip, Modal, Button } from "antd";
-
-const data = [
-  {
-    id: 1123131736183761872361873612738612783617894824028409328,
-    name: "Áo thun namkajfsfaoejfakdfjosaiefjafkdsdsajfldksjfalsjflakfjsljslkafjdlskfjaslkdfjkls",
-    category: "Thời trang",
-    images: "https://via.placeholder.com/80",
-    status: "active",
-    shopId: 101,
-  },
-  {
-    id: 2,
-    name: "Giày thể thao",
-    category: "Giày dép",
-    images: "https://via.placeholder.com/80",
-    status: "inactive",
-    shopId: 102,
-  },
-];
+import { Select, Table, Tag, Tooltip, Modal, Button, message } from "antd";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as ProductServices from "../../../services/admin/ProductServices";
 
 const ProductManagementPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [filteredData, setFilteredData] = useState(data);
+  const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [tempStatus, setTempStatus] = useState("");
 
+  const handleDecoded = () => {
+    let storageData = localStorage.getItem("access_token");
+    let decoded = {};
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      decoded = jwtDecode(storageData);
+    }
+    return { decoded, storageData };
+  };
+
+  const fetchShops = async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      const res = await ProductServices.getAllProducts(accessToken);
+
+      console.log("res", res);
+
+      const productsWithKeys = res.data.map((product) => ({
+        ...product,
+        key: product._id || product.id,
+      }));
+
+      setAllData(productsWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchShops();
+  }, []);
+
+  useEffect(() => {
+    if (selectedStatus === "all") {
+      setFilteredData(allData);
+    } else {
+      setFilteredData(allData.filter((item) => item.status === selectedStatus));
+    }
+  }, [allData, selectedStatus]);
+
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
-    setFilteredData(
-      value === "all" ? data : data.filter((item) => item.status === value)
-    );
   };
 
   const handleRowClick = (record) => {
@@ -50,19 +82,46 @@ const ProductManagementPage = () => {
     setTempStatus(value);
   };
 
-  const handleSave = () => {
-    setFilteredData((prevData) =>
-      prevData.map((item) =>
-        item.id === selectedProduct.id ? { ...item, status: tempStatus } : item
-      )
-    );
-    setModalVisible(false);
+  const handleSave = async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      // Sử dụng tempStatus để cập nhật
+      await ProductServices.partialUpdateProduct(
+        selectedProduct.key, // ID sản phẩm được chọn
+        tempStatus, // Trạng thái mới
+        accessToken // Token hợp lệ
+      );
+
+      const updateProductStatus = allData.map((product) =>
+        product.key === selectedProduct.key
+          ? {
+              ...product,
+              status: tempStatus, // Cập nhật trạng thái mới
+            }
+          : product
+      );
+
+      setAllData(updateProductStatus); // Cập nhật danh sách trong state
+      setModalVisible(false); // Ẩn modal
+      message.success("Cập nhật trạng thái thành công!");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      message.error("Đã có lỗi xảy ra khi cập nhật trạng thái.");
+    }
   };
 
   const columns = [
     {
       title: "Mã sản phẩm",
-      dataIndex: "id",
+      dataIndex: "_id",
       key: "id",
       sorter: (a, b) => a.id - b.id,
       render: (text) => (
@@ -75,14 +134,15 @@ const ProductManagementPage = () => {
               whiteSpace: "nowrap",
             }}
           >
-            {text.toString().slice(0, 10)}...
+            {text?.toString().slice(0, 10)}...
           </div>
         </Tooltip>
       ),
+      ellipsis: true,
     },
     {
       title: "Tên sản phẩm",
-      dataIndex: "name",
+      dataIndex: "product_name",
       key: "name",
       render: (text) => (
         <Tooltip title={text}>
@@ -98,11 +158,13 @@ const ProductManagementPage = () => {
           </div>
         </Tooltip>
       ),
+      ellipsis: true,
     },
     {
       title: "Danh mục",
       dataIndex: "category",
       key: "category",
+      ellipsis: true,
     },
     {
       title: "Hình ảnh",
@@ -132,9 +194,13 @@ const ProductManagementPage = () => {
       sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
-      title: "Mã shop",
-      dataIndex: "shopId",
-      key: "shopId",
+      title: "Chủ shop",
+      dataIndex: "user_id",
+      key: "user_name",
+      render: (user_id) => {
+        return user_id ? user_id.user_name : "Chưa có thông tin";
+      },
+      ellipsis: true,
     },
   ];
 
@@ -172,7 +238,7 @@ const ProductManagementPage = () => {
         </div>
         <Table
           bordered
-          rowKey="id"
+          rowKey="key"
           columns={columns}
           dataSource={filteredData}
           pagination={{ pageSize: 5 }}
@@ -188,42 +254,27 @@ const ProductManagementPage = () => {
             Đóng
           </Button>,
           <Button key="save" type="primary" onClick={handleSave}>
-            Lưu
+            Lưu thay đổi
           </Button>,
         ]}
       >
         {selectedProduct && (
           <div>
             <p>
-              <strong>ID:</strong> {selectedProduct.id}
+              <strong>Tên sản phẩm:</strong> {selectedProduct.product_name}
             </p>
             <p>
-              <strong>Tên:</strong> {selectedProduct.name}
+              <strong>Trạng thái hiện tại:</strong> {selectedProduct.status}
             </p>
-            <p>
-              <strong>Danh mục:</strong> {selectedProduct.category}
-            </p>
-            <p>
-              <strong>Trạng thái:</strong>
-              <Select
-                value={tempStatus}
-                style={{ width: 200 }}
-                options={[
-                  { value: "active", label: "Hoạt động" },
-                  { value: "inactive", label: "Không hoạt động" },
-                  { value: "pending", label: "Chờ duyệt" },
-                ]}
-                onChange={handleStatusChange}
-              />
-            </p>
-            <p>
-              <strong>Mã Shop:</strong> {selectedProduct.shopId}
-            </p>
-            <img
-              src={selectedProduct.images}
-              alt="product"
-              style={{ width: "100%", borderRadius: 4 }}
-            />
+            <Select
+              value={tempStatus}
+              onChange={handleStatusChange}
+              style={{ width: "100%" }}
+            >
+              <Select.Option value="active">Hoạt động</Select.Option>
+              <Select.Option value="inactive">Không hoạt động</Select.Option>
+              <Select.Option value="pending">Chờ duyệt</Select.Option>
+            </Select>
           </div>
         )}
       </Modal>
