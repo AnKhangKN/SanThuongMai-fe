@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from "react";
 import { WrapperVendor } from '../VendorMain/styleVendorMain'
-import { Card, Col, Form, List, Typography, Input, Button, Upload, Space, Select } from 'antd'
+import { Card, Col, Form, List, Typography, Input, Button, Upload, Space } from 'antd'
 import {
   CheckCircleFilled,
   UploadOutlined 
@@ -9,13 +9,12 @@ import ColorTableComponent from '../../../components/VendorComponents/ColorTable
 
 const { Text } = Typography;
 const { TextArea } = Input;
-const { Option } = Select;
 
 // Mỗi mục sẽ có text + trạng thái đã hoàn thành hay chưa
 const checklist = [
   { text: 'Thêm ít nhất 3 hình ảnh', done: false },
   { text: 'Tên sản phẩm có ít nhất 25~100 kí tự', done: false },
-  { text: 'Thêm ít nhất 100 kí tự hoặc 1 hình ảnh trong mô tả sản phẩm', done: false },
+  { text: 'Thêm ít nhất 100 kí tự trong mô tả sản phẩm', done: false },
   { text: 'Thêm thương hiệu', done: false },
 ];
 
@@ -26,6 +25,38 @@ const AddProduct = () => {
   const onFinish = (values) => {
     console.log('Dữ liệu đã nhập:', values);
     };
+
+    const [productName, setProductName] = useState("");
+    const [productDescription, setProductDescription] = useState("");
+    const [productSize, setProductSize] = useState("");
+    const [productPriceInput, setProductPriceInput] = useState("");
+    const [productPriceSale, setProductPriceSale] = useState("");
+
+    const handleChangeNameProduct = (e) => {
+      setProductName(e.target.value);
+      // console.log("teen sp", e.target.value)
+
+    };
+
+    const handleChangeDescription = (e) => {
+      setProductDescription(e.target.value);
+      // console.log("mo ta sp", e.target.value)
+    }
+
+    const handleChangeSize = (e) => {
+      setProductSize(e.target.value);
+      // console.log("kich thuoc", e.target.value)
+    }
+
+    const handleChangePriceIput = (e) => {
+      setProductPriceInput(e.target.value);
+      // console.log("gia nhap sp", e.target.value)
+    }
+
+    const handleChangePriceSale = (e) => {
+      setProductPriceSale(e.target.value);
+      console.log("gia ban sp", e.target.value)
+    }
 
   return (
     <div>
@@ -58,18 +89,6 @@ const AddProduct = () => {
                     <h2>Thông tin cơ bản</h2>
 
                     <Form.Item
-                      name="coverImage"
-                      label="Ảnh bìa"
-                      valuePropName="fileList"
-                      getValueFromEvent={(e) => Array.isArray(e) ? e : e?.fileList}
-                      rules={[{ required: true, message: 'Vui lòng chọn ảnh bìa!' }]}
-                    >
-                      <Upload beforeUpload={() => false} maxCount={1} listType="picture">
-                        <Button icon={<UploadOutlined />}>Chọn ảnh bìa</Button>
-                      </Upload>
-                    </Form.Item>
-
-                    <Form.Item
                       name="images"
                       label="Hình ảnh sản phẩm"
                       valuePropName="fileList"
@@ -89,66 +108,35 @@ const AddProduct = () => {
                         { min: 25, message: 'Tên sản phẩm phải có ít nhất 25 kí tự' },
                       ]}
                     >
-                      <Input placeholder="Nhập tên sản phẩm" />
+                      <Input
+                        placeholder="Nhập tên sản phẩm"
+                        value={productName}
+                        onChange={handleChangeNameProduct}
+                      />
                     </Form.Item>
 
                     <Form.Item
                       name="description"
                       label="Mô tả sản phẩm"
-                      rules={[{ required: true, message: 'Vui lòng nhập mô tả sản phẩm!' }]}
-                    >
-                      <TextArea rows={5} placeholder="Nhập mô tả sản phẩm" />
+                      rules={[{ required: true, message: 'Vui lòng nhập mô tả sản phẩm!' }]}>
+                      <TextArea 
+                        value={productDescription}
+                        onChange={handleChangeDescription}
+                        rows={5} placeholder="Nhập mô tả sản phẩm" />
                     </Form.Item>
 
                     {/* THÔNG TIN CHI TIẾT */}
                     <h2>Thông tin chi tiết</h2>
 
-                    <Form.Item
-                      name="brand"
-                      label="Thương hiệu"
-                      rules={[{ required: true, message: 'Vui lòng chọn thương hiệu!' }]}
-                    >
-                      <Select placeholder="Chọn thương hiệu">
-                        <Option value="Nike">Nike</Option>
-                        <Option value="Adidas">Adidas</Option>
-                        <Option value="Puma">Puma</Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="origin"
-                      label="Xuất xứ"
-                      rules={[{ required: true, message: 'Vui lòng chọn xuất xứ!' }]}
-                    >
-                      <Select placeholder="Chọn xuất xứ">
-                        <Option value="Việt Nam">Việt Nam</Option>
-                        <Option value="Trung Quốc">Trung Quốc</Option>
-                        <Option value="Mỹ">Mỹ</Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="warranty"
-                      label="Bảo hành"
-                      rules={[{ required: true, message: 'Vui lòng chọn thời gian bảo hành!' }]}
-                    >
-                      <Select placeholder="Chọn thời gian bảo hành">
-                        <Option value="6 tháng">6 tháng</Option>
-                        <Option value="12 tháng">12 tháng</Option>
-                        <Option value="24 tháng">24 tháng</Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="material"
-                      label="Chất liệu"
-                      rules={[{ required: true, message: 'Vui lòng chọn chất liệu!' }]}
-                    >
-                      <Select placeholder="Chọn chất liệu">
-                        <Option value="Vải">Vải</Option>
-                        <Option value="Da">Da</Option>
-                        <Option value="Nhựa">Nhựa</Option>
-                      </Select>
+                    <Form.Item 
+                      label="Kích thước"
+                      name="size"
+                      rules={[{ required: true, message: 'Vui lòng nhập kích thước!' }]}>
+                      <Input
+                        placeholder="Nhập kích thước"
+                        value={productSize}
+                        onChange={handleChangeSize}
+                      />
                     </Form.Item>
 
                     <Form.Item label="Danh sách màu sắc" name="colors">
@@ -163,7 +151,7 @@ const AddProduct = () => {
                       label="Giá nhập"
                       rules={[{ required: true, message: 'Vui lòng nhập giá nhập!' }]}
                     >
-                      <Input type="number" placeholder="Nhập giá nhập" />
+                      <Input type="number" placeholder="Nhập giá nhập" value={productPriceInput} onChange={handleChangePriceIput} />
                     </Form.Item>
 
                     <Form.Item
@@ -171,7 +159,7 @@ const AddProduct = () => {
                       label="Giá bán"
                       rules={[{ required: true, message: 'Vui lòng nhập giá bán!' }]}
                     >
-                      <Input type="number" placeholder="Nhập giá bán" />
+                      <Input type="number" placeholder="Nhập giá bán" value={productPriceSale} onChange={handleChangePriceSale} />
                     </Form.Item>
 
                     <Form.Item>
