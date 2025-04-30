@@ -6,6 +6,92 @@ import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ProductServices from "../../../services/admin/ProductServices";
 
+const columns = [
+  {
+    title: "Mã sản phẩm",
+    dataIndex: "_id",
+    key: "id",
+    sorter: (a, b) => a.id - b.id,
+    render: (text) => (
+      <Tooltip title={text}>
+        <div
+          style={{
+            maxWidth: 100,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {text?.toString().slice(0, 10)}...
+        </div>
+      </Tooltip>
+    ),
+    ellipsis: true,
+  },
+  {
+    title: "Tên sản phẩm",
+    dataIndex: "product_name",
+    key: "name",
+    render: (text) => (
+      <Tooltip title={text}>
+        <div
+          style={{
+            maxWidth: 150,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {text}
+        </div>
+      </Tooltip>
+    ),
+    ellipsis: true,
+  },
+  {
+    title: "Danh mục",
+    dataIndex: "category",
+    key: "category",
+    ellipsis: true,
+  },
+  {
+    title: "Hình ảnh",
+    dataIndex: "images",
+    key: "images",
+    render: (image) => (
+      <img src={image} alt="product" style={{ width: 80, borderRadius: 4 }} />
+    ),
+  },
+  {
+    title: "Trạng thái",
+    dataIndex: "status",
+    key: "status",
+    render: (status) => {
+      let color =
+        status === "active"
+          ? "green"
+          : status === "inactive"
+          ? "red"
+          : "orange";
+      return (
+        <Tooltip title={`Trạng thái: ${status}`}>
+          <Tag color={color}>{status.toUpperCase()}</Tag>
+        </Tooltip>
+      );
+    },
+    sorter: (a, b) => a.status.localeCompare(b.status),
+  },
+  {
+    title: "Chủ shop",
+    dataIndex: "user_id",
+    key: "user_name",
+    render: (user_id) => {
+      return user_id ? user_id.user_name : "Chưa có thông tin";
+    },
+    ellipsis: true,
+  },
+];
+
 const ProductManagementPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [allData, setAllData] = useState([]);
@@ -117,92 +203,6 @@ const ProductManagementPage = () => {
       message.error("Đã có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
-
-  const columns = [
-    {
-      title: "Mã sản phẩm",
-      dataIndex: "_id",
-      key: "id",
-      sorter: (a, b) => a.id - b.id,
-      render: (text) => (
-        <Tooltip title={text}>
-          <div
-            style={{
-              maxWidth: 100,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {text?.toString().slice(0, 10)}...
-          </div>
-        </Tooltip>
-      ),
-      ellipsis: true,
-    },
-    {
-      title: "Tên sản phẩm",
-      dataIndex: "product_name",
-      key: "name",
-      render: (text) => (
-        <Tooltip title={text}>
-          <div
-            style={{
-              maxWidth: 150,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {text}
-          </div>
-        </Tooltip>
-      ),
-      ellipsis: true,
-    },
-    {
-      title: "Danh mục",
-      dataIndex: "category",
-      key: "category",
-      ellipsis: true,
-    },
-    {
-      title: "Hình ảnh",
-      dataIndex: "images",
-      key: "images",
-      render: (image) => (
-        <img src={image} alt="product" style={{ width: 80, borderRadius: 4 }} />
-      ),
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        let color =
-          status === "active"
-            ? "green"
-            : status === "inactive"
-            ? "red"
-            : "orange";
-        return (
-          <Tooltip title={`Trạng thái: ${status}`}>
-            <Tag color={color}>{status.toUpperCase()}</Tag>
-          </Tooltip>
-        );
-      },
-      sorter: (a, b) => a.status.localeCompare(b.status),
-    },
-    {
-      title: "Chủ shop",
-      dataIndex: "user_id",
-      key: "user_name",
-      render: (user_id) => {
-        return user_id ? user_id.user_name : "Chưa có thông tin";
-      },
-      ellipsis: true,
-    },
-  ];
 
   return (
     <Wrapper>

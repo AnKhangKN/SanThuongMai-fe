@@ -35,3 +35,16 @@ export const partialUpdateProduct = async (
   );
   return res.data;
 };
+
+// Lấy danh sách sản phẩm bị báo cáo
+export const getAllReportedProducts = async (accessToken) => {
+  const res = await axios.get(
+    `${process.env.REACT_APP_API_URL}/admin/get-all-reported-products`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  return res.data;
+};

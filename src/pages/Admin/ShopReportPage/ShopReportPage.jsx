@@ -1,68 +1,88 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Wrapper } from "./style";
 import { Modal, Select, Table, Tag, Button } from "antd";
 import TextArea from "antd/es/input/TextArea";
+import { jwtDecode } from "jwt-decode";
+import { isJsonString } from "../../../utils";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as ShopServices from "../../../services/admin/ShopServices";
+
+const columns = [
+  {
+    title: "Shop",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "Trạng thái",
+    dataIndex: "status",
+    key: "status",
+    render: (status) => {
+      let color = status === "Chờ xử lý" ? "orange" : "green";
+      return <Tag color={color}>{status.toUpperCase()}</Tag>;
+    },
+  },
+  {
+    title: "Mã khách hàng",
+    dataIndex: "customerId",
+    key: "customerId",
+  },
+  {
+    title: "Tên khách hàng",
+    dataIndex: "customers",
+    key: "customers",
+  },
+  {
+    title: "Ngày bị báo cáo",
+    dataIndex: "date",
+    key: "date",
+  },
+];
 
 const ShopReportPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [tempStatus, setTempStatus] = useState("");
-  const [dataSource, setDataSource] = useState([
-    {
-      key: "1",
-      name: "Cửa hàng A",
-      status: "Chờ xử lý",
-      customerId: "KH001",
-      customers: "Nguyễn Văn A",
-      date: "01/04/2025",
-      category: "Thời trang",
-      shopId: "SHOP001",
-      images: "https://via.placeholder.com/300x200",
-    },
-    {
-      key: "2",
-      name: "Shop Bán Giày",
-      status: "Hoàn tất",
-      customerId: "KH002",
-      customers: "Trần Thị B",
-      date: "02/04/2025",
-      category: "Giày dép",
-      shopId: "SHOP002",
-      images: "https://via.placeholder.com/300x200",
-    },
-  ]);
+  const [dataSource, setDataSource] = useState([]); // thêm state này
 
-  const columns = [
-    {
-      title: "Shop",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        let color = status === "Chờ xử lý" ? "orange" : "green";
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
-    },
-    {
-      title: "Mã khách hàng",
-      dataIndex: "customerId",
-      key: "customerId",
-    },
-    {
-      title: "Tên khách hàng",
-      dataIndex: "customers",
-      key: "customers",
-    },
-    {
-      title: "Ngày bị báo cáo",
-      dataIndex: "date",
-      key: "date",
-    },
-  ];
+  const handleDecoded = () => {
+    let storageData = localStorage.getItem("access_token");
+    let decoded = {};
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      decoded = jwtDecode(storageData);
+    }
+    return { decoded, storageData };
+  };
+
+  const fetchReportedShops = async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      const res = await ShopServices.getAllReportedShops(accessToken);
+
+      const shopsWithKeys = res.data.map((shop) => ({
+        ...shop,
+        key: shop._id || shop.id,
+      }));
+
+      setDataSource(shopsWithKeys); // sửa lại hàm này
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportedShops();
+  }, []);
 
   const handleRowClick = (record) => {
     setSelectedProduct(record);
@@ -162,10 +182,14 @@ const ShopReportPage = () => {
               <strong>Mã Shop:</strong> {selectedProduct.shopId}
             </p>
             <div>
-              <strong>Trạng thái shop:</strong>
-              <Select style={{ width: 200 }}>
-                <option value="Thời trang">Ngưng hoạt động</option>
-              </Select>
+              <strong>Trạng thái shop:</strong>{" "}
+              <Select
+                value="Ngưng hoạt động"
+                style={{ width: 200 }}
+                options={[
+                  { value: "Ngưng hoạt động", label: "Ngưng hoạt động" },
+                ]}
+              />
             </div>
 
             <img

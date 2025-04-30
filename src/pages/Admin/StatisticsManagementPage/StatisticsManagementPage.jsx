@@ -1,77 +1,150 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Wrapper } from "./style";
-import { Button, Modal, Table, Tag, Select, Input } from "antd";
+import { Button, Modal, Table, Tag, Select, Input, message } from "antd";
+import { jwtDecode } from "jwt-decode";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as PlatformServices from "../../../services/admin/PlatformFeeServices";
+import { isJsonString } from "../../../utils";
+
+const FEE_TYPES = [
+  { value: "fixed", label: "Cố định" },
+  { value: "percentage", label: "Phần trăm" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Đang hoạt động" },
+  { value: "inactive", label: "Không hoạt động" },
+];
+
+const columns = [
+  {
+    title: "Tên chi phí",
+    dataIndex: "fee_name",
+    key: "fee_name",
+    ellipsis: true,
+    sorter: (a, b) => a.fee_name.localeCompare(b.fee_name),
+  },
+  {
+    title: "Loại chi phí",
+    dataIndex: "fee_type",
+    key: "fee_type",
+    ellipsis: true,
+  },
+  {
+    title: "Giá trị",
+    dataIndex: "value",
+    key: "value",
+    ellipsis: true,
+  },
+  {
+    title: "Mô tả",
+    dataIndex: "description",
+    key: "description",
+    ellipsis: true,
+  },
+  {
+    title: "Ngày bắt đầu",
+    dataIndex: "effective_from",
+    key: "effective_from",
+  },
+  {
+    title: "Trạng thái",
+    dataIndex: "status",
+    key: "status",
+    render: (status) => {
+      const color =
+        status === "active"
+          ? "green"
+          : status === "inactive"
+          ? "red"
+          : "orange";
+      return <Tag color={color}>{status.toUpperCase()}</Tag>;
+    },
+    sorter: (a, b) => a.status.localeCompare(b.status),
+  },
+];
 
 const StatisticsManagementPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAddVisible, setModalAddVisible] = useState(false);
   const [selectedFee, setSelectedFee] = useState(null);
   const [newStatus, setNewStatus] = useState("");
+  const [feeData, setFeeData] = useState([]);
   const [newFee, setNewFee] = useState({
-    name: "",
-    applicable: "Order",
-    amount: "",
+    fee_name: "",
+    fee_type: "fixed",
+    value: "",
     description: "",
     status: "Đang hoạt động",
     createdAt: new Date().toLocaleDateString("vi-VN"),
   });
 
-  const [feeData, setFeeData] = useState([
-    {
-      key: "1",
-      name: "Phí theo phần trăm đơn hàng",
-      applicable: "Order",
-      amount: "10%",
-      description: "Phí thu trên mỗi đơn hàng hoàn tất",
-      status: "Đang hoạt động",
-      createdAt: "01/04/2025",
-    },
-    {
-      key: "2",
-      name: "Phí cố định mỗi sản phẩm",
-      applicable: "Product",
-      amount: "5.000đ",
-      description: "Phí cố định áp dụng trên mỗi sản phẩm bán ra",
-      status: "Đang hoạt động",
-      createdAt: "01/04/2025",
-    },
-    {
-      key: "3",
-      name: "Phí riêng cho Vendor A",
-      applicable: "Vendor",
-      amount: "8%",
-      description: "Mức phí riêng cho nhà bán A",
-      status: "Đang hoạt động",
-      createdAt: "02/04/2025",
-    },
-    {
-      key: "4",
-      name: "Phí theo danh mục điện tử",
-      applicable: "Category",
-      amount: "15%",
-      description: "Áp dụng cho các sản phẩm trong danh mục điện tử",
-      status: "Không hoạt động",
-      createdAt: "02/04/2025",
-    },
-    {
-      key: "5",
-      name: "Phí xử lý thanh toán",
-      applicable: "Order",
-      amount: "2%",
-      description: "Phí hỗ trợ cổng thanh toán và đối soát",
-      status: "Đang hoạt động",
-      createdAt: "05/04/2025",
-    },
-    {
-      key: "6",
-      name: "Phí khuyến mãi đặc biệt",
-      applicable: "Vendor",
-      amount: "3%",
-      description: "Phí ưu đãi trong đợt khuyến mãi 30/4",
-      status: "Không hoạt động",
-      createdAt: "07/04/2025",
-    },
-  ]);
+  const handleDecoded = async () => {
+    let storageData = localStorage.getItem("access_token");
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      const decoded = jwtDecode(storageData);
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        const accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        return accessToken;
+      }
+      return storageData;
+    }
+    return null;
+  };
+
+  const createFee = async () => {
+    const { fee_name, fee_type, value, description } = newFee;
+
+    if (!fee_name || !fee_type || !value || !description) {
+      return message.error("Hãy điền đầy đủ thông tin!");
+    }
+
+    if (isNaN(Number(value))) {
+      return message.error("Giá trị phải là số hợp lệ!");
+    }
+
+    if (fee_type !== "percentage" && fee_type !== "fixed") {
+      return message.error("Hãy chọn kiểu chi phí hợp lệ!");
+    }
+
+    try {
+      const token = await handleDecoded();
+      const res = await PlatformServices.createFee(token, newFee);
+      if (res?.data) {
+        setFeeData((prev) => [...prev, { ...res.data, key: res.data._id }]);
+        setModalAddVisible(false);
+        message.success("Tạo chi phí thành công!");
+        setNewFee({
+          fee_name: "",
+          fee_type: "fixed",
+          value: "",
+          description: "",
+          status: "Đang hoạt động",
+          createdAt: new Date().toLocaleDateString("vi-VN"),
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi tạo chi phí:", error);
+      message.error("Tạo chi phí thất bại!");
+    }
+  };
+
+  const fetchFee = async () => {
+    try {
+      const token = await handleDecoded();
+      const res = await PlatformServices.getAllFees(token);
+      const feeWithKeys = res.data.map((fee) => ({
+        ...fee,
+        key: fee._id,
+      }));
+      setFeeData(feeWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    }
+  };
 
   const handleRowClick = (record) => {
     setSelectedFee(record);
@@ -84,88 +157,38 @@ const StatisticsManagementPage = () => {
     setSelectedFee(null);
   };
 
-  const handleSaveStatus = () => {
-    const updatedData = feeData.map((item) =>
-      item.key === selectedFee.key ? { ...item, status: newStatus } : item
-    );
-    setFeeData(updatedData);
-    setModalVisible(false);
+  const handleSaveStatus = async () => {
+    // try {
+    //   const token = await handleDecoded();
+    //   await PlatformServices.updateFeeStatus(token, selectedFee.key, newStatus);
+    //   const updatedData = feeData.map((item) =>
+    //     item.key === selectedFee.key ? { ...item, status: newStatus } : item
+    //   );
+    //   setFeeData(updatedData);
+    //   setModalVisible(false);
+    //   message.success("Cập nhật trạng thái thành công!");
+    // } catch (error) {
+    //   console.error("Lỗi khi cập nhật trạng thái:", error);
+    //   message.error("Cập nhật trạng thái thất bại!");
+    // }
   };
 
   const handleOpenAddModal = () => {
-    setNewFee({
-      name: "",
-      applicable: "Order",
-      amount: "",
-      description: "",
-      status: "Đang hoạt động",
-      createdAt: new Date().toLocaleDateString("vi-VN"),
-    });
     setModalAddVisible(true);
   };
 
-  const handleAddFee = () => {
-    const newItem = {
-      ...newFee,
-      key: (feeData.length + 1).toString(),
-    };
-    setFeeData([...feeData, newItem]);
-    setModalAddVisible(false);
-  };
-
-  const columns = [
-    {
-      title: "Tên chi phí",
-      dataIndex: "name",
-      key: "name",
-      sorter: (a, b) => a.name.localeCompare(b.name),
-    },
-    {
-      title: "Áp dụng cho",
-      dataIndex: "applicable",
-      key: "applicable",
-    },
-    {
-      title: "Giá trị",
-      dataIndex: "amount",
-      key: "amount",
-    },
-    {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      render: (status) => {
-        let color =
-          status === "Đang hoạt động"
-            ? "green"
-            : status === "Không hoạt động"
-            ? "red"
-            : "orange";
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
-      key: "status",
-      sorter: (a, b) => a.status.localeCompare(b.status),
-    },
-    {
-      title: "Ngày tạo",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    },
-  ];
+  useEffect(() => {
+    fetchFee();
+  }, []);
 
   return (
     <Wrapper>
       <h3>Quản lý chi phí nền tảng</h3>
       <div
         style={{
-          backgroundColor: "#fff",
-          padding: "20px",
-          borderRadius: "5px",
+          background: "#fff",
+          padding: 20,
+          borderRadius: 5,
           boxShadow: "1px 1px 10px #e9e9e9",
         }}
       >
@@ -173,8 +196,7 @@ const StatisticsManagementPage = () => {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
+            marginBottom: 20,
           }}
         >
           <h5>Danh sách chi phí nền tảng</h5>
@@ -187,14 +209,12 @@ const StatisticsManagementPage = () => {
           dataSource={feeData}
           columns={columns}
           pagination={{ pageSize: 5 }}
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-          })}
+          onRow={(record) => ({ onClick: () => handleRowClick(record) })}
           rowKey="key"
         />
       </div>
 
-      {/* Modal xem/sửa trạng thái */}
+      {/* Modal xem chi tiết và đổi trạng thái */}
       <Modal
         title="Thông tin Chi phí"
         open={modalVisible}
@@ -214,28 +234,31 @@ const StatisticsManagementPage = () => {
               <strong>ID:</strong> {selectedFee.key}
             </p>
             <p>
-              <strong>Tên chi phí:</strong> {selectedFee.name}
+              <strong>Tên chi phí:</strong> {selectedFee.fee_name}
+            </p>
+            <p>
+              <strong>Kiểu chi phí:</strong> {selectedFee.fee_type}
             </p>
             <p>
               <strong>Mô tả:</strong> {selectedFee.description}
             </p>
             <p>
+              <strong>Ngày tạo:</strong> {selectedFee.createdAt}
+            </p>
+            <p>
               <strong>Trạng thái:</strong>
               <Select
                 value={newStatus}
-                style={{ width: "160px", marginLeft: "10px" }}
+                style={{ width: 160, marginLeft: 10 }}
                 onChange={(value) => setNewStatus(value)}
-                options={[
-                  { value: "Đang hoạt động", label: "Đang hoạt động" },
-                  { value: "Không hoạt động", label: "Không hoạt động" },
-                ]}
+                options={STATUS_OPTIONS}
               />
             </p>
           </div>
         )}
       </Modal>
 
-      {/* Modal thêm chi phí */}
+      {/* Modal thêm mới */}
       <Modal
         title="Thêm Chi phí mới"
         open={modalAddVisible}
@@ -244,38 +267,35 @@ const StatisticsManagementPage = () => {
           <Button key="cancel" onClick={() => setModalAddVisible(false)}>
             Hủy
           </Button>,
-          <Button key="add" type="primary" onClick={handleAddFee}>
+          <Button key="add" type="primary" onClick={createFee}>
             Thêm
           </Button>,
         ]}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
             <strong>Tên chi phí:</strong>
             <Input
-              value={newFee.name}
-              onChange={(e) => setNewFee({ ...newFee, name: e.target.value })}
+              value={newFee.fee_name}
+              onChange={(e) =>
+                setNewFee({ ...newFee, fee_name: e.target.value })
+              }
             />
           </div>
           <div>
-            <strong>Áp dụng cho:</strong>
+            <strong>Kiểu chi phí:</strong>
             <Select
-              value={newFee.applicable}
-              onChange={(value) => setNewFee({ ...newFee, applicable: value })}
-              style={{ width: "100%" }}
-              options={[
-                { value: "Order", label: "Order" },
-                { value: "Product", label: "Product" },
-                { value: "Vendor", label: "Vendor" },
-                { value: "Category", label: "Category" },
-              ]}
+              value={newFee.fee_type}
+              style={{ width: 160 }}
+              onChange={(value) => setNewFee({ ...newFee, fee_type: value })}
+              options={FEE_TYPES}
             />
           </div>
           <div>
             <strong>Giá trị:</strong>
             <Input
-              value={newFee.amount}
-              onChange={(e) => setNewFee({ ...newFee, amount: e.target.value })}
+              value={newFee.value}
+              onChange={(e) => setNewFee({ ...newFee, value: e.target.value })}
             />
           </div>
           <div>
@@ -285,18 +305,6 @@ const StatisticsManagementPage = () => {
               onChange={(e) =>
                 setNewFee({ ...newFee, description: e.target.value })
               }
-            />
-          </div>
-          <div>
-            <strong>Trạng thái:</strong>
-            <Select
-              value={newFee.status}
-              onChange={(value) => setNewFee({ ...newFee, status: value })}
-              style={{ width: "100%" }}
-              options={[
-                { value: "Đang hoạt động", label: "Đang hoạt động" },
-                { value: "Không hoạt động", label: "Không hoạt động" },
-              ]}
             />
           </div>
         </div>
