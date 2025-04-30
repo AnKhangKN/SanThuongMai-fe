@@ -43,6 +43,7 @@ function App() {
 
   // Setup Interceptor
   AuthServices.axiosJWT.interceptors.request.use(
+    
     async (config) => {
       const currentTime = new Date();
       const { decoded } = handleDecoded();
@@ -51,6 +52,7 @@ function App() {
 
         console.log("data", data);
         config.headers["Authorization"] = `Bearer ${data?.access_token}`;
+        
 
         localStorage.setItem(
           "access_token",

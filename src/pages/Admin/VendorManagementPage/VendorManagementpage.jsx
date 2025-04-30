@@ -1,60 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag, Modal, Button } from "antd";
-
-const allData = [
-  {
-    key: 1,
-    name: "John",
-    email: "john@gmail.com",
-    phone: "1234567890",
-    shopId: "3",
-    shopName: "John Shop",
-    status: "active",
-    createAt: "2023-01-01",
-  },
-  {
-    key: 2,
-    name: "Alice",
-    email: "alice@gmail.com",
-    phone: "0987654321",
-    shopId: "5",
-    shopName: "Alice's Store",
-    status: "pending",
-    createAt: "2023-02-15",
-  },
-  {
-    key: 3,
-    name: "Bob",
-    email: "bob@gmail.com",
-    phone: "1122334455",
-    shopId: "7",
-    shopName: "Bob's Market",
-    status: "active",
-    createAt: "2023-03-10",
-  },
-  {
-    key: 4,
-    name: "Charlie",
-    email: "charlie@gmail.com",
-    phone: "2233445566",
-    shopId: "9",
-    shopName: "Charlie's Goods",
-    status: "inactive",
-    createAt: "2023-04-05",
-  },
-];
+import { Select, Table, Tag, Modal, Button, message } from "antd";
+import * as ShopServices from "../../../services/admin/ShopServices";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
+import * as AuthServices from "../../../services/shared/AuthServices";
 
 const columns = [
-  { title: "ID", dataIndex: "key", sorter: (a, b) => a.key - b.key },
-  { title: "Name", dataIndex: "name" },
-  { title: "Email", dataIndex: "email" },
-  { title: "Phone", dataIndex: "phone" },
-  { title: "Shop Name", dataIndex: "shopName" },
   {
-    title: "Status",
-    dataIndex: "status",
-    render: (status) => {
+    title: "ID",
+    dataIndex: "key",
+    sorter: (a, b) => a.key - b.key,
+    ellipsis: true,
+  },
+  { title: "Chủ sở hữu", dataIndex: "user_name", ellipsis: true },
+  { title: "Email", dataIndex: "email", ellipsis: true },
+  { title: "Điện thoại", dataIndex: "phone", ellipsis: true },
+  {
+    title: "Tên cửa hàng",
+    render: (record) => record.shop?.name || "Chưa có",
+    ellipsis: true,
+  },
+  {
+    title: "Trạng thái cửa hàng",
+    render: (record) => {
+      const status = record.shop?.status || "chưa xác định";
       let color =
         status === "active"
           ? "green"
@@ -65,27 +35,74 @@ const columns = [
     },
   },
   {
-    title: "Create At",
-    dataIndex: "createAt",
-    sorter: (a, b) => new Date(a.createAt) - new Date(b.createAt),
+    title: "Ngày tạo",
+    dataIndex: "createdAt",
+    render: (date) => new Date(date).toLocaleString(),
+    sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
   },
 ];
 
 const VendorManagementPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [filteredData, setFilteredData] = useState(allData);
+  const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
 
-  // Cập nhật dữ liệu mỗi khi selectedStatus thay đổi
+  // Giải mã access_token từ localStorage
+  const handleDecoded = () => {
+    let storageData = localStorage.getItem("access_token");
+    let decoded = {};
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      decoded = jwtDecode(storageData);
+    }
+    return { decoded, storageData };
+  };
+
+  // Lấy danh sách người dùng từ server
+  const fetchUsers = async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+
+      let accessToken = storageData;
+
+      // Nếu token hết hạn → refresh và sử dụng ngay token mới
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+
+        // Cập nhật lại token trong localStorage để dùng cho các request sau
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      // Gọi API lấy danh sách người dùng với accessToken (mới hoặc cũ)
+      const res = await ShopServices.getAllShops(accessToken);
+
+      // Thêm key để Table hiển thị
+      const usersWithKeys = res.data.map((user) => ({
+        ...user,
+        key: user._id,
+      }));
+
+      setAllData(usersWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy người dùng:", error);
+    }
+  };
+
   useEffect(() => {
-    const newData =
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const filtered =
       selectedStatus === "all"
         ? allData
-        : allData.filter((item) => item.status === selectedStatus);
-    setFilteredData(newData);
-  }, [selectedStatus]);
+        : allData.filter((item) => item.shop?.status === selectedStatus);
+    setFilteredData(filtered);
+  }, [selectedStatus, allData]);
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
@@ -93,7 +110,7 @@ const VendorManagementPage = () => {
 
   const handleRowClick = (record) => {
     setSelectedUser(record);
-    setNewStatus(record.status);
+    setNewStatus(record.shop?.status || null);
     setModalVisible(true);
   };
 
@@ -102,18 +119,48 @@ const VendorManagementPage = () => {
     setSelectedUser(null);
   };
 
-  const handleSaveStatus = () => {
-    if (selectedUser) {
-      const updatedAllData = allData.map((item) =>
-        item.key === selectedUser.key ? { ...item, status: newStatus } : item
+  const handleSaveStatus = async () => {
+    try {
+      // Lấy token từ localStorage và giải mã
+      let { storageData, decoded } = handleDecoded();
+
+      let accessToken = storageData;
+
+      // Kiểm tra nếu token đã hết hạn → refresh token
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+
+        // Lưu token mới vào localStorage để sử dụng lần sau
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      // Gọi API cập nhật trạng thái người dùng với token mới/cũ
+      await ShopServices.partialUpdateShop(
+        selectedUser.key, // ID người dùng được chọn
+        newStatus, // Trạng thái mới
+        accessToken // Token hợp lệ
       );
-      // Cập nhật lại filteredData dựa vào selectedStatus
-      const updatedFilteredData =
-        selectedStatus === "all"
-          ? updatedAllData
-          : updatedAllData.filter((item) => item.status === selectedStatus);
-      setFilteredData(updatedFilteredData);
-      setModalVisible(false);
+
+      // Cập nhật lại dữ liệu người dùng trong danh sách
+      const updateShopStatus = allData.map((user) =>
+        user.key === selectedUser.key
+          ? {
+              ...user,
+              shop: {
+                ...user.shop,
+                status: newStatus,
+              },
+            }
+          : user
+      );
+
+      setAllData(updateShopStatus); // Cập nhật danh sách trong state
+      setModalVisible(false); // Ẩn modal
+      message.success("Cập nhật trạng thái thành công!");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      message.error("Đã có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
 
@@ -141,10 +188,10 @@ const VendorManagementPage = () => {
             style={{ width: "120px" }}
             onChange={handleFilterChange}
             options={[
-              { value: "all", label: "All" },
-              { value: "active", label: "Active" },
-              { value: "pending", label: "Pending" },
-              { value: "inactive", label: "Inactive" },
+              { value: "all", label: "Tất cả" },
+              { value: "active", label: "Đang hoạt động" },
+              { value: "pending", label: "Đang chờ" },
+              { value: "inactive", label: "Không hoạt động" },
             ]}
           />
         </div>
@@ -154,11 +201,10 @@ const VendorManagementPage = () => {
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
           })}
-          pagination={{ pageSize: 5 }}
+          pagination={{ pageSize: 8 }}
         />
       </div>
 
-      {/* Modal xem/sửa thông tin */}
       <Modal
         title="Thông tin Cộng tác viên"
         open={modalVisible}
@@ -178,10 +224,11 @@ const VendorManagementPage = () => {
               <strong>ID:</strong> {selectedUser.key}
             </p>
             <p>
-              <strong>Name:</strong> {selectedUser.name}
+              <strong>Tên:</strong> {selectedUser.user_name}
             </p>
             <p>
-              <strong>Shop Name:</strong> {selectedUser.shopName}
+              <strong>Tên cửa hàng:</strong>{" "}
+              {selectedUser.shop?.name || "Chưa có"}
             </p>
             <div>
               <Select
@@ -189,9 +236,10 @@ const VendorManagementPage = () => {
                 style={{ width: "120px" }}
                 onChange={(value) => setNewStatus(value)}
                 options={[
-                  { value: "active", label: "Active" },
-                  { value: "inactive", label: "Inactive" },
-                  { value: "pending", label: "Pending" },
+                  { value: "active", label: "Đang hoạt động" },
+                  { value: "inactive", label: "Không hoạt động" },
+                  { value: "pending", label: "Đang chờ" },
+                  { value: "banned", label: "Bị cấm" },
                 ]}
               />
             </div>

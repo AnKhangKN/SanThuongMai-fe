@@ -1,112 +1,158 @@
-import React, { useState, useEffect } from "react";
-import { Wrapper } from "./style";
-import { Select, Table, Tag, Modal, Button, message } from "antd";
-import { useDispatch } from "react-redux";
+import { useEffect, useState } from "react";
+import { Table, Tag, Modal, Select, message } from "antd";
+import { jwtDecode } from "jwt-decode";
 import * as UserServices from "../../../services/admin/UserServices";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { isJsonString } from "../../../utils";
+import { Wrapper } from "./style";
 
-const columns = [
-  { title: "ID", dataIndex: "key" },
-  { title: "Name", dataIndex: "name" },
-  { title: "Email", dataIndex: "email" },
-  { title: "Phone", dataIndex: "phone" },
-  {
-    title: "Status",
-    dataIndex: "status",
-    render: (status) => {
-      if (!status) return <Tag color="gray">Unknown</Tag>; // Xử lý trường hợp status là null hoặc undefined
+const { Option } = Select;
 
-      let color =
-        status === "active"
-          ? "green"
-          : status === "inactive"
-          ? "red"
-          : "orange";
-
-      return <Tag color={color}>{status.toUpperCase()}</Tag>;
-    },
-  },
-  {
-    title: "Create At",
-    dataIndex: "createAt",
-    sorter: (a, b) => new Date(a.createAt) - new Date(b.createAt),
-  },
-];
-
-const VendorManagementPage = () => {
+const UserManagenetPage = () => {
+  // Danh sách người dùng từ server
   const [allData, setAllData] = useState([]);
+
+  // Dữ liệu đã được lọc theo trạng thái
   const [filteredData, setFilteredData] = useState([]);
+
+  // Trạng thái đang được chọn để lọc
   const [selectedStatus, setSelectedStatus] = useState("all");
+
+  // Hiện/ẩn modal cập nhật trạng thái
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Người dùng được chọn để chỉnh sửa
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Trạng thái mới được chọn trong modal
   const [newStatus, setNewStatus] = useState(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // Lấy accessToken từ localStorage hoặc từ Redux store
-        const accessToken = localStorage.getItem("access_token"); // Hoặc lấy từ Redux
+  // Giải mã access_token từ localStorage
+  const handleDecoded = () => {
+    let storageData = localStorage.getItem("access_token");
+    let decoded = {};
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      decoded = jwtDecode(storageData);
+    }
+    return { decoded, storageData };
+  };
 
-        if (!accessToken) {
-          message.error("Không tìm thấy access token");
-          return;
-        }
+  // Lấy danh sách người dùng từ server
+  const fetchUsers = async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
 
-        // Truyền accessToken vào hàm getAllUsers
-        const res = await UserServices.getAllUsers(accessToken);
+      let accessToken = storageData;
 
-        if (res?.data) {
-          const usersWithKey = res.data.map((user) => ({
-            ...user,
-            key: user._id,
-          }));
-          setAllData(usersWithKey);
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách người dùng:", error);
-        message.error("Không thể tải danh sách người dùng");
+      // Nếu token hết hạn → refresh và sử dụng ngay token mới
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+
+        // Cập nhật lại token trong localStorage để dùng cho các request sau
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
       }
-    };
 
+      // Gọi API lấy danh sách người dùng với accessToken (mới hoặc cũ)
+      const res = await UserServices.getAllUsers(accessToken);
+
+      // Thêm key để Table hiển thị
+      const usersWithKeys = res.data.map((user) => ({
+        ...user,
+        key: user._id,
+      }));
+
+      setAllData(usersWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy người dùng:", error);
+    }
+  };
+
+  // Gọi API khi component được mount
+  useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Lọc dữ liệu khi thay đổi trạng thái lọc hoặc allData
   useEffect(() => {
     const newData =
       selectedStatus === "all"
         ? allData
-        : allData.filter((item) => item.status === selectedStatus);
+        : allData.filter((item) => item.account_status === selectedStatus);
     setFilteredData(newData);
   }, [selectedStatus, allData]);
 
-  const handleFilterChange = (value) => {
-    setSelectedStatus(value);
-  };
-
+  // Cập nhật trạng thái người dùng khi click
   const handleRowClick = (record) => {
     setSelectedUser(record);
-    setNewStatus(record.status);
+    setNewStatus(record.account_status);
     setModalVisible(true);
   };
 
-  const handleModalCancel = () => {
-    setModalVisible(false);
-    setSelectedUser(null);
-  };
+  // Gọi API để cập nhật trạng thái người dùng
+  const handleSaveStatus = async () => {
+    try {
+      // Lấy token từ localStorage và giải mã
+      let { storageData, decoded } = handleDecoded();
 
-  const handleSaveStatus = () => {
-    if (selectedUser) {
-      const updatedAllData = allData.map((item) =>
-        item.key === selectedUser.key ? { ...item, status: newStatus } : item
+      let accessToken = storageData;
+
+      // Kiểm tra nếu token đã hết hạn → refresh token
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+
+        // Lưu token mới vào localStorage để sử dụng lần sau
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      // Gọi API cập nhật trạng thái người dùng với token mới/cũ
+      await UserServices.partialUpdateUser(
+        selectedUser.key, // ID người dùng được chọn
+        newStatus, // Trạng thái mới
+        accessToken // Token hợp lệ
       );
-      setAllData(updatedAllData); // cập nhật local
-      setModalVisible(false);
-      message.success("Cập nhật trạng thái thành công");
+
+      // Cập nhật lại dữ liệu người dùng trong danh sách
+      const updatedUsers = allData.map((user) =>
+        user.key === selectedUser.key
+          ? { ...user, account_status: newStatus }
+          : user
+      );
+
+      setAllData(updatedUsers); // Cập nhật danh sách trong state
+      setModalVisible(false); // Ẩn modal
+      message.success("Cập nhật trạng thái thành công!");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      message.error("Đã có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
 
+  // Cấu hình cột cho bảng
+  const columns = [
+    { title: "ID", dataIndex: "key" },
+    { title: "Tên người dùng", dataIndex: "user_name" },
+    { title: "Email", dataIndex: "email" },
+    {
+      title: "Trạng thái",
+      dataIndex: "account_status",
+      render: (status) => {
+        let color = "default";
+        if (status === "active") color = "green";
+        else if (status === "pending") color = "orange";
+        else if (status === "inactive") color = "red";
+
+        return <Tag color={color}>{status}</Tag>;
+      },
+    },
+  ];
+
   return (
     <Wrapper>
-      <h3>Quản lý người dùng</h3>
+      <h3>Quản lý Cộng tác viên</h3>
+
       <div
         style={{
           backgroundColor: "#fff",
@@ -123,70 +169,55 @@ const VendorManagementPage = () => {
           }}
         >
           <h5>Danh sách Cộng tác viên</h5>
+
           <Select
             value={selectedStatus}
-            style={{ width: "120px" }}
-            onChange={handleFilterChange}
-            options={[
-              { value: "all", label: "All" },
-              { value: "active", label: "Active" },
-              { value: "pending", label: "Pending" },
-              { value: "inactive", label: "Inactive" },
-            ]}
-          />
+            onChange={(value) => setSelectedStatus(value)}
+            style={{ width: 200, marginBottom: 16 }}
+          >
+            <Option value="all">Tất cả</Option>
+            <Option value="active">Đang hoạt động</Option>
+            <Option value="pending">Chờ duyệt</Option>
+            <Option value="inactive">Ngưng hoạt động</Option>
+          </Select>
         </div>
+
+        {/* Bảng hiển thị người dùng */}
         <Table
-          columns={columns}
           dataSource={filteredData}
+          columns={columns}
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
           })}
-          pagination={{ pageSize: 5 }}
+          pagination={{ pageSize: 8 }}
+          rowClassName="clickable-row"
         />
-      </div>
 
-      {/* Modal chỉnh sửa trạng thái */}
-      <Modal
-        title="Thông tin Cộng tác viên"
-        open={modalVisible}
-        onCancel={handleModalCancel}
-        footer={[
-          <Button key="cancel" onClick={handleModalCancel}>
-            Đóng
-          </Button>,
-          <Button key="save" type="primary" onClick={handleSaveStatus}>
-            Lưu
-          </Button>,
-        ]}
-      >
-        {selectedUser && (
-          <div>
-            <p>
-              <strong>ID:</strong> {selectedUser.key}
-            </p>
-            <p>
-              <strong>Name:</strong> {selectedUser.name}
-            </p>
-            <p>
-              <strong>Email:</strong> {selectedUser.email}
-            </p>
-            <div style={{ marginTop: "10px" }}>
-              <Select
-                value={newStatus}
-                style={{ width: "120px" }}
-                onChange={(value) => setNewStatus(value)}
-                options={[
-                  { value: "active", label: "Active" },
-                  { value: "inactive", label: "Inactive" },
-                  { value: "pending", label: "Pending" },
-                ]}
-              />
-            </div>
-          </div>
-        )}
-      </Modal>
+        {/* Modal cập nhật trạng thái */}
+        <Modal
+          title="Cập nhật trạng thái người dùng"
+          open={modalVisible}
+          onOk={handleSaveStatus}
+          onCancel={() => setModalVisible(false)}
+          okText="Lưu"
+          cancelText="Hủy"
+        >
+          <p>
+            Người dùng: <strong>{selectedUser?.user_name}</strong>
+          </p>
+          <Select
+            value={newStatus}
+            onChange={(value) => setNewStatus(value)}
+            style={{ width: "100%" }}
+          >
+            <Option value="active">Đang hoạt động</Option>
+            <Option value="pending">Chờ duyệt</Option>
+            <Option value="inactive">Ngưng hoạt động</Option>
+          </Select>
+        </Modal>
+      </div>
     </Wrapper>
   );
 };
 
-export default VendorManagementPage;
+export default UserManagenetPage;
