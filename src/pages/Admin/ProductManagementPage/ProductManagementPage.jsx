@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Wrapper } from "./style";
 import { Select, Table, Tag, Tooltip, Modal, Button, message } from "antd";
 import { isJsonString } from "../../../utils";
@@ -110,7 +110,7 @@ const ProductManagementPage = () => {
     return { decoded, storageData };
   };
 
-  const fetchShops = async () => {
+  const fetchShops = useCallback(async () => {
     try {
       let { storageData, decoded } = handleDecoded();
 
@@ -135,11 +135,11 @@ const ProductManagementPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy sản phẩm:", error);
     }
-  };
+  }, []); // Dùng useCallback để ghi nhớ hàm fetchShops
 
   useEffect(() => {
-    fetchShops();
-  }, []);
+    fetchShops(); // Gọi fetchShops khi component mount
+  }, [fetchShops]);
 
   useEffect(() => {
     if (selectedStatus === "all") {

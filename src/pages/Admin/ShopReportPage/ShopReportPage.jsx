@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Wrapper } from "./style";
 import { Modal, Select, Table, Tag, Button } from "antd";
 import TextArea from "antd/es/input/TextArea";
@@ -55,7 +55,7 @@ const ShopReportPage = () => {
     return { decoded, storageData };
   };
 
-  const fetchReportedShops = async () => {
+  const fetchReportedShops = useCallback(async () => {
     try {
       let { storageData, decoded } = handleDecoded();
 
@@ -78,11 +78,11 @@ const ShopReportPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy sản phẩm:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchReportedShops();
-  }, []);
+  }, [fetchReportedShops]);
 
   const handleRowClick = (record) => {
     setSelectedProduct(record);

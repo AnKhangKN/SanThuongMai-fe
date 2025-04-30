@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Wrapper } from "./style";
 import { Button, Modal, Table, Tag, Select, Input, message } from "antd";
 import { jwtDecode } from "jwt-decode";
@@ -132,7 +132,7 @@ const StatisticsManagementPage = () => {
     }
   };
 
-  const fetchFee = async () => {
+  const fetchFee = useCallback(async () => {
     try {
       const token = await handleDecoded();
       const res = await PlatformServices.getAllFees(token);
@@ -144,7 +144,11 @@ const StatisticsManagementPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchFee();
+  }, [fetchFee]);
 
   const handleRowClick = (record) => {
     setSelectedFee(record);
@@ -176,10 +180,6 @@ const StatisticsManagementPage = () => {
   const handleOpenAddModal = () => {
     setModalAddVisible(true);
   };
-
-  useEffect(() => {
-    fetchFee();
-  }, []);
 
   return (
     <Wrapper>

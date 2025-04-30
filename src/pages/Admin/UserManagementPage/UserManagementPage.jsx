@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Table, Tag, Modal, Select, message } from "antd";
 import { jwtDecode } from "jwt-decode";
 import * as UserServices from "../../../services/admin/UserServices";
@@ -39,7 +39,7 @@ const UserManagenetPage = () => {
   };
 
   // Lấy danh sách người dùng từ server
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       let { storageData, decoded } = handleDecoded();
 
@@ -67,12 +67,12 @@ const UserManagenetPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy người dùng:", error);
     }
-  };
+  }, []);
 
   // Gọi API khi component được mount
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   // Lọc dữ liệu khi thay đổi trạng thái lọc hoặc allData
   useEffect(() => {

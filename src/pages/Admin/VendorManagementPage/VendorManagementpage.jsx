@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Wrapper } from "./style";
 import { Select, Table, Tag, Modal, Button, message } from "antd";
 import * as ShopServices from "../../../services/admin/ShopServices";
@@ -62,7 +62,7 @@ const VendorManagementPage = () => {
   };
 
   // Lấy danh sách người dùng từ server
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       let { storageData, decoded } = handleDecoded();
 
@@ -90,11 +90,11 @@ const VendorManagementPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy người dùng:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   useEffect(() => {
     const filtered =

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Wrapper } from "./style";
 import { Modal, Select, Table, Tag, Button, Input } from "antd";
 import { isJsonString } from "../../../utils";
@@ -56,7 +56,7 @@ const ProductReportPage = () => {
     return { decoded, storageData };
   };
 
-  const fetchReportedProducts = async () => {
+  const fetchReportedProducts = useCallback(async () => {
     try {
       let { storageData, decoded } = handleDecoded();
 
@@ -79,11 +79,11 @@ const ProductReportPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy sản phẩm:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchReportedProducts();
-  }, []);
+  }, [fetchReportedProducts]);
 
   const handleRowClick = (record) => {
     setSelectedProduct(record);
