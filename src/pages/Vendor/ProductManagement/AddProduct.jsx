@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { WrapperVendor } from '../VendorMain/styleVendorMain';
 import { Card, Col, Form, List, Typography, Input, Button, Upload, Space, message } from 'antd';
 import {
   CheckCircleFilled,
   UploadOutlined 
 } from '@ant-design/icons';
-import ColorTableComponent from '../../../components/VendorComponents/ColorTableComponent/ColorTableComponent';
 import * as AuthServices from '../../../services/shared/AuthServices';
 import * as ProductServices from '../../../services/vendor/ProductService';
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
+import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -23,19 +23,15 @@ const checklist = [
 
 const AddProduct = () => {
   const [form] = Form.useForm();
-
-  const [productName, setProductName] = useState("");
-  const [productDescription, setProductDescription] = useState("");
-  const [productSize, setProductSize] = useState("");
-  const [productPriceInput, setProductPriceInput] = useState("");
-  const [productPriceSale, setProductPriceSale] = useState("");
+  const user = useSelector((state) => state.user);
 
   const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
     let decoded = {};
     if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
+      const parsed = JSON.parse(storageData);
+      decoded = jwtDecode(parsed);
+      return { decoded, storageData: parsed };
     }
     return { decoded, storageData };
   };
@@ -54,7 +50,9 @@ const AddProduct = () => {
       }
 
       const res = await ProductServices.createProduct(accessToken, productData);
-      if (res?.status === 'success') {
+
+      console.log('res',res)
+      if (res?.status === 200) {
         message.success("Tạo sản phẩm thành công!");
         form.resetFields();
       } else {
@@ -69,41 +67,29 @@ const AddProduct = () => {
 
   const onFinish = (values) => {
     const productData = {
-      productName: values.productName,
+      user_id: user?.id, // đúng với model
+      product_name: values.productName,
       description: values.description,
-      size: values.size,
-      costPrice: values.costPrice,
-      salePrice: values.salePrice,
-      colors: values.colors || [],
+      category: values.category,
       images: values.images?.map(file => file.originFileObj?.name) || [],
+  
+      details: [
+        {
+          size: values.size,
+          color: values.colors?.trim(), // vì model yêu cầu String, không phải mảng
+          price: Number(values.costPrice),
+          quantity: Number(values.quantity),
+        },
+      ],
+  
+      // sale: {
+      //   price: Number(values.salePrice),
+      //   // Bạn có thể thêm start_date và end_date nếu muốn
+      // },
     };
+  
     console.log('Dữ liệu gửi lên:', productData);
     fetchCreateProduct(productData);
-  };
-
-  useEffect(() => {
-    // Không gọi fetchCreateProduct ở đây nếu không cần tạo sản phẩm mặc định
-  }, []);
-
-  const handleChangeNameProduct = (e) => {
-    setProductName(e.target.value);
-  };
-
-  const handleChangeDescription = (e) => {
-    setProductDescription(e.target.value);
-  };
-
-  const handleChangeSize = (e) => {
-    setProductSize(e.target.value);
-  };
-
-  const handleChangePriceInput = (e) => {
-    setProductPriceInput(e.target.value);
-  };
-
-  const handleChangePriceSale = (e) => {
-    setProductPriceSale(e.target.value);
-    console.log("Giá bán sản phẩm:", e.target.value);
   };
 
   return (
@@ -140,10 +126,15 @@ const AddProduct = () => {
                 name="images"
                 label="Hình ảnh sản phẩm"
                 valuePropName="fileList"
-                getValueFromEvent={e => e?.fileList || []}
+                getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
                 rules={[{ required: true, message: 'Vui lòng chọn hình ảnh sản phẩm!' }]}
               >
-                <Upload beforeUpload={() => false} multiple listType="picture">
+                <Upload
+                  name="productImages"
+                  beforeUpload={() => false}
+                  multiple
+                  listType="picture"
+                >
                   <Button icon={<UploadOutlined />}>Tải lên hình ảnh</Button>
                 </Upload>
               </Form.Item>
@@ -153,10 +144,10 @@ const AddProduct = () => {
                 label="Tên sản phẩm"
                 rules={[
                   { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
-                  { min: 25, message: 'Tên sản phẩm phải có ít nhất 25 kí tự' },
+                  { min: 10, message: 'Tên sản phẩm phải có ít nhất 10 kí tự' },
                 ]}
               >
-                <Input placeholder="Nhập tên sản phẩm" onChange={handleChangeNameProduct} />
+                <Input placeholder="Nhập tên sản phẩm" />
               </Form.Item>
 
               <Form.Item
@@ -164,22 +155,39 @@ const AddProduct = () => {
                 label="Mô tả sản phẩm"
                 rules={[{ required: true, message: 'Vui lòng nhập mô tả sản phẩm!' }]}
               >
-                <TextArea rows={5} placeholder="Nhập mô tả sản phẩm" onChange={handleChangeDescription} />
+                <TextArea rows={5} placeholder="Nhập mô tả sản phẩm" />
               </Form.Item>
 
               {/* THÔNG TIN CHI TIẾT */}
               <h2>Thông tin chi tiết</h2>
 
               <Form.Item
-                label="Kích thước"
+                label="Kích thước"
                 name="size"
-                rules={[{ required: true, message: 'Vui lòng nhập kích thước!' }]}
+                rules={[{ required: true, message: 'Vui lòng nhập kích thước!' }]}
               >
-                <Input placeholder="Nhập kích thước" onChange={handleChangeSize} />
+                <Input placeholder="Nhập kích thước" />
               </Form.Item>
 
-              <Form.Item label="Danh sách màu sắc" name="colors">
-                <ColorTableComponent name="colors" />
+              <Form.Item
+                label="Màu sắc"
+                name="colors"
+              >
+                <Input placeholder="Nhập màu sắc" />
+              </Form.Item>
+
+              <Form.Item
+                label="Loại sản phẩm"
+                name="category"
+              >
+                <Input placeholder="Nhập loại sản phẩm" />
+              </Form.Item>
+
+              <Form.Item
+                label="Số lượng"
+                name="quantity"
+              >
+                <Input placeholder="Nhập số lượng" />
               </Form.Item>
 
               {/* GIÁ SẢN PHẨM */}
@@ -190,7 +198,7 @@ const AddProduct = () => {
                 label="Giá nhập"
                 rules={[{ required: true, message: 'Vui lòng nhập giá nhập!' }]}
               >
-                <Input type="number" placeholder="Nhập giá nhập" onChange={handleChangePriceInput} />
+                <Input type="number" placeholder="Nhập giá nhập" />
               </Form.Item>
 
               <Form.Item
@@ -198,7 +206,7 @@ const AddProduct = () => {
                 label="Giá bán"
                 rules={[{ required: true, message: 'Vui lòng nhập giá bán!' }]}
               >
-                <Input type="number" placeholder="Nhập giá bán" onChange={handleChangePriceSale} />
+                <Input type="number" placeholder="Nhập giá bán" />
               </Form.Item>
 
               <Form.Item>

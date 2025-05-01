@@ -23,7 +23,7 @@ const HeaderOfVendorComponent = (props) => {
   };
 
   const handleClickToLogin = () => {
-    navigate('/vendor/login');
+    navigate('/login');
   }
   const { textHeader } = props;
   const [open, setOpen] = useState(false);

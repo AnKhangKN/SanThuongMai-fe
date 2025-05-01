@@ -31,7 +31,6 @@ import ProfilePage from "../pages/Customer/AccountPage/ProfilePage/ProfilePage";
 import CartPage from "../pages/Customer/CartPage/CartPage";
 import CategoryPage from "../pages/Customer/CategoryPage/CategoryPage";
 import NotificationPage from "../pages/Customer/AccountPage/NotificationPage/NotificationPage";
-import LoginVendor from "../pages/Vendor/Login/LoginVendor";
 
 import CompleteComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/CompleteComponent/CompleteComponent";
 import CancelComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/CancelComponent/CancelComponent";
@@ -119,11 +118,6 @@ export const routes = [
   },
 
   // vendor
-  {
-    path: "/vendor/login",
-    page: LoginVendor,
-    isShowHeaderVendor: false,
-  },
   {
     path: "/vendor",
     page: VendorMain,
