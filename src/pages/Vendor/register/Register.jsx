@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Image } from "antd";
-import InformationSignUp from "../../../assets/imagesVendor/InformationSignUp.png";
+import InformationSignUp from "../../../assets/images/Orther/InformationSignUp.png";
 import {
   WrapperRegister,
   WrapperRegisterTextDescribe,
@@ -21,13 +21,14 @@ const Register = () => {
           src={InformationSignUp}
           alt="Information SignUp image"
           style={{ height: "200px", width: "200px" }}
+          preview={false}
         ></Image>
       </div>
       <WrapperRegisterTextWelcome>
         Chào mừng đến với HKN!
       </WrapperRegisterTextWelcome>
       <WrapperRegisterTextDescribe>
-        Vui lòng cung cấp thông tin để thành lập tài khoản người bán trên Shopee
+        Vui lòng cung cấp thông tin để thành lập tài khoản người bán trên HKN
       </WrapperRegisterTextDescribe>
       <Button
         type="primary"

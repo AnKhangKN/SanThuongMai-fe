@@ -63,7 +63,7 @@ const HeaderNavbarComponent = () => {
           <div style={{ padding: "0px 10px" }}>|</div>
         ) : (
           <VendorText>
-            <Link to="" style={{ color: "#fff", textDecoration: "none" }}>
+            <Link to="/vendor/register" style={{ color: "#fff", textDecoration: "none" }}>
               Trở thành người bán Shopee
             </Link>
           </VendorText>
