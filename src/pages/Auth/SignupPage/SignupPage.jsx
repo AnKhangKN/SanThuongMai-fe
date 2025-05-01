@@ -5,6 +5,7 @@ import * as AuthServices from "../../../services/shared/AuthServices";
 import { useMutationHooks } from "../../../hook/useMutationHook";
 import logo_remove_bg from "../../../assets/images/Logo_Den-removebg-preview.png";
 import * as MessageComponent from "../../../components/CustomerComponents/MessageComponent/MessageComponent";
+import logo_den from "../../../assets/images/Logo_Den.jpg";
 
 const { Title, Text, Link: AntLink } = Typography;
 
@@ -71,7 +72,7 @@ const SignupPage = () => {
         <div style={{ width: "40px", height: "40px" }}>
           <img
             style={{ width: "40px", objectFit: "cover" }}
-            src="logo_url"
+            src={logo_den}
             alt="logo"
           />
         </div>
