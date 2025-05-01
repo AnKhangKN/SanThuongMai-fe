@@ -1,51 +1,63 @@
 import { Col, Row } from "antd";
-import React, { useState } from "react";
-import img from "../../../../assets/images/products/ao-demo-phu3.webp";
+import React, { useEffect, useState } from "react";
 import ButtonComponent from "../../ButtonComponent/ButtonComponent";
 import { Link } from "react-router-dom";
-
-// Mảng sản phẩm mẫu
-const sampleProducts = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  name: `Sản phẩm ${i + 1}`,
-  img: img,
-  price: `200.000`,
-  sell: `100k`,
-}));
+import * as ProductServices from "../../../../services/shared/ProductServices";
 
 const SuggestComponent = () => {
   const [visibleRows, setVisibleRows] = useState(4); // 4 dòng mặc định
+  const [allData, setAllData] = useState([]); // chứa sản phẩm thực tế
   const itemsPerRow = 4;
 
+  const fetchProducts = async () => {
+    try {
+      const res = await ProductServices.getAllProducts();
+
+      const productsWithKeys = res.data.map((product) => ({
+        ...product,
+        key: product._id || product.id,
+      }));
+      setAllData(productsWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+    }
+  };
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   const handleLoadMore = () => {
-    setVisibleRows((prev) => prev + 2); // Tăng thêm 2 dòng
+    setVisibleRows((prev) => prev + 2);
   };
 
-  const visibleProducts = sampleProducts.slice(0, visibleRows * itemsPerRow);
+  const visibleProducts = allData.slice(0, visibleRows * itemsPerRow);
 
   return (
     <div>
       <Row gutter={[16, 16]}>
         {visibleProducts.map((product) => (
-          <Col span={6} key={product.id}>
+          <Col span={6} key={product.key}>
             <Link
-              to="product/:id"
+              to={`/product/${product._id}`}
               style={{ textDecoration: "none", color: "#333" }}
             >
-              <div
-                style={{
-                  border: "1px solid #ccc",
-                }}
-              >
+              <div style={{ border: "1px solid #ccc" }}>
                 <div style={{ width: "100%" }}>
                   <img
                     style={{ width: "100%" }}
-                    src={product.img}
+                    src={
+                      Array.isArray(product.img)
+                        ? product.img[0]
+                        : product.img ||
+                          "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
+                    }
                     alt={product.name}
                   />
                 </div>
                 <div style={{ padding: "10px" }}>
-                  <div style={{ marginBottom: "30px" }}>{product.name}</div>
+                  <div style={{ marginBottom: "30px" }}>
+                    {product.product_name}
+                  </div>
                   <div
                     style={{
                       display: "flex",
@@ -63,10 +75,12 @@ const SuggestComponent = () => {
                       }}
                     >
                       <div style={{ fontSize: "10px" }}>đ</div>
-                      <div style={{ fontSize: "18px" }}>{product.price}</div>
+                      <div style={{ fontSize: "18px" }}>
+                        {product.details[0].price}
+                      </div>
                     </div>
                     <div style={{ fontSize: "13px" }}>
-                      Đã bán: {product.sell}
+                      Đã bán: {product.sold_count}
                     </div>
                   </div>
                 </div>
@@ -77,7 +91,7 @@ const SuggestComponent = () => {
       </Row>
 
       <div style={{ backgroundColor: "#f5f5f5", paddingTop: "20px" }}>
-        {visibleProducts.length < sampleProducts.length && (
+        {visibleProducts.length < allData.length && (
           <div style={{ textAlign: "center", marginTop: "20px" }}>
             <ButtonComponent onClick={handleLoadMore} name="Xem Thêm" />
           </div>

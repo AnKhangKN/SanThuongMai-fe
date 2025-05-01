@@ -15,7 +15,9 @@ export const getAllShops = async (accessToken) => {
 
 // Duyệt trạng thái shops
 export const partialUpdateShop = async (userId, dataUpdate, accessToken) => {
-  const data = { shop: { status: dataUpdate } };
+  const data = { shop: 
+    { status: dataUpdate }
+   };
 
   const res = await axios.patch(
     `${process.env.REACT_APP_API_URL}/admin/partial-update-shop/${userId}`,
