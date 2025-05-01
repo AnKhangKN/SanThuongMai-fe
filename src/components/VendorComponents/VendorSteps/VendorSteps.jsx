@@ -5,8 +5,6 @@ const { Step } = Steps;
 
 const steps = [
   { title: "Thông tin Shop" },
-  { title: "Cài đặt vận chuyển" },
-  { title: "Thông tin thuế" },
   { title: "Hoàn tất" },
 ];
 

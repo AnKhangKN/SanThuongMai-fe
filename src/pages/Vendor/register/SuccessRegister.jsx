@@ -21,7 +21,7 @@ const SuccessRegister = () => {
     <div>
       <WrapperStepsPadding>
         <WrapperStepsVendor>
-          <VendorSteps current={3} />
+          <VendorSteps current={1} />
         </WrapperStepsVendor>
       </WrapperStepsPadding>
 
