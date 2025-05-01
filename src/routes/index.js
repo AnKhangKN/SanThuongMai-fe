@@ -4,7 +4,7 @@ import HomePage from "../pages/Customer/HomePage/HomePage";
 import ProductManagementPage from "../pages/Admin/ProductManagementPage/ProductManagementPage";
 import ProductReportPage from "../pages/Admin/ProductReportPage/ProductReportPage";
 import ShopReportPage from "../pages/Admin/ShopReportPage/ShopReportPage";
-import OrderReportPage from "../pages/Admin/OrderReportPage/OrderReportPage";
+import OrderReportPage from "../pages/Admin/OderReportPage/OrderReportPage";
 import StatisticsManagementPage from "../pages/Admin/StatisticsManagementPage/StatisticsManagementPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 

@@ -174,6 +174,16 @@ const OrderReportPage = () => {
                 ]}
               />
             </div>
+            <div>
+              <strong>Thời gian cấm shop:</strong>
+              <Select
+                style={{ width: 200 }}
+                options={[
+                  { value: "Ngưng hoạt động", label: "Ngưng hoạt động" },
+                  { value: "Hoạt động", label: "Hoạt động" },
+                ]}
+              />
+            </div>
 
             <img
               src={selectedProduct.images}

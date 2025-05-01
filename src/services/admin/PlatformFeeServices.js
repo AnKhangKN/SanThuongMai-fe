@@ -27,3 +27,17 @@ export const createFee = async (accessToken, data) => {
   );
   return res.data;
 };
+
+// Cập nhật chi phí nên tảng
+export const updateFee = async (accessToken, id, data) => {
+  const res = await axios.patch(
+    `${process.env.REACT_APP_API_URL}/admin/update-fee/${id}`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  return res.data;
+};

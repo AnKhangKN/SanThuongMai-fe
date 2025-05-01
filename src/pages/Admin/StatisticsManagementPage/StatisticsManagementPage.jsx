@@ -1,10 +1,23 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Wrapper } from "./style";
-import { Button, Modal, Table, Tag, Select, Input, message } from "antd";
+import {
+  Button,
+  Modal,
+  Table,
+  Tag,
+  Select,
+  Input,
+  message,
+  DatePicker,
+} from "antd";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as PlatformServices from "../../../services/admin/PlatformFeeServices";
 import { isJsonString } from "../../../utils";
+
+dayjs.extend(customParseFormat);
 
 const FEE_TYPES = [
   { value: "fixed", label: "Cố định" },
@@ -68,15 +81,14 @@ const StatisticsManagementPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAddVisible, setModalAddVisible] = useState(false);
   const [selectedFee, setSelectedFee] = useState(null);
-  const [newStatus, setNewStatus] = useState("");
   const [feeData, setFeeData] = useState([]);
   const [newFee, setNewFee] = useState({
     fee_name: "",
     fee_type: "fixed",
     value: "",
     description: "",
-    status: "Đang hoạt động",
-    createdAt: new Date().toLocaleDateString("vi-VN"),
+    status: "active",
+    effective_from: dayjs().format("YYYY-MM-DD"),
   });
 
   const handleDecoded = async () => {
@@ -95,6 +107,21 @@ const StatisticsManagementPage = () => {
     return null;
   };
 
+  const fetchFee = useCallback(async () => {
+    try {
+      const token = await handleDecoded();
+      const res = await PlatformServices.getAllFees(token);
+      const feeWithKeys = res.data.map((fee) => ({ ...fee, key: fee._id }));
+      setFeeData(feeWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFee();
+  }, [fetchFee]);
+
   const createFee = async () => {
     const { fee_name, fee_type, value, description } = newFee;
 
@@ -104,10 +131,6 @@ const StatisticsManagementPage = () => {
 
     if (isNaN(Number(value))) {
       return message.error("Giá trị phải là số hợp lệ!");
-    }
-
-    if (fee_type !== "percentage" && fee_type !== "fixed") {
-      return message.error("Hãy chọn kiểu chi phí hợp lệ!");
     }
 
     try {
@@ -122,8 +145,8 @@ const StatisticsManagementPage = () => {
           fee_type: "fixed",
           value: "",
           description: "",
-          status: "Đang hoạt động",
-          createdAt: new Date().toLocaleDateString("vi-VN"),
+          status: "active",
+          effective_from: dayjs().format("YYYY-MM-DD"),
         });
       }
     } catch (error) {
@@ -132,66 +155,37 @@ const StatisticsManagementPage = () => {
     }
   };
 
-  const fetchFee = useCallback(async () => {
-    try {
-      const token = await handleDecoded();
-      const res = await PlatformServices.getAllFees(token);
-      const feeWithKeys = res.data.map((fee) => ({
-        ...fee,
-        key: fee._id,
-      }));
-      setFeeData(feeWithKeys);
-    } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFee();
-  }, [fetchFee]);
-
   const handleRowClick = (record) => {
     setSelectedFee(record);
-    setNewStatus(record.status);
     setModalVisible(true);
   };
 
-  const handleModalCancel = () => {
-    setModalVisible(false);
-    setSelectedFee(null);
-  };
-
   const handleSaveStatus = async () => {
-    // try {
-    //   const token = await handleDecoded();
-    //   await PlatformServices.updateFeeStatus(token, selectedFee.key, newStatus);
-    //   const updatedData = feeData.map((item) =>
-    //     item.key === selectedFee.key ? { ...item, status: newStatus } : item
-    //   );
-    //   setFeeData(updatedData);
-    //   setModalVisible(false);
-    //   message.success("Cập nhật trạng thái thành công!");
-    // } catch (error) {
-    //   console.error("Lỗi khi cập nhật trạng thái:", error);
-    //   message.error("Cập nhật trạng thái thất bại!");
-    // }
-  };
-
-  const handleOpenAddModal = () => {
-    setModalAddVisible(true);
+    try {
+      const token = await handleDecoded();
+      const res = await PlatformServices.updateFee(
+        token,
+        selectedFee.key,
+        selectedFee
+      );
+      if (res?.data) {
+        const updatedData = feeData.map((item) =>
+          item.key === selectedFee.key ? { ...selectedFee } : item
+        );
+        setFeeData(updatedData);
+        setModalVisible(false);
+        message.success("Cập nhật thông tin thành công!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật:", error);
+      message.error("Cập nhật thất bại!");
+    }
   };
 
   return (
     <Wrapper>
       <h3>Quản lý chi phí nền tảng</h3>
-      <div
-        style={{
-          background: "#fff",
-          padding: 20,
-          borderRadius: 5,
-          boxShadow: "1px 1px 10px #e9e9e9",
-        }}
-      >
+      <div style={{ background: "#fff", padding: 20, borderRadius: 5 }}>
         <div
           style={{
             display: "flex",
@@ -200,11 +194,10 @@ const StatisticsManagementPage = () => {
           }}
         >
           <h5>Danh sách chi phí nền tảng</h5>
-          <Button type="primary" onClick={handleOpenAddModal}>
+          <Button type="primary" onClick={() => setModalAddVisible(true)}>
             Thêm chi phí
           </Button>
         </div>
-
         <Table
           dataSource={feeData}
           columns={columns}
@@ -214,13 +207,13 @@ const StatisticsManagementPage = () => {
         />
       </div>
 
-      {/* Modal xem chi tiết và đổi trạng thái */}
+      {/* Modal xem & cập nhật */}
       <Modal
-        title="Thông tin Chi phí"
+        title="Cập nhật Chi phí"
         open={modalVisible}
-        onCancel={handleModalCancel}
+        onCancel={() => setModalVisible(false)}
         footer={[
-          <Button key="cancel" onClick={handleModalCancel}>
+          <Button key="cancel" onClick={() => setModalVisible(false)}>
             Đóng
           </Button>,
           <Button key="save" type="primary" onClick={handleSaveStatus}>
@@ -229,31 +222,51 @@ const StatisticsManagementPage = () => {
         ]}
       >
         {selectedFee && (
-          <div>
-            <p>
-              <strong>ID:</strong> {selectedFee.key}
-            </p>
-            <p>
-              <strong>Tên chi phí:</strong> {selectedFee.fee_name}
-            </p>
-            <p>
-              <strong>Kiểu chi phí:</strong> {selectedFee.fee_type}
-            </p>
-            <p>
-              <strong>Mô tả:</strong> {selectedFee.description}
-            </p>
-            <p>
-              <strong>Ngày tạo:</strong> {selectedFee.createdAt}
-            </p>
-            <p>
-              <strong>Trạng thái:</strong>
-              <Select
-                value={newStatus}
-                style={{ width: 160, marginLeft: 10 }}
-                onChange={(value) => setNewStatus(value)}
-                options={STATUS_OPTIONS}
-              />
-            </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Input
+              value={selectedFee.fee_name}
+              onChange={(e) =>
+                setSelectedFee({ ...selectedFee, fee_name: e.target.value })
+              }
+              placeholder="Tên chi phí"
+            />
+            <Select
+              value={selectedFee.fee_type}
+              onChange={(value) =>
+                setSelectedFee({ ...selectedFee, fee_type: value })
+              }
+              options={FEE_TYPES}
+            />
+            <Input
+              value={selectedFee.value}
+              onChange={(e) =>
+                setSelectedFee({ ...selectedFee, value: e.target.value })
+              }
+              placeholder="Giá trị"
+            />
+            <Input
+              value={selectedFee.description}
+              onChange={(e) =>
+                setSelectedFee({ ...selectedFee, description: e.target.value })
+              }
+              placeholder="Mô tả"
+            />
+            <DatePicker
+              value={dayjs(selectedFee.effective_from)}
+              onChange={(date) =>
+                setSelectedFee({
+                  ...selectedFee,
+                  effective_from: date.format("YYYY-MM-DD"),
+                })
+              }
+            />
+            <Select
+              value={selectedFee.status}
+              onChange={(value) =>
+                setSelectedFee({ ...selectedFee, status: value })
+              }
+              options={STATUS_OPTIONS}
+            />
           </div>
         )}
       </Modal>
@@ -273,40 +286,43 @@ const StatisticsManagementPage = () => {
         ]}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div>
-            <strong>Tên chi phí:</strong>
-            <Input
-              value={newFee.fee_name}
-              onChange={(e) =>
-                setNewFee({ ...newFee, fee_name: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <strong>Kiểu chi phí:</strong>
-            <Select
-              value={newFee.fee_type}
-              style={{ width: 160 }}
-              onChange={(value) => setNewFee({ ...newFee, fee_type: value })}
-              options={FEE_TYPES}
-            />
-          </div>
-          <div>
-            <strong>Giá trị:</strong>
-            <Input
-              value={newFee.value}
-              onChange={(e) => setNewFee({ ...newFee, value: e.target.value })}
-            />
-          </div>
-          <div>
-            <strong>Mô tả:</strong>
-            <Input
-              value={newFee.description}
-              onChange={(e) =>
-                setNewFee({ ...newFee, description: e.target.value })
-              }
-            />
-          </div>
+          <Input
+            value={newFee.fee_name}
+            onChange={(e) => setNewFee({ ...newFee, fee_name: e.target.value })}
+            placeholder="Tên chi phí"
+          />
+          <Select
+            value={newFee.fee_type}
+            onChange={(value) => setNewFee({ ...newFee, fee_type: value })}
+            options={FEE_TYPES}
+          />
+          <Input
+            value={newFee.value}
+            onChange={(e) => setNewFee({ ...newFee, value: e.target.value })}
+            placeholder="Giá trị"
+          />
+          <Input
+            value={newFee.description}
+            onChange={(e) =>
+              setNewFee({ ...newFee, description: e.target.value })
+            }
+            placeholder="Mô tả"
+          />
+
+          <DatePicker
+            value={dayjs(newFee.effective_from)}
+            format={{
+              format: "YYYY-MM-DD",
+              type: "mask",
+            }}
+            onChange={(date) =>
+              setNewFee({
+                ...newFee,
+                effective_from: date.format("YYYY-MM-DD"),
+              })
+            }
+            showToday={false}
+          />
         </div>
       </Modal>
     </Wrapper>
