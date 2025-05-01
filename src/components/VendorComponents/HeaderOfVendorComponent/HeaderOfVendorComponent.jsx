@@ -13,9 +13,14 @@ import {
   WrapperHeaderTextLogo,
 } from "./styleHeaderOfVendor";
 import { useNavigate } from "react-router-dom";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { resetUser } from "../../../redux/slices/userSlice";
+import { useDispatch } from "react-redux";
 
 const HeaderOfVendorComponent = (props) => {
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
 
   const handleClickToProfileShop = () => {
     navigate("/vendor/profile-shop"); // Đường dẫn bạn muốn chuyển đến
@@ -25,9 +30,6 @@ const HeaderOfVendorComponent = (props) => {
     navigate("/vendor");
   };
 
-  const handleClickToLogin = () => {
-    navigate("/login");
-  };
   const { textHeader } = props;
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -48,6 +50,24 @@ const HeaderOfVendorComponent = (props) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await AuthServices.logoutUser();
+
+      // Xoá access token localStorage
+      localStorage.removeItem("access_token");
+
+      // Reset redux user state
+      dispatch(resetUser());
+
+      // Điều hướng về trang login
+      navigate("/login");
+    } catch (error) {
+      console.error("Lỗi khi logout:", error);
+    }
+  };
+
   return (
     <WrapperHeader>
       <Col
@@ -111,7 +131,7 @@ const HeaderOfVendorComponent = (props) => {
                 />{" "}
                 Hồ sơ Shop
               </div>
-              <div className="menu-item" onClick={handleClickToLogin}>
+              <div className="menu-item" onClick={handleLogout}>
                 <LogoutOutlined
                   style={{ fontSize: "16px", marginRight: "10px" }}
                 />
