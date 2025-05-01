@@ -61,9 +61,18 @@ const HeaderNavbarComponent = () => {
 
         {user?.isVendor ? (
           <div style={{ padding: "0px 10px" }}>|</div>
+        ) : !user.id ? (
+          <VendorText>
+            <Link to="/login" style={{ color: "#fff", textDecoration: "none" }}>
+              Trở thành người bán Shopee
+            </Link>
+          </VendorText>
         ) : (
           <VendorText>
-            <Link to="/vendor/register" style={{ color: "#fff", textDecoration: "none" }}>
+            <Link
+              to="/vendor/register"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
               Trở thành người bán Shopee
             </Link>
           </VendorText>
