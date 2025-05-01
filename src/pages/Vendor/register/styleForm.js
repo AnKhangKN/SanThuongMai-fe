@@ -13,7 +13,7 @@ export const WrapperStepsVendor = styled.div`
 
 export const WrapperStepsPadding = styled.div`
   border-bottom: 1px solid #ccc;
-  padding: 20px 120px;
+  padding: 20px 400px;
 `;
 
 export const WrapperFormVendor = styled.div`

@@ -14,14 +14,14 @@ import VendorSteps from "../../../components/VendorComponents/VendorSteps/Vendor
 const SuccessRegister = () => {
   const navigate = useNavigate();
 
-  const handleClickTobackVendorMain = () => {
-    navigate("/vendor"); // Đường dẫn bạn muốn chuyển đến
+  const handleClickTobackLogin = () => {
+    navigate("/login"); // Đường dẫn bạn muốn chuyển đến
   };
   return (
     <div>
       <WrapperStepsPadding>
         <WrapperStepsVendor>
-          <VendorSteps current={3} />
+          <VendorSteps current={1} />
         </WrapperStepsVendor>
       </WrapperStepsPadding>
 
@@ -39,9 +39,9 @@ const SuccessRegister = () => {
         <Button
           type="primary"
           style={{ backgroundColor: "#f6f6f6", color: "#000" }}
-          onClick={handleClickTobackVendorMain}
+          onClick={handleClickTobackLogin}
         >
-          Đi đến trang bán hàng
+          Đi đến trang đăng nhập để vào bán hàng
         </Button>
       </WrapperRegister>
     </div>

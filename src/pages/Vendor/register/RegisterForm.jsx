@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 const RegisterForm = () => {
   const navigate = useNavigate();
 
-  const handleClickToNextTransport = () => {
-    navigate("/vendor/register-transport"); // Đường dẫn
+  const handleClickToNextSuccess = () => {
+    navigate("/vendor/register-success"); // Đường dẫn
   };
   return (
     <div>
@@ -42,7 +42,7 @@ const RegisterForm = () => {
         </Button>
         <Button
           style={{ backgroundColor: "#333", color: "#fff" }}
-          onClick={handleClickToNextTransport}
+          onClick={handleClickToNextSuccess}
         >
           Tiếp theo
         </Button>
