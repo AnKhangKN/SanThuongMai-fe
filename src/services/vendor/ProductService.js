@@ -11,3 +11,14 @@ export const createProduct = async (accessToken, productData) => {
     }
   );
 };
+
+export const getAllProduct = async (accessToken) => {
+  return await axios.get(
+    `${process.env.REACT_APP_API_URL}/vendor/getAll-product`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+};
