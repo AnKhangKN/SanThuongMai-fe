@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, Input, Typography } from "antd";
 import logo_den from "../../../assets/images/Logo_Den.jpg";
 import logo_removebg from "../../../assets/images/Logo_Den-removebg-preview.png";
@@ -17,35 +17,42 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
+  const location = useLocation();
 
   //call api
   const mutation = useMutationHooks((data) => AuthServices.loginUser(data));
 
   const { data, isError, isSuccess } = mutation;
 
+  // useEffect 1: thông báo và lưu token
   useEffect(() => {
     if (isSuccess) {
       MessageComponent.success("Đăng nhập thành công");
       localStorage.setItem("access_token", JSON.stringify(data?.access_token));
-
-      if (data?.access_token) {
-        const decoded = jwtDecode(data?.access_token);
-
-        if (decoded?.id) {
-          handleGetDetailUser(
-            decoded?.id,
-            data?.access_token, // đúng nè
-            decoded?.isAdmin,
-            decoded?.isVendor
-          );
-        }
-      }
     }
 
     if (isError) {
       MessageComponent.error("Đăng nhập thất bại!");
     }
-  }, [isSuccess, isError]);
+  }, [isSuccess, isError, data]);
+
+  // useEffect 2: xử lý navigate và gọi API
+  useEffect(() => {
+    if (isSuccess && data?.access_token) {
+      const decoded = jwtDecode(data.access_token);
+
+      if (location.state) {
+        navigate(location.state);
+      } else if (decoded?.id) {
+        handleGetDetailUser(
+          decoded.id,
+          data.access_token,
+          decoded.isAdmin,
+          decoded.isVendor
+        );
+      }
+    }
+  }, [isSuccess, data, location]);
 
   const handleGetDetailUser = async (id, accessToken, isAdmin, isVendor) => {
     const res = await AuthServices.getDetailUser(id, accessToken);
