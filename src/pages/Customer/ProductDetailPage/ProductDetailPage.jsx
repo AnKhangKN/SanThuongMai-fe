@@ -5,13 +5,18 @@ import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import { BsCartPlus } from "react-icons/bs";
 import { FiMinus, FiPlus } from "react-icons/fi";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import * as ProductServices from "../../../services/shared/ProductServices";
+import * as CartServices from "../../../services/customer/CartServices";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
   const navigate = useNavigate();
   const id = useParams();
+  const location = useLocation();
 
   const [startIndex, setStartIndex] = useState(0);
   const [currentImage, setCurrentImage] = useState([]);
@@ -22,8 +27,6 @@ const ProductDetailPage = () => {
   const [detailSize, setDetailSize] = useState(null);
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
   const [listImages, setListImages] = useState([]);
-
-  console.log(productDetail?.details?.some((d) => d.color));
 
   const maxVisible = 5;
 
@@ -76,10 +79,20 @@ const ProductDetailPage = () => {
     setSelectedImage(image);
   };
 
-  const handleAddToCart = () => {
+  const handleDecoded = () => {
+    let storageData = localStorage.getItem("access_token");
+    let decoded = {};
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      decoded = jwtDecode(storageData);
+    }
+    return { decoded, storageData };
+  };
+
+  const handleAddToCart = async () => {
     if (!user?.id) {
       message.info("Hãy đăng nhập trước!");
-      navigate("/login");
+      navigate("/login", { state: location?.pathname });
       return;
     }
 
@@ -90,6 +103,43 @@ const ProductDetailPage = () => {
       message.error("Số lượng sản phẩm trong kho không đủ!");
       setQuantity(0);
       return;
+    }
+
+    try {
+      let { storageData, decoded } = handleDecoded();
+
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      console.log("Request data:", {
+        accessToken: accessToken,
+        productDetail: selectedProductDetail,
+        productId: id?.id,
+      });
+
+      const res = await CartServices.addToCart(
+        accessToken,
+        selectedProductDetail,
+        quantity,
+        id?.id
+      );
+
+      if (!res) {
+        message.error("Không thể thêm vào giỏi hàng");
+        return;
+      }
+
+      console.log("res", res);
+
+      message.success("Đã thêm vào giỏ hàng!");
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      message.error("Không thể thêm sản phẩm vào giỏ hàng!");
     }
   };
 
@@ -242,7 +292,7 @@ const ProductDetailPage = () => {
                 <div></div>
               )}
 
-              {productDetail?.details?.some((d) => d.color) ? (
+              {productDetail?.details?.some((d) => d.size) ? (
                 <div
                   style={{
                     display: "flex",
