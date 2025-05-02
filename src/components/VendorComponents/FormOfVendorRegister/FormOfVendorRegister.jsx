@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Form, Input } from "antd";
+import {Form, Input } from "antd";
 
 
 const FormOfVendorRegister = () => {
@@ -15,6 +15,10 @@ const FormOfVendorRegister = () => {
           rules={[{ required: true, message: "Vui lòng nhập tên Shop" }]}
         >
           <Input placeholder="Nhập vào" maxLength={30} />
+        </Form.Item>
+
+        <Form.Item label="Căn cước công dân" name="address">
+          <Input placeholder="Nhập căn cước công dân" />
         </Form.Item>
 
         {/* Địa chỉ lấy hàng */}
