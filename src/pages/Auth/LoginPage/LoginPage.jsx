@@ -16,7 +16,7 @@ const LoginPage = () => {
   //lưu
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const dispatch = useDispatch(); // ✅ đúng
+  const dispatch = useDispatch();
 
   //call api
   const mutation = useMutationHooks((data) => AuthServices.loginUser(data));
@@ -195,7 +195,7 @@ const LoginPage = () => {
             </div>
 
             <div style={{ textAlign: "center", marginTop: 16 }}>
-              <Text type="secondary">Bạn mới biết đến Shopee? </Text>
+              <Text type="secondary">Bạn mới biết đến HKN store? </Text>
               <AntLink onClick={handleNavigateSignup}>Đăng ký</AntLink>
             </div>
           </Card>

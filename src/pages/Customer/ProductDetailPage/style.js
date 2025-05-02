@@ -22,3 +22,9 @@ export const DetailBox = styled.div`
   border-radius: 4px;
   padding: 20px;
 `;
+
+export const WrapperIcon = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;

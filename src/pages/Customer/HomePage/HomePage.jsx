@@ -6,22 +6,8 @@ import CategoryComponent from "../../../components/CustomerComponents/HomePageCo
 import TopSearchComponent from "../../../components/CustomerComponents/HomePageComponent/TopSearchComponent/TopSearchComponent";
 import SuggestComponent from "../../../components/CustomerComponents/HomePageComponent/SuggestComponent/SuggestComponent";
 import { LineSuggest } from "./style";
-import { useQuery } from "@tanstack/react-query";
-import * as ProductServices from "../../../services/customer/ProductServices";
 
 const HomePage = () => {
-  // const fetchProductAll = async () => {
-  //   const res = await ProductServices.getAllProducts();
-  //   return res;
-  // };
-
-  // const { isLoading, data } = useQuery({
-  //   queryKey: ["product"],
-  //   queryFn: fetchProductAll,
-  // });
-
-  // console.log(data);
-
   return (
     <>
       <div

@@ -8,6 +8,38 @@ import { Wrapper } from "./style";
 
 const { Option } = Select;
 
+// Cấu hình cột cho bảng
+const columns = [
+  {
+    title: "ID",
+    dataIndex: "key",
+    sorter: (a, b) => a.key - b.key,
+    ellipsis: true,
+  },
+  { title: "Tên người dùng", dataIndex: "user_name" },
+  { title: "Email", dataIndex: "email" },
+  {
+    title: "Trạng thái",
+    dataIndex: "account_status",
+    render: (status) => {
+      let color = "default";
+      if (status === "active") color = "green";
+      else if (status === "pending") color = "orange";
+      else if (status === "inactive") color = "red";
+
+      return <Tag color={color}>{status}</Tag>;
+    },
+    sorter: (a, b) => a.account_status.localeCompare(b.account_status),
+  },
+
+  {
+    title: "Ngày tạo",
+    dataIndex: "createdAt",
+    render: (date) => new Date(date).toLocaleString(),
+    sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+  },
+];
+
 const UserManagenetPage = () => {
   // Danh sách người dùng từ server
   const [allData, setAllData] = useState([]);
@@ -129,25 +161,6 @@ const UserManagenetPage = () => {
       message.error("Đã có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
-
-  // Cấu hình cột cho bảng
-  const columns = [
-    { title: "ID", dataIndex: "key" },
-    { title: "Tên người dùng", dataIndex: "user_name" },
-    { title: "Email", dataIndex: "email" },
-    {
-      title: "Trạng thái",
-      dataIndex: "account_status",
-      render: (status) => {
-        let color = "default";
-        if (status === "active") color = "green";
-        else if (status === "pending") color = "orange";
-        else if (status === "inactive") color = "red";
-
-        return <Tag color={color}>{status}</Tag>;
-      },
-    },
-  ];
 
   return (
     <Wrapper>

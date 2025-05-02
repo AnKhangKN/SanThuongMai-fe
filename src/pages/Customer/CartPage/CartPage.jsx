@@ -133,8 +133,22 @@ const CartPage = () => {
                 <div>₫{product.price.toLocaleString()}</div>
               </Col>
               <Col span={3}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <button>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <button
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      border: "0.5px solid #ffffff",
+                      height: "30px",
+                      width: "30px",
+                    }}
+                  >
                     <FaMinus />
                   </button>
                   <input
@@ -142,12 +156,23 @@ const CartPage = () => {
                       width: "30px",
                       textAlign: "center",
                       margin: "0 0px",
+                      border: "none",
+                      height: "30px",
                     }}
                     type="text"
                     value={1}
                     readOnly
                   />
-                  <button>
+                  <button
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      border: "0.5px solid #fff",
+                      height: "30px",
+                      width: "30px",
+                    }}
+                  >
                     <FaPlus />
                   </button>
                 </div>
