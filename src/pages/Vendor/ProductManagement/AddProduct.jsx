@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { WrapperVendor } from '../VendorMain/styleVendorMain';
 import { Card, Col, Form, List, Typography, Input, Button, Upload, Space, message } from 'antd';
 import {
@@ -172,6 +172,7 @@ const AddProduct = () => {
               <Form.Item
                 label="Màu sắc"
                 name="colors"
+                rules={[{ required: true, message: 'Vui lòng nhập màu sắc!' }]}
               >
                 <Input placeholder="Nhập màu sắc" />
               </Form.Item>
@@ -179,6 +180,7 @@ const AddProduct = () => {
               <Form.Item
                 label="Loại sản phẩm"
                 name="category"
+                rules={[{ required: true, message: 'Vui lòng nhập loại sản phẩm' }]}
               >
                 <Input placeholder="Nhập loại sản phẩm" />
               </Form.Item>
@@ -186,8 +188,21 @@ const AddProduct = () => {
               <Form.Item
                 label="Số lượng"
                 name="quantity"
+                rules={[
+                  { required: true, message: 'Vui lòng nhập số lượng!' },
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === '') {
+                        return Promise.resolve(); // Để tránh báo lỗi khi chưa nhập
+                      }
+                      return value >= 0
+                        ? Promise.resolve()
+                        : Promise.reject(new Error('số lượng phải là số không âm!'));
+                    },
+                  },
+                ]}
               >
-                <Input placeholder="Nhập số lượng" />
+                <Input type="number" placeholder="Nhập số lượng" />
               </Form.Item>
 
               {/* GIÁ SẢN PHẨM */}
@@ -196,15 +211,40 @@ const AddProduct = () => {
               <Form.Item
                 name="costPrice"
                 label="Giá nhập"
-                rules={[{ required: true, message: 'Vui lòng nhập giá nhập!' }]}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập giá nhập!' },
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === '') {
+                        return Promise.resolve(); // Để tránh báo lỗi khi chưa nhập
+                      }
+                      return value >= 0
+                        ? Promise.resolve()
+                        : Promise.reject(new Error('Giá nhập phải là số không âm!'));
+                    },
+                  },
+                ]}
               >
                 <Input type="number" placeholder="Nhập giá nhập" />
               </Form.Item>
 
+
               <Form.Item
                 name="salePrice"
                 label="Giá bán"
-                rules={[{ required: true, message: 'Vui lòng nhập giá bán!' }]}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập giá bán!' },
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === '') {
+                        return Promise.resolve(); // Để tránh báo lỗi khi chưa nhập
+                      }
+                      return value >= 0
+                        ? Promise.resolve()
+                        : Promise.reject(new Error('Giá bán phải là số không âm!'));
+                    },
+                  },
+                ]}
               >
                 <Input type="number" placeholder="Nhập giá bán" />
               </Form.Item>
