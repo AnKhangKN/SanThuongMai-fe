@@ -5,6 +5,21 @@ export const IconWrapper = styled.div`
   cursor: pointer;
   line-height: 85px;
   margin: 0px 40px 0px 70px;
+  position: relative;
+`;
+
+export const SumCart = styled.div`
+  position: absolute;
+  top: 16px;
+  border-radius: 50%;
+  line-height: 22px;
+  color: #f6402e;
+  font-size: 12px;
+  background: #fff;
+  height: 22px;
+  right: -10px;
+  width: 22px;
+  text-align: center;
 `;
 
 // cart

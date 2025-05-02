@@ -1,86 +1,192 @@
 import { Col, Row, Tooltip, Pagination } from "antd";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import logo from "../../../assets/images/Logo_Den.jpg";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { BsTicketPerforated } from "react-icons/bs";
 import SuggestComponent from "../../../components/CustomerComponents/CartPageComponent/SuggestComponent/SuggestComponent";
-
-const products = [
-  {
-    id: 1,
-    name: "Xe Đẩy Cho Bé Chính Hãng Baobaohao V16, Xe Đẩy Gấp Gọn Đảo Chiều 360 Độ Bảo Hành 12 Tháng",
-    price: 80000,
-  },
-  {
-    id: 2,
-    name: "Ghế Ăn Dặm Cho Bé Cao Cấp, Đa Năng, Gấp Gọn Tiện Lợi",
-    price: 150000,
-  },
-  {
-    id: 3,
-    name: "Địu Em Bé Siêu Nhẹ, Thoáng Khí, Hàng Chính Hãng",
-    price: 120000,
-  },
-  {
-    id: 4,
-    name: "Xe Tập Đi Cho Bé Có Nhạc Và Đèn, An Toàn, Bền Đẹp",
-    price: 100000,
-  },
-  {
-    id: 5,
-    name: "Thảm Chơi Cho Bé Nhiều Màu Sắc, Chống Thấm, Dễ Gấp Gọn",
-    price: 90000,
-  },
-  {
-    id: 6,
-    name: "Balo Trẻ Em Chống Gù, Dễ Thương, Nhiều Mẫu Mã",
-    price: 180000,
-  },
-  {
-    id: 7,
-    name: "Nôi Điện Cho Bé Có Nhạc Ru, Điều Khiển Từ Xa",
-    price: 250000,
-  },
-  {
-    id: 8,
-    name: "Đồ Chơi Phát Triển Trí Tuệ Cho Trẻ 1-3 Tuổi",
-    price: 70000,
-  },
-  {
-    id: 9,
-    name: "Máy Hâm Sữa 2 Bình Đa Năng, Tiện Lợi",
-    price: 140000,
-  },
-  {
-    id: 10,
-    name: "Xe Lắc Cho Bé Có Nhạc Và Đèn, Thiết Kế An Toàn",
-    price: 110000,
-  },
-];
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as CartServices from "../../../services/customer/CartServices";
 
 const CartPage = () => {
+  const [cartItems, setCartItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]); // Track selected items
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
+  const decodeToken = () => {
+    let storageToken = localStorage.getItem("access_token");
+    if (storageToken && isJsonString(storageToken)) {
+      const token = JSON.parse(storageToken);
+      const decoded = jwtDecode(token);
+      return { decoded, token };
+    }
+    return { decoded: null, token: null };
+  };
+
+  const fetchCartItems = useCallback(async () => {
+    try {
+      let { decoded, token } = decodeToken();
+
+      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
+        const refreshed = await AuthServices.refreshToken();
+        token = refreshed?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(token));
+      }
+
+      const response = await CartServices.getAllItem(token);
+      const data = response?.data[0]?.items || [];
+
+      const items = data.map((item) => ({
+        ...item,
+        key: item._id || item.id,
+        quantity: item.quantity || 1,
+      }));
+
+      setCartItems(items);
+    } catch (err) {
+      console.error("Lỗi khi lấy giỏ hàng:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCartItems();
+  }, [fetchCartItems]);
+
+  const handleMoreItem = async (itemKey) => {
+    try {
+      let { decoded, token } = decodeToken();
+
+      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
+        const refreshed = await AuthServices.refreshToken();
+        token = refreshed?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(token));
+      }
+
+      const itemToUpdate = cartItems.find((item) => item.key === itemKey);
+      if (!itemToUpdate) return;
+
+      const newQuantity = itemToUpdate.quantity + 1;
+
+      await CartServices.updateQuantity(token, {
+        detailCartId: itemToUpdate._id,
+        size: itemToUpdate.size,
+        color: itemToUpdate.color,
+        quantity: newQuantity,
+      });
+
+      const updatedItems = cartItems.map((item) =>
+        item.key === itemKey ? { ...item, quantity: newQuantity } : item
+      );
+
+      setCartItems(updatedItems);
+    } catch (err) {
+      console.error("Lỗi khi tăng số lượng:", err);
+    }
+  };
+
+  const handleReduceItem = async (itemKey) => {
+    try {
+      let { decoded, token } = decodeToken();
+
+      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
+        const refreshed = await AuthServices.refreshToken();
+        token = refreshed?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(token));
+      }
+
+      const itemToUpdate = cartItems.find((item) => item.key === itemKey);
+      if (!itemToUpdate || itemToUpdate.quantity <= 1) return;
+
+      const newQuantity = itemToUpdate.quantity - 1;
+
+      await CartServices.updateQuantity(token, {
+        detailCartId: itemToUpdate._id,
+        size: itemToUpdate.size,
+        color: itemToUpdate.color,
+        quantity: newQuantity,
+      });
+
+      const updatedItems = cartItems.map((item) =>
+        item.key === itemKey ? { ...item, quantity: newQuantity } : item
+      );
+
+      setCartItems(updatedItems);
+    } catch (err) {
+      console.error("Lỗi khi giảm số lượng:", err);
+    }
+  };
+
+  const handleDeleteItem = async (itemKey) => {
+    try {
+      let { decoded, token } = decodeToken();
+
+      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
+        const refreshed = await AuthServices.refreshToken();
+        token = refreshed?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(token));
+      }
+
+      const itemToDelete = cartItems.find((item) => item.key === itemKey);
+      if (!itemToDelete) return;
+
+      await CartServices.deleteCartItem(token, {
+        detailCartId: itemToDelete._id,
+      });
+
+      const updatedItems = cartItems.filter((item) => item.key !== itemKey);
+      setCartItems(updatedItems);
+    } catch (err) {
+      console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", err);
+    }
+  };
+
+  const handleItemSelection = (itemKey) => {
+    setSelectedItems((prevSelectedItems) =>
+      prevSelectedItems.includes(itemKey)
+        ? prevSelectedItems.filter((key) => key !== itemKey)
+        : [...prevSelectedItems, itemKey]
+    );
+  };
+
   const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedProducts = products.slice(startIndex, endIndex);
+  const displayedItems = cartItems.slice(startIndex, startIndex + pageSize);
+
+  console.log("{item.name}", displayedItems);
+
+  const totalPrice = selectedItems.reduce((acc, itemKey) => {
+    const selectedItem = cartItems.find((item) => item.key === itemKey);
+    return selectedItem
+      ? acc + selectedItem.price * selectedItem.quantity
+      : acc;
+  }, 0);
+
+  const totalItems = selectedItems.length;
 
   return (
-    <div style={{ marginTop: "120px", backgroundColor: "#f5f5f5" }}>
-      <div style={{ width: "1200px", margin: "auto" }}>
-        <div style={{ height: "20px" }}></div>
+    <div style={{ marginTop: 120, backgroundColor: "#f5f5f5" }}>
+      <div style={{ width: 1200, margin: "auto" }}>
+        <div style={{ height: 20 }} />
+
+        {/* Header row */}
         <div
-          style={{
-            padding: "10px 30px",
-            marginBottom: "10px",
-            backgroundColor: "#fff",
-          }}
+          style={{ padding: "10px 30px", marginBottom: 10, background: "#fff" }}
         >
           <Row>
             <Col span={2}>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={selectedItems.length === cartItems.length}
+                onChange={() => {
+                  if (selectedItems.length === cartItems.length) {
+                    setSelectedItems([]);
+                  } else {
+                    setSelectedItems(cartItems.map((item) => item.key));
+                  }
+                }}
+              />
             </Col>
             <Col span={10}>Sản phẩm</Col>
             <Col span={4}>Đơn giá</Col>
@@ -90,192 +196,178 @@ const CartPage = () => {
           </Row>
         </div>
 
-        {paginatedProducts.map((product) => (
+        {/* Item list */}
+        {displayedItems.map((item) => (
           <div
-            key={product.id}
+            key={item.key}
             style={{
               padding: "10px 30px",
-              margin: "2px 0px",
+              margin: "2px 0",
               backgroundColor: "#fff",
             }}
           >
             <Row align="middle">
               <Col span={2}>
-                <input type="checkbox" />
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item.key)}
+                  onChange={() => handleItemSelection(item.key)}
+                />
               </Col>
               <Col span={10}>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
-                >
-                  <div style={{ width: "80px" }}>
-                    <img style={{ width: "100%" }} src={logo} alt="product" />
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <div style={{ width: 80 }}>
+                    <img src={logo} alt="product" style={{ width: "100%" }} />
                   </div>
                   <div>
-                    <Tooltip title={product.name}>
+                    <Tooltip title={item.product_name}>
                       <div
                         style={{
-                          maxWidth: "400px",
+                          maxWidth: 400,
                           overflow: "hidden",
                           whiteSpace: "nowrap",
                           textOverflow: "ellipsis",
                         }}
-                      >
-                        {product.name}
-                      </div>
+                      ></div>
                     </Tooltip>
-                    <div style={{ fontSize: "12px", color: "gray" }}>
-                      Phân loại hàng
+                    <div style={{ fontSize: 12, color: "gray" }}>
+                      <div style={{ fontSize: "15px", color: "#333" }}>
+                        {item.product_name}
+                      </div>
+                      <div style={{ display: "flex", gap: "20px" }}>
+                        <div>{item.color} </div>
+                        <div>{item.size}</div>
+                      </div>
+
+                      <div>{item.shop_name}</div>
                     </div>
                   </div>
                 </div>
               </Col>
-              <Col span={4}>
-                <div>₫{product.price.toLocaleString()}</div>
-              </Col>
+              <Col span={4}>₫{item.price}</Col>
               <Col span={3}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
+                <div style={{ display: "flex", alignItems: "center" }}>
                   <button
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      border: "0.5px solid #ffffff",
-                      height: "30px",
-                      width: "30px",
-                    }}
+                    style={{ border: "1px solid #ddd", height: 30, width: 30 }}
+                    onClick={() => handleReduceItem(item.key)}
                   >
                     <FaMinus />
                   </button>
+
                   <input
                     style={{
-                      width: "30px",
+                      width: 30,
                       textAlign: "center",
-                      margin: "0 0px",
                       border: "none",
-                      height: "30px",
+                      height: 30,
                     }}
                     type="text"
-                    value={1}
+                    value={item.quantity}
                     readOnly
                   />
+
                   <button
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      border: "0.5px solid #fff",
-                      height: "30px",
-                      width: "30px",
-                    }}
+                    style={{ border: "1px solid #ddd", height: 30, width: 30 }}
+                    onClick={() => handleMoreItem(item.key)}
                   >
                     <FaPlus />
                   </button>
                 </div>
               </Col>
               <Col span={3}>
-                <div>₫{product.price.toLocaleString()}</div>
+                ₫{(item.price * item.quantity).toLocaleString()}
               </Col>
               <Col span={2}>
-                <div style={{ color: "red", cursor: "pointer" }}>Xóa</div>
+                <div
+                  onClick={() => handleDeleteItem(item.key)}
+                  style={{ color: "red", cursor: "pointer" }}
+                >
+                  Xóa
+                </div>
               </Col>
             </Row>
           </div>
         ))}
 
+        {/* Pagination */}
         <div
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            marginTop: "-2px",
-            paddingBottom: "20px",
-            paddingRight: "35px",
+            paddingBottom: 20,
+            paddingRight: 35,
             backgroundColor: "#fff",
           }}
         >
           <Pagination
             current={currentPage}
             pageSize={pageSize}
-            total={products.length}
+            total={cartItems.length}
             onChange={(page) => setCurrentPage(page)}
           />
         </div>
 
+        {/* Voucher */}
         <div
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            marginTop: "20px",
+            marginTop: 20,
             backgroundColor: "#fff",
-            padding: "20px 20px",
-            gap: "180px",
+            padding: 20,
+            gap: 180,
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
-              fontSize: "18px",
+              gap: 10,
+              fontSize: 18,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <BsTicketPerforated />
-            </div>
-            <div>Shopee Voucher</div>
+            <BsTicketPerforated />
+            <span>Shopee Voucher</span>
           </div>
-          <div style={{ fontSize: "14px" }}>Chọn hoặc nhập mã</div>
+          <div style={{ fontSize: 14 }}>Chọn hoặc nhập mã</div>
         </div>
 
+        {/* Tổng cộng */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginTop: "2px",
-            padding: "20px 20px",
+            marginTop: 2,
+            padding: 20,
             backgroundColor: "#fff",
           }}
         >
-          <div style={{ display: "flex", gap: "20px" }}>
-            <div>
-              <input type="checkbox" />
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ fontSize: 20 }}>
+              Tổng cộng ({totalItems} sản phẩm):
             </div>
-            <div>Chọn Tất Cả</div>
-            <div>Xóa Tất Cả</div>
+            <div style={{ fontSize: 18, color: "red" }}>
+              ₫{totalPrice.toLocaleString()}
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ fontSize: "16px" }}>Tổng cộng (0 Sản phẩm):</div>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <div>đ</div>
-              <div style={{ fontSize: "22px" }}>0</div>
-            </div>
-            <div>
-              <ButtonComponent name="Mua Hàng" width="200px" />
-            </div>
+          <div style={{ width: 160 }}>
+            <ButtonComponent name="Mua hàng" />
           </div>
         </div>
 
+        {/* Gợi ý sản phẩm */}
         <div
           style={{
             margin: "50px 0px 20px 0px",
-            display: "flex",
-            justifyContent: "start",
-            fontSize: "18px",
+            fontSize: 18,
             textTransform: "uppercase",
             color: "#7a7a7a",
           }}
         >
           Có thể bạn cũng thích
         </div>
-
-        <div>
-          <SuggestComponent />
-        </div>
+        <SuggestComponent />
       </div>
     </div>
   );

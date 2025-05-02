@@ -107,34 +107,45 @@ const ProductDetailPage = () => {
 
     try {
       let { storageData, decoded } = handleDecoded();
-
       let accessToken = storageData;
 
-      if (decoded?.exp < Date.now() / 1000) {
+      // Làm mới token nếu hết hạn
+      if (decoded?.exp * 1000 < Date.now()) {
         const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
+        if (!res?.access_token) {
+          message.error("Không thể làm mới phiên đăng nhập!");
+          return;
+        }
+        accessToken = res.access_token;
         localStorage.setItem("access_token", JSON.stringify(accessToken));
       }
 
-      console.log("Request data:", {
-        accessToken: accessToken,
-        productDetail: selectedProductDetail,
-        productId: id?.id,
-      });
-
-      const res = await CartServices.addToCart(
-        accessToken,
-        selectedProductDetail,
+      const payload = {
+        itemData: {
+          size: selectedProductDetail.size,
+          color: selectedProductDetail.color,
+          price: selectedProductDetail.price,
+        },
         quantity,
-        id?.id
-      );
+        owner_id: productDetail.user_id, // Chủ sản phẩm
+        product_id_module: id.id,
+      };
 
-      if (!res) {
-        message.error("Không thể thêm vào giỏi hàng");
+      if (payload.quantity <= 0) {
+        message.warning("Hãy thêm số lượng bạn cần!");
         return;
       }
 
-      console.log("res", res);
+      const res = await CartServices.addToCart(
+        accessToken,
+        payload,
+        selectedProductDetail._id // product_id
+      );
+
+      if (!res || res.status !== "OK") {
+        message.error(res?.message || "Không thể thêm vào giỏ hàng!");
+        return;
+      }
 
       message.success("Đã thêm vào giỏ hàng!");
     } catch (error) {
