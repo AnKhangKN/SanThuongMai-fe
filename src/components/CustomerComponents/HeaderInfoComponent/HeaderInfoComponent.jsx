@@ -1,59 +1,17 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { CartModal, CartWrapper, IconWrapper, SumCart } from "./style";
-
 import Logo_Xoa_Phong from "../../../assets/images/Logo_Den-removebg-preview.png";
 import SearchComponent from "../SearchComponent/SearchComponent";
 import HeaderCategoryComponent from "../HeaderCategoryComponent/HeaderCategoryComponent";
 import { Link } from "react-router-dom";
 import anh from "../../../assets/images/Logo_Den.jpg";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
-import * as CartServices from "../../../services/customer/CartServices";
+import { useSelector } from "react-redux";
 
 const HeaderInfoComponent = () => {
-  const [cartItems, setCartItems] = useState([]);
-
-  const decodeToken = () => {
-    let storageToken = localStorage.getItem("access_token");
-    if (storageToken && isJsonString(storageToken)) {
-      const token = JSON.parse(storageToken);
-      const decoded = jwtDecode(token);
-      return { decoded, token };
-    }
-    return { decoded: null, token: null };
-  };
-
-  const fetchCartItems = useCallback(async () => {
-    try {
-      let { decoded, token } = decodeToken();
-
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
-
-      const response = await CartServices.getAllItem(token);
-      const data = response?.data[0]?.items || [];
-
-      const items = data.map((item) => ({
-        ...item,
-        key: item._id || item.id,
-        quantity: item.quantity < 1 ? 1 : item.quantity, // tránh lỗi quantity = 0
-      }));
-
-      setCartItems(items);
-    } catch (err) {
-      console.error("Lỗi khi lấy giỏ hàng:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCartItems();
-  }, [fetchCartItems]);
+  const cart = useSelector((state) => state.cart);
+  const cartItems = cart.products;
 
   return (
     <div
@@ -64,6 +22,7 @@ const HeaderInfoComponent = () => {
         justifyContent: "space-between",
       }}
     >
+      {/* Logo */}
       <Link
         to="/"
         style={{ display: "flex", color: "#fff", textDecoration: "none" }}
@@ -80,6 +39,7 @@ const HeaderInfoComponent = () => {
         </div>
       </Link>
 
+      {/* Search + Category */}
       <div style={{ width: "100%", margin: "0px 30px 0px 60px" }}>
         <div>
           <SearchComponent />
@@ -89,22 +49,21 @@ const HeaderInfoComponent = () => {
         </div>
       </div>
 
-      {/* cart */}
+      {/* Cart */}
       <CartWrapper>
         <IconWrapper>
           <AiOutlineShoppingCart />
-          {/* Hiển thị tổng số lượng sản phẩm trong giỏ hàng */}
-          <SumCart>{cartItems.length > 99 ? "99+" : cartItems.length}</SumCart>
+          <SumCart>{cart.total_item > 99 ? "99+" : cart.total_item}</SumCart>
         </IconWrapper>
 
-        {/* modal cart */}
+        {/* Modal Cart */}
         <CartModal>
           <div>Sản phẩm trong giỏ hàng</div>
 
           {/* Hiển thị tối đa 5 sản phẩm */}
           {cartItems.slice(0, 5).map((item) => (
             <div
-              key={item.key}
+              key={item.product_id}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -115,14 +74,14 @@ const HeaderInfoComponent = () => {
                 <div style={{ width: "40px", height: "40px" }}>
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
-                    src={item.image || anh}
-                    alt={item.name}
+                    src={item.product_img || anh}
+                    alt={item.product_name}
                   />
                 </div>
               </div>
 
               <div style={{ flex: "0 0 60%" }}>
-                {item.name || "Tên sản phẩm"}
+                {item.product_name || "Tên sản phẩm"}
               </div>
               <div style={{ flex: "0 0 25%", textAlign: "end" }}>
                 {(item.price || 0).toLocaleString()}đ

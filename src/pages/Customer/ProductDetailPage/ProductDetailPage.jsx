@@ -4,19 +4,24 @@ import { Col, message, Row } from "antd";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import { BsCartPlus } from "react-icons/bs";
 import { FiMinus, FiPlus } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import * as ProductServices from "../../../services/shared/ProductServices";
 import * as CartServices from "../../../services/customer/CartServices";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
+import { updateCart } from "../../../redux/slices/cartSlice";
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
   const navigate = useNavigate();
   const id = useParams();
   const location = useLocation();
+
+  const dispatch = useDispatch();
+
+  const currentCart = useSelector((state) => state.cart);
 
   const [startIndex, setStartIndex] = useState(0);
   const [currentImage, setCurrentImage] = useState([]);
@@ -130,7 +135,6 @@ const ProductDetailPage = () => {
         owner_id: productDetail.user_id, // Chủ sản phẩm
         product_id_module: id.id,
       };
-
       if (payload.quantity <= 0) {
         message.warning("Hãy thêm số lượng bạn cần!");
         return;
@@ -146,6 +150,23 @@ const ProductDetailPage = () => {
         message.error(res?.message || "Không thể thêm vào giỏ hàng!");
         return;
       }
+
+      const newItem = {
+        product_id: selectedProductDetail._id,
+        product_name: productDetail.product_name,
+        product_img: currentImage,
+        price: selectedProductDetail.price,
+        quantity,
+        size: selectedProductDetail.size,
+        color: selectedProductDetail.color,
+      };
+
+      dispatch(
+        updateCart({
+          products: [...currentCart.products, newItem],
+          total_item: currentCart.total_item + 1,
+        })
+      );
 
       message.success("Đã thêm vào giỏ hàng!");
     } catch (error) {

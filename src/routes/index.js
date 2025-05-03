@@ -41,6 +41,7 @@ import SignupPage from "../pages/Auth/SignupPage/SignupPage";
 import LoginPage from "../pages/Auth/LoginPage/LoginPage";
 import AdminProfilePage from "../pages/Admin/AdminProfilePage/AdminProfilePage";
 import VendorManagementPage from "../pages/Admin/VendorManagementPage/VendorManagementpage";
+import PaymentPage from "../pages/Customer/PaymentPage/PaymentPage";
 
 export const routes = [
   //auth
@@ -79,6 +80,11 @@ export const routes = [
   {
     path: "/cart",
     page: CartPage,
+    isShowHeader: true,
+  },
+  {
+    path: "/checkout",
+    page: PaymentPage,
     isShowHeader: true,
   },
   {

@@ -9,8 +9,14 @@ import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as CartServices from "../../../services/customer/CartServices";
+import { useDispatch } from "react-redux";
+import { updateCart } from "../../../redux/slices/cartSlice";
+import { useNavigate } from "react-router-dom";
 
 const CartPage = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]); // Track selected items
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +52,21 @@ const CartPage = () => {
       }));
 
       setCartItems(items);
+
+      const cartData = {
+        products: items.map((item) => ({
+          product_id: item.product_id,
+          product_name: item.product_name,
+          product_img: item.product_img || "",
+          price: item.price,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+        })),
+        total_item: items.length,
+      };
+
+      dispatch(updateCart(cartData));
     } catch (err) {
       console.error("Lỗi khi lấy giỏ hàng:", err);
     }
@@ -154,8 +175,6 @@ const CartPage = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const displayedItems = cartItems.slice(startIndex, startIndex + pageSize);
 
-  console.log("{item.name}", displayedItems);
-
   const totalPrice = selectedItems.reduce((acc, itemKey) => {
     const selectedItem = cartItems.find((item) => item.key === itemKey);
     return selectedItem
@@ -164,6 +183,10 @@ const CartPage = () => {
   }, 0);
 
   const totalItems = selectedItems.length;
+
+  const handleCheckout = () => {
+    navigate("/checkout");
+  };
 
   return (
     <div style={{ marginTop: 120, backgroundColor: "#f5f5f5" }}>
@@ -217,7 +240,11 @@ const CartPage = () => {
               <Col span={10}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <div style={{ width: 80 }}>
-                    <img src={logo} alt="product" style={{ width: "100%" }} />
+                    <img
+                      src={item.product_img}
+                      alt="product"
+                      style={{ width: "100%" }}
+                    />
                   </div>
                   <div>
                     <Tooltip title={item.product_name}>
@@ -352,7 +379,7 @@ const CartPage = () => {
             </div>
           </div>
           <div style={{ width: 160 }}>
-            <ButtonComponent name="Mua hàng" />
+            <ButtonComponent name="Mua hàng" onClick={handleCheckout} />
           </div>
         </div>
 
