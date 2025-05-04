@@ -1,9 +1,6 @@
 import axios from "axios";
 
 export const createUserVendor = async (accessToken, UserVendorData) => {
-  console.log("accesstoken", accessToken);
-  console.log("UserVendorData", UserVendorData);
-
   const userId = UserVendorData.user_id; // Lấy user_id từ dữ liệu gửi lên
 
   return await axios.put(

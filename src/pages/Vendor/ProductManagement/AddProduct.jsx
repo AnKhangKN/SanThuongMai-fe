@@ -210,27 +210,6 @@ const AddProduct = () => {
 
               <Form.Item
                 name="costPrice"
-                label="Giá nhập"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập giá nhập!' },
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === '') {
-                        return Promise.resolve(); // Để tránh báo lỗi khi chưa nhập
-                      }
-                      return value >= 0
-                        ? Promise.resolve()
-                        : Promise.reject(new Error('Giá nhập phải là số không âm!'));
-                    },
-                  },
-                ]}
-              >
-                <Input type="number" placeholder="Nhập giá nhập" />
-              </Form.Item>
-
-
-              <Form.Item
-                name="salePrice"
                 label="Giá bán"
                 rules={[
                   { required: true, message: 'Vui lòng nhập giá bán!' },

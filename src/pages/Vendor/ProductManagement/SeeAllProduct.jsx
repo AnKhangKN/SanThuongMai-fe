@@ -1,53 +1,132 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, InputNumber } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Modal, Form, Input, InputNumber, Upload, message } from 'antd';
 import { PlusOutlined, SearchOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode";
 
-// Các component layout giả định
 import ButtonComponents from '../../../components/VendorComponents/ButtonComponents/ButtonComponents';
 import InputComponent from '../../../components/VendorComponents/InputComponent/InputComponent';
 import ComboboxComponent from '../../../components/VendorComponents/ComboboxComponent/ComboboxComponent';
-import { WrapperHeaderSeeAllProduct, WrapperUnderHeaderSeeAllProduct } from './StyleSeeAllProduct';
+import { WrapperHeaderSeeAllProduct, WrapperUnderHeaderSeeAllProduct, StyledTable, StyledTh, StyledTd, ProductImage, EditButton } from './StyleSeeAllProduct';
+import * as ProductService from '../../../services/vendor/ProductService';
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { isJsonString } from "../../../utils";
 
 const SeeAllProduct = () => {
   const navigate = useNavigate();
-
   const [form] = Form.useForm();
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fileList, setFileList] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]);
+  const [allData, setAllData] = useState([]);
 
   const handleClickToAddProduct = () => {
     navigate('/vendor/add-product');
   };
 
-  const sampleData = [
-    {
-      id: 1,
-      product_name: 'Giày đá bóng Nike',
-      images: ['https://via.placeholder.com/50'],
-      details: [
-        {
-          price: 700000,
-          color: 'Đỏ',
-          size: '42',
-          quantity: 10,
-        },
-      ],
-    },
-    {
-      id: 2,
-      product_name: 'Áo thể thao Adidas',
-      images: ['https://via.placeholder.com/50'],
-      details: [
-        {
-          price: 450000,
-          color: 'Xanh',
-          size: 'L',
-          quantity: 15,
-        },
-      ],
-    },
-  ];
+  const handleDecoded = () => {
+    const storageData = localStorage.getItem('access_token');
+    let decoded = {};
+
+    if (storageData && isJsonString(storageData)) {
+      const parsed = JSON.parse(storageData);
+      decoded = jwtDecode(parsed);
+      return { decoded, storageData: parsed };
+    }
+
+    return { decoded, storageData };
+  };
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      const res = await ProductService.getAllProducts(accessToken);
+
+      console.log('res',res)
+
+      // Kiểm tra kiểu dữ liệu của res.data trước khi map
+      const productsWithKeys = res.data.data.map((product) => ({
+        ...product,
+        key: product._id,
+        product_name: product.product_name,
+        description: product.description,
+        category: product.category,
+        status: product.status,
+
+      }));
+
+      console.log('productsWithKeys',productsWithKeys)
+
+      setAllData(productsWithKeys);
+
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const fetchUpdateProduct = async (productData) => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        if (res?.access_token) {
+          accessToken = res.access_token;
+          localStorage.setItem('access_token', JSON.stringify(accessToken));
+        }
+      }
+
+      const res = await ProductService.updatedProduct(accessToken, productData);
+
+      if (res?.status === 200) {
+        message.success('Sửa sản phẩm thành công!');
+        form.resetFields();
+        setIsModalOpen(false);
+        fetchProducts();
+      } else {
+        message.error('Sửa sản phẩm thất bại!');
+      }
+    } catch (error) {
+      console.error('Lỗi khi sửa sản phẩm:', error);
+      message.error('Có lỗi xảy ra khi sửa sản phẩm.');
+    }
+  };
+
+  const onFinish = async (values) => {
+    const productData = {
+      _id: editingProduct?._id,
+      user_id: editingProduct?.user_id,
+      product_name: values.product_name,
+      description: values.description,
+      category: values.category,
+      status: values.status,
+      images: previewImages.length > 0 ? previewImages : editingProduct.images,
+      details: [{
+        price: values.price,
+        import_price: values.import_price,
+        color: values.color,
+        size: values.size,
+        quantity: values.quantity,
+      }],
+    };
+
+    await fetchUpdateProduct(productData);
+  };
 
   const PriceProduct = [
     { label: 'Tất cả', value: 'all' },
@@ -59,123 +138,53 @@ const SeeAllProduct = () => {
     { label: '500.000 -> 600.000', value: '500000-600000' },
   ];
 
-  const handleEdit = (record) => {
-    setEditingProduct(record);
-    form.setFieldsValue({
-      product_name: record.product_name,
-      price: record.details?.[0]?.price,
-      color: record.details?.[0]?.color,
-      size: record.details?.[0]?.size,
-      quantity: record.details?.[0]?.quantity,
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleOk = () => {
-    form.validateFields().then((values) => {
-      console.log('Dữ liệu đã sửa:', { ...editingProduct, ...values });
-      setIsModalOpen(false);
-    });
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-
-  const columns = [
-    {
-      title: 'Tên sản phẩm',
-      dataIndex: 'product_name',
-      key: 'product_name',
-    },
-    {
-      title: 'Hình ảnh',
-      dataIndex: 'images',
-      key: 'images',
-      render: (images) => (
-        <img
-          src={images?.[0] || 'https://via.placeholder.com/50'}
-          alt="product"
-          style={{ width: 50, height: 50, objectFit: 'cover' }}
-        />
-      ),
-    },
-    {
-      title: 'Giá bán',
-      dataIndex: ['details', 0, 'price'],
-      key: 'price',
-      render: (price, record) =>
-        `${record.details?.[0]?.price?.toLocaleString() || 0}₫`,
-    },
-    {
-      title: 'Màu sắc',
-      dataIndex: ['details', 0, 'color'],
-      key: 'color',
-      render: (_, record) => record.details?.[0]?.color || 'Không có',
-    },
-    {
-      title: 'Kích thước',
-      dataIndex: ['details', 0, 'size'],
-      key: 'size',
-      render: (_, record) => record.details?.[0]?.size || 'Không có',
-    },
-    {
-      title: 'Số lượng',
-      dataIndex: ['details', 0, 'quantity'],
-      key: 'quantity',
-      render: (_, record) => record.details?.[0]?.quantity || 0,
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      render: (_, record) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div>
       <WrapperHeaderSeeAllProduct>
         <h3>Sản phẩm</h3>
-        <ButtonComponents onClick={handleClickToAddProduct} icon={<PlusOutlined />} textButton={'Thêm sản phẩm'} />
+        <ButtonComponents onClick={handleClickToAddProduct} icon={<PlusOutlined />} textButton="Thêm sản phẩm" />
       </WrapperHeaderSeeAllProduct>
 
       <WrapperUnderHeaderSeeAllProduct>
-        <InputComponent name="searchProduct" label={'Tìm kiếm sản phẩm'} placeholder={'Nhập tên sản phẩm'} icon={<SearchOutlined />} />
-        <ComboboxComponent name="searchPriceProduct" label={'Giá sản phẩm'} placeholder={'Chọn giá sản phẩm'} options={PriceProduct} />
+        <InputComponent name="searchProduct" label="Tìm kiếm sản phẩm" placeholder="Nhập tên sản phẩm" icon={<SearchOutlined />} />
+        <ComboboxComponent name="searchPriceProduct" label="Giá sản phẩm" placeholder="Chọn giá sản phẩm" options={PriceProduct} />
       </WrapperUnderHeaderSeeAllProduct>
 
       <WrapperUnderHeaderSeeAllProduct>
         <h4>Danh sách sản phẩm</h4>
-        <div>{sampleData.length} sản phẩm</div>
+        <div>{allData?.length} sản phẩm</div>
       </WrapperUnderHeaderSeeAllProduct>
 
-      <Table columns={columns} dataSource={sampleData} rowKey="id" />
-
-      <Modal title="Chỉnh sửa sản phẩm" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-        <Form form={form} layout="vertical">
-          <Form.Item name="product_name" label="Tên sản phẩm" rules={[{ required: true, message: 'Vui lòng nhập tên' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="price" label="Giá bán" rules={[{ required: true }]}>
-            <InputNumber min={0} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="color" label="Màu sắc">
-            <Input />
-          </Form.Item>
-          <Form.Item name="size" label="Kích thước">
-            <Input />
-          </Form.Item>
-          <Form.Item name="quantity" label="Số lượng">
-            <InputNumber min={0} style={{ width: '100%' }} />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <StyledTable>
+        <thead>
+          <tr>
+            <StyledTh>Tên sản phẩm</StyledTh>
+            <StyledTh>Hình ảnh</StyledTh>
+            <StyledTh>Giá bán</StyledTh>
+            <StyledTh>Màu sắc</StyledTh>
+            <StyledTh>Kích thước</StyledTh>
+            <StyledTh>Số lượng</StyledTh>
+            <StyledTh>Thao tác</StyledTh>
+          </tr>
+        </thead>
+        <tbody>
+          {allData?.map((item) => (
+            <tr key={item._id}>
+              <StyledTd>{item.product_name}</StyledTd>
+              <StyledTd>
+                <ProductImage src={item.main_image || 'https://via.placeholder.com/150'} alt="product" />
+              </StyledTd>
+              <StyledTd>{item.price ? item.price.toLocaleString() : 'Chưa có giá'}₫</StyledTd>
+              <StyledTd>{item.color || 'Chưa có màu sắc'}</StyledTd>
+              <StyledTd>{item.size || 'Chưa có kích thước'}</StyledTd>
+              <StyledTd>{item.quantity || 0}</StyledTd>
+              <StyledTd>
+                <EditButton>Sửa</EditButton>
+              </StyledTd>
+            </tr>
+          ))}
+        </tbody>
+      </StyledTable>
     </div>
   );
 };
