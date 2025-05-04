@@ -1,6 +1,5 @@
-import { Col, Row, Tooltip, Pagination } from "antd";
+import { Col, Row, Tooltip, Pagination, message } from "antd";
 import React, { useCallback, useEffect, useState } from "react";
-import logo from "../../../assets/images/Logo_Den.jpg";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { BsTicketPerforated } from "react-icons/bs";
@@ -12,6 +11,7 @@ import * as CartServices from "../../../services/customer/CartServices";
 import { useDispatch } from "react-redux";
 import { updateCart } from "../../../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
+import { setCheckoutInfo } from "../../../redux/slices/checkoutSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -185,6 +185,35 @@ const CartPage = () => {
   const totalItems = selectedItems.length;
 
   const handleCheckout = () => {
+    const selectedProducts = cartItems.filter((item) =>
+      selectedItems.includes(item.key)
+    );
+
+    if (selectedProducts.length === 0) {
+      message.info("Vui lòng chọn sản phẩm để thanh toán!");
+      return;
+    }
+
+    console.log("selectedProducts", selectedProducts);
+
+    const checkoutData = {
+      products: selectedProducts.map((item) => ({
+        product_id: item.product_id,
+        product_name: item.product_name,
+        product_img: item.product_img || "",
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+
+        owner_id: item.owner_id,
+        cartItem_id: item._id,
+      })),
+    };
+
+    console.log("checkoutData", checkoutData);
+
+    dispatch(setCheckoutInfo(checkoutData));
     navigate("/checkout");
   };
 
@@ -242,21 +271,12 @@ const CartPage = () => {
                   <div style={{ width: 80 }}>
                     <img
                       src={item.product_img}
-                      alt="product"
+                      alt=""
                       style={{ width: "100%" }}
                     />
                   </div>
+
                   <div>
-                    <Tooltip title={item.product_name}>
-                      <div
-                        style={{
-                          maxWidth: 400,
-                          overflow: "hidden",
-                          whiteSpace: "nowrap",
-                          textOverflow: "ellipsis",
-                        }}
-                      ></div>
-                    </Tooltip>
                     <div style={{ fontSize: 12, color: "gray" }}>
                       <div style={{ fontSize: "15px", color: "#333" }}>
                         {item.product_name}

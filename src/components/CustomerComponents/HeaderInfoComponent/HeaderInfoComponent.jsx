@@ -75,7 +75,7 @@ const HeaderInfoComponent = () => {
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
                     src={item.product_img || anh}
-                    alt={item.product_name}
+                    alt=""
                   />
                 </div>
               </div>

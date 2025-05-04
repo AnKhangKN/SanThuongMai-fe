@@ -5,7 +5,7 @@ const initialState = {
   total_item: 0, // Tổng số lượng sản phẩm trong giỏ hàng
 };
 
-export const userSlice = createSlice({
+export const cartSlice = createSlice({
   name: "cart",
   initialState,
 
@@ -18,6 +18,6 @@ export const userSlice = createSlice({
   },
 });
 
-export const { updateCart } = userSlice.actions;
+export const { updateCart } = cartSlice.actions;
 
-export default userSlice.reducer;
+export default cartSlice.reducer;

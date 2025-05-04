@@ -133,8 +133,10 @@ const ProductDetailPage = () => {
         },
         quantity,
         owner_id: productDetail.user_id, // Chủ sản phẩm
-        product_id_module: id.id,
+        product_id_module: id.id, // id của sản phẩm
       };
+      console.log("payload", payload);
+
       if (payload.quantity <= 0) {
         message.warning("Hãy thêm số lượng bạn cần!");
         return;
@@ -143,7 +145,7 @@ const ProductDetailPage = () => {
       const res = await CartServices.addToCart(
         accessToken,
         payload,
-        selectedProductDetail._id // product_id
+        payload.product_id_module // product_id đúng
       );
 
       if (!res || res.status !== "OK") {
@@ -152,7 +154,7 @@ const ProductDetailPage = () => {
       }
 
       const newItem = {
-        product_id: selectedProductDetail._id,
+        product_id: payload.product_id_module,
         product_name: productDetail.product_name,
         product_img: currentImage,
         price: selectedProductDetail.price,

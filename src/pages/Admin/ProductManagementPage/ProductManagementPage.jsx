@@ -131,6 +131,8 @@ const ProductManagementPage = () => {
         key: product._id || product.id,
       }));
 
+      console.log("productsWithKeys", productsWithKeys)
+
       setAllData(productsWithKeys);
     } catch (error) {
       console.error("Lỗi khi lấy sản phẩm:", error);
