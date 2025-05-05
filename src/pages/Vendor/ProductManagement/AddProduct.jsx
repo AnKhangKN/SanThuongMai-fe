@@ -81,11 +81,6 @@ const AddProduct = () => {
           quantity: Number(values.quantity),
         },
       ],
-  
-      // sale: {
-      //   price: Number(values.salePrice),
-      //   // Bạn có thể thêm start_date và end_date nếu muốn
-      // },
     };
   
     console.log('Dữ liệu gửi lên:', productData);
@@ -144,7 +139,7 @@ const AddProduct = () => {
                 label="Tên sản phẩm"
                 rules={[
                   { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
-                  { min: 10, message: 'Tên sản phẩm phải có ít nhất 10 kí tự' },
+                  { min: 5, message: 'Tên sản phẩm phải có ít nhất 5 kí tự' },
                 ]}
               >
                 <Input placeholder="Nhập tên sản phẩm" />
@@ -164,7 +159,6 @@ const AddProduct = () => {
               <Form.Item
                 label="Kích thước"
                 name="size"
-                rules={[{ required: true, message: 'Vui lòng nhập kích thước!' }]}
               >
                 <Input placeholder="Nhập kích thước" />
               </Form.Item>
@@ -172,7 +166,6 @@ const AddProduct = () => {
               <Form.Item
                 label="Màu sắc"
                 name="colors"
-                rules={[{ required: true, message: 'Vui lòng nhập màu sắc!' }]}
               >
                 <Input placeholder="Nhập màu sắc" />
               </Form.Item>

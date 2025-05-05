@@ -8,8 +8,13 @@ import {
   ShopDescription,
   ShopDetail
 } from './styleOfProfile';
+import { useSelector } from 'react-redux';
 
 const ProFileShop = () => {
+  const user = useSelector((state) => state.user);
+
+  console.log("user", user);
+
   return (
     <ShopProfileWrapper>
       <ShopAvatar src={shopLogo} alt="Shop Logo" />
@@ -19,9 +24,8 @@ const ProFileShop = () => {
           Chuyên cung cấp các dụng cụ thể thao chất lượng cao, giá cả hợp lý.
         </ShopDescription>
         <ShopDetail>
-          <p><strong>Mã shop:</strong> SHP-202504</p>
-          <p><strong>Email:</strong> hknsports@gmail.com</p>
-          <p><strong>Điện thoại:</strong> 0987 654 321</p>
+          <p><strong>Email:</strong> {user?.email}</p>
+          <p><strong>Điện thoại:</strong> {user?.shop?.phone}</p>
           <p><strong>Địa chỉ:</strong> 123 Nguyễn Trãi, Q.5, TP.HCM</p>
         </ShopDetail>
       </ShopInfo>

@@ -24,9 +24,9 @@ export const getAllProducts = async (accessToken) => {
 };
 
 export const updatedProduct = async (accessToken, productData) => {
-  const userId = productData.user_id;
+  console.log(productData);
   return await axios.put(
-    `${process.env.REACT_APP_API_URL}/vendor/update-product/${userId}`,
+    `${process.env.REACT_APP_API_URL}/vendor/update-product`,
     productData,
     {
       headers: {
