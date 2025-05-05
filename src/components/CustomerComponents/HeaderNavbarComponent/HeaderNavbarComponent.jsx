@@ -158,7 +158,7 @@ const HeaderNavbarComponent = () => {
                 {/* modal */}
                 <ModalInformation>
                   <Link to="/user/account/profile">Thông tin cá nhân </Link>
-                  <Link to="/user/purchase/complete">Đơn mua</Link>
+                  <Link to="/user/purchase/delivered">Đơn mua</Link>
                   <div onClick={handleLogout}>Đăng xuất</div>
                 </ModalInformation>
               </>

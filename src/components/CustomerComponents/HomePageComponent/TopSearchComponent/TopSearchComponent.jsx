@@ -1,29 +1,32 @@
 import React, { useState, useEffect, useRef } from "react";
 import { GrNext, GrPrevious } from "react-icons/gr";
-import img from "../../../../assets/images/products/ao-demo-2.webp";
-import { ImageCart } from "./style";
 import { Link } from "react-router-dom";
+import * as ProductServices from "../../../../services/shared/ProductServices";
+import { ImageCart } from "./style";
 
 const TopSearchComponent = () => {
-  const products = [
-    { id: 1, name: "Sản phẩm 1", image: img },
-    { id: 2, name: "Sản phẩm 2", image: img },
-    { id: 3, name: "Sản phẩm 3", image: img },
-    { id: 4, name: "Sản phẩm 4", image: img },
-    { id: 5, name: "Sản phẩm 5", image: img },
-    { id: 6, name: "Sản phẩm 6", image: img },
-    { id: 7, name: "Sản phẩm 7", image: img },
-    { id: 8, name: "Sản phẩm 8", image: img },
-    { id: 9, name: "Sản phẩm 9", image: img },
-    { id: 10, name: "Sản phẩm 10", image: img },
-  ];
-
   const [index, setIndex] = useState(0);
   const [visibleItems, setVisibleItems] = useState(6);
   const [itemWidth, setItemWidth] = useState(0);
   const [maxIndex, setMaxIndex] = useState(0);
+  const [products, setProducts] = useState([]); // Khởi tạo state products để lưu dữ liệu sản phẩm
   const productRef = useRef();
 
+  // Hàm fetch dữ liệu sản phẩm
+  const fetchAllProduct = async () => {
+    const res = await ProductServices.getAllTopSearch();
+
+    const lsProduct = res.data;
+
+    setProducts(lsProduct); // Lưu sản phẩm vào state products
+  };
+
+  // Lấy dữ liệu sản phẩm khi component được mount
+  useEffect(() => {
+    fetchAllProduct();
+  }, []);
+
+  // Cập nhật các giá trị phụ thuộc vào kích thước cửa sổ
   useEffect(() => {
     const updateValues = () => {
       const windowWidth = window.innerWidth;
@@ -48,7 +51,7 @@ const TopSearchComponent = () => {
     updateValues();
     window.addEventListener("resize", updateValues);
     return () => window.removeEventListener("resize", updateValues);
-  }, [visibleItems, products.length]); // Added products.length to the dependency array
+  }, [visibleItems, products.length]); // Sử dụng products.length trong dependency array
 
   const handlePrev = () => {
     if (index > 0) {
@@ -79,7 +82,7 @@ const TopSearchComponent = () => {
             products.map((product, idx) => (
               <div
                 key={product.id}
-                ref={idx === 0 ? productRef : null} // Only assign ref to the first item
+                ref={idx === 0 ? productRef : null} // Chỉ gán ref cho sản phẩm đầu tiên
                 style={{
                   flex: `0 0 calc(100% / ${visibleItems})`,
                   padding: "10px",
@@ -88,18 +91,23 @@ const TopSearchComponent = () => {
                 }}
               >
                 <Link
-                  to={`/product/${product.id}`}
+                  to={`/product/${product._id}`}
                   style={{ textDecoration: "none" }}
                 >
                   <ImageCart>
                     <img
-                      src={product.image}
-                      alt={product.name}
+                      src={
+                        Array.isArray(product.img)
+                          ? product.img[0]
+                          : product.img ||
+                            "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
+                      }
+                      alt=""
                       style={{ width: "100%" }}
                     />
                   </ImageCart>
 
-                  <h5>{product.name}</h5>
+                  <h5>{product.product_name}</h5>
                 </Link>
               </div>
             ))

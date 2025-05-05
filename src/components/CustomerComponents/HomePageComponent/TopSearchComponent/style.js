@@ -18,7 +18,7 @@ export const ImageCart = styled.div`
   }
 
   &::after {
-    content: "Đã bán 30k";
+    content: "";
     position: absolute;
     color: #fff;
     bottom: 0px;

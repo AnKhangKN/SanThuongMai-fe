@@ -1,21 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import img from "../../../../assets/images/products/ao-demo.webp";
 import { Link } from "react-router-dom";
-
-const products = Array.from({ length: 50 }, (_, i) => ({
-  id: i + 1,
-  name: `Danh mục ${i + 1}`,
-  img: img,
-}));
+import * as ProductServices from "../../../../services/shared/ProductServices";
 
 const itemsPerRow = 10;
 const rowsPerPage = 2;
 const itemsPerPage = itemsPerRow * rowsPerPage;
 
 const CategoryComponent = () => {
+  const [products, setProducts] = useState([]);
   const [startIndex, setStartIndex] = useState(0);
+
+  const fetchCategory = async () => {
+    try {
+      const res = await ProductServices.getAllCategoryHome();
+
+      const lsProduct = res.data;
+
+      console.log(lsProduct);
+
+      setProducts(lsProduct);
+    } catch (err) {
+      console.error("Lỗi khi lấy danh mục:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategory();
+  }, []);
 
   const handleNext = () => {
     if (startIndex + itemsPerPage < products.length) {
@@ -53,16 +67,11 @@ const CategoryComponent = () => {
               to={`/category/${product.name}`}
               style={{ textDecoration: "none", color: "#333" }}
             >
-              <div
-                style={{
-                  width: "80%",
-                  margin: "auto ",
-                }}
-              >
+              <div style={{ width: "80%", margin: "auto" }}>
                 <img
                   style={{ width: "100%", objectFit: "cover" }}
-                  src={product.img}
-                  alt={product.name}
+                  src={product.img || img}
+                  alt=""
                 />
               </div>
               <div style={{ textAlign: "center" }}>{product.name}</div>

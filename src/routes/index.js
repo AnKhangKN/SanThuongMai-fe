@@ -32,16 +32,17 @@ import CartPage from "../pages/Customer/CartPage/CartPage";
 import CategoryPage from "../pages/Customer/CategoryPage/CategoryPage";
 import NotificationPage from "../pages/Customer/AccountPage/NotificationPage/NotificationPage";
 
-import CompleteComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/CompleteComponent/CompleteComponent";
-import CancelComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/CancelComponent/CancelComponent";
-import TransportComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/TransportComponent/TransportComponent";
-import WaitingForDelivery from "../components/CustomerComponents/AccountPageComponent/OrderComponent/WaitingForDelivery/WaitingForDelivery";
-import WaitingForPayment from "../components/CustomerComponents/AccountPageComponent/OrderComponent/WaitingForPayment/WaitingForPayment";
+// import CompleteComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/CompleteComponent/CompleteComponent";
+// import CancelComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/CancelComponent/CancelComponent";
+// import TransportComponent from "../components/CustomerComponents/AccountPageComponent/OrderComponent/TransportComponent/TransportComponent";
+// import WaitingForDelivery from "../components/CustomerComponents/AccountPageComponent/OrderComponent/WaitingForDelivery/WaitingForDelivery";
+// import WaitingForPayment from "../components/CustomerComponents/AccountPageComponent/OrderComponent/WaitingForPayment/WaitingForPayment";
 import SignupPage from "../pages/Auth/SignupPage/SignupPage";
 import LoginPage from "../pages/Auth/LoginPage/LoginPage";
 import AdminProfilePage from "../pages/Admin/AdminProfilePage/AdminProfilePage";
 import VendorManagementPage from "../pages/Admin/VendorManagementPage/VendorManagementpage";
 import PaymentPage from "../pages/Customer/PaymentPage/PaymentPage";
+import OrderPage from "../pages/Customer/AccountPage/OrderPage/OrderPage";
 
 export const routes = [
   //auth
@@ -63,7 +64,7 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/category/:name",
+    path: "/category/:name-category",
     page: CategoryPage,
     isShowHeader: true,
   },
@@ -97,31 +98,38 @@ export const routes = [
     page: NotificationPage,
     isShowHeader: true,
   },
+
   {
-    path: "/user/purchase/complete",
-    page: CompleteComponent,
+    path: "/user/purchase/:status-order",
+    page: OrderPage,
     isShowHeader: true,
   },
-  {
-    path: "/user/purchase/cancel",
-    page: CancelComponent,
-    isShowHeader: true,
-  },
-  {
-    path: "/user/purchase/transport",
-    page: TransportComponent,
-    isShowHeader: true,
-  },
-  {
-    path: "/user/purchase/waiting-delivery",
-    page: WaitingForDelivery,
-    isShowHeader: true,
-  },
-  {
-    path: "/user/purchase/waiting-payment",
-    page: WaitingForPayment,
-    isShowHeader: true,
-  },
+
+  // {
+  //   path: "/user/purchase/:status-delivered",
+  //   page: CompleteComponent,
+  //   isShowHeader: true,
+  // },
+  // {
+  //   path: "/user/purchase/:status-cancel",
+  //   page: CancelComponent,
+  //   isShowHeader: true,
+  // },
+  // {
+  //   path: "/user/purchase/:status-shipped",
+  //   page: TransportComponent,
+  //   isShowHeader: true,
+  // },
+  // {
+  //   path: "/user/purchase/:status-pending",
+  //   page: WaitingForDelivery,
+  //   isShowHeader: true,
+  // },
+  // {
+  //   path: "/user/purchase/:status-processing",
+  //   page: WaitingForPayment,
+  //   isShowHeader: true,
+  // },
 
   // vendor
   {

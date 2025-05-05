@@ -8,8 +8,9 @@ import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as OrderServices from "../../../services/customer/OrderServices";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { resetCheckout } from "../../../redux/slices/checkoutSlice";
 
 const PaymentPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +25,8 @@ const PaymentPage = () => {
   });
 
   const products = useSelector((state) => state.checkout.products);
+
+  const dispatch = useDispatch();
 
   const decodeToken = () => {
     const storageToken = localStorage.getItem("access_token");
@@ -58,6 +61,11 @@ const PaymentPage = () => {
 
     const paymentMethod = selectedMethod;
 
+    if (!paymentMethod) {
+      message.info("Hãy chọn phương thức thanh toán!");
+      return;
+    }
+
     try {
       let { decoded, token } = decodeToken();
       if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
@@ -75,6 +83,8 @@ const PaymentPage = () => {
         totalBill,
         paymentMethod
       );
+
+      dispatch(resetCheckout());
 
       message.success("Đặt hàng thành công!");
     } catch (err) {
@@ -576,6 +586,7 @@ const PaymentPage = () => {
                 style={{ width: "100%" }}
                 name="Confirm Order"
                 type="primary"
+                disabled={!selectedMethod}
                 onClick={handleConfirmOrder}
               />
             )}

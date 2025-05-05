@@ -66,3 +66,39 @@ export const addPayment = async (
     );
   }
 };
+
+export const getAllOrderByStatus = async (accessToken, keyword) => {
+  try {
+    const res = await axios.get(
+      `${process.env.REACT_APP_API_URL}/customer/get-all-order`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Đảm bảo có header Authorization
+        },
+        params: { keyword }, // Truyền `keyword` dưới dạng query string
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch search products:", error);
+    throw error;
+  }
+};
+
+export const successfulDelivered = async (accessToken, data) => {
+  try {
+    const res = await axios.patch(
+      `${process.env.REACT_APP_API_URL}/customer/successful-delivered`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Đảm bảo có header Authorization
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch search products:", error);
+    throw error;
+  }
+};

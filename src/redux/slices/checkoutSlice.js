@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  products: [], // nên dùng "products" vì reducer đang cập nhật "products"
+  products: [],
 };
 
 export const checkoutSlice = createSlice({
@@ -15,9 +15,13 @@ export const checkoutSlice = createSlice({
     addProductToCheckout: (state, action) => {
       state.products.push(action.payload);
     },
+    resetCheckout: (state) => {
+      state.products = [];
+    },
   },
 });
 
-export const { setCheckoutInfo, addProductToCheckout } = checkoutSlice.actions;
+export const { setCheckoutInfo, addProductToCheckout, resetCheckout } =
+  checkoutSlice.actions;
 
 export default checkoutSlice.reducer;

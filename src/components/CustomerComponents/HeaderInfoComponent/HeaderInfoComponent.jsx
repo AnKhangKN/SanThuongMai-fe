@@ -3,7 +3,6 @@ import { AiOutlineShoppingCart } from "react-icons/ai";
 import { CartModal, CartWrapper, IconWrapper, SumCart } from "./style";
 import Logo_Xoa_Phong from "../../../assets/images/Logo_Den-removebg-preview.png";
 import SearchComponent from "../SearchComponent/SearchComponent";
-import HeaderCategoryComponent from "../HeaderCategoryComponent/HeaderCategoryComponent";
 import { Link } from "react-router-dom";
 import anh from "../../../assets/images/Logo_Den.jpg";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
@@ -43,9 +42,6 @@ const HeaderInfoComponent = () => {
       <div style={{ width: "100%", margin: "0px 30px 0px 60px" }}>
         <div>
           <SearchComponent />
-        </div>
-        <div style={{ margin: "8px 0px -12px 0px" }}>
-          <HeaderCategoryComponent />
         </div>
       </div>
 

@@ -6,7 +6,13 @@ import { Col, Row } from "antd";
 const AccountPage = ({ children }) => {
   return (
     <>
-      <div style={{ marginTop: "120px", backgroundColor: "#f5f5f5" }}>
+      <div
+        style={{
+          marginTop: "120px",
+          backgroundColor: "#f5f5f5",
+          height: "100vh",
+        }}
+      >
         <Row
           style={{
             display: "flex",
