@@ -103,3 +103,21 @@ export const successfulDelivered = async (accessToken, data) => {
     throw error;
   }
 };
+
+export const cancelledOrder = async (accessToken, data) => {
+  try {
+    const res = await axios.patch(
+      `${process.env.REACT_APP_API_URL}/customer/cancel-order`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Đảm bảo có header Authorization
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch search products:", error);
+    throw error;
+  }
+};

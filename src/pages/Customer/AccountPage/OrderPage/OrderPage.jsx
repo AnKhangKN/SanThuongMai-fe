@@ -46,7 +46,6 @@ const OrderPage = () => {
       }
 
       const res = await OrderServices.getAllOrderByStatus(accessToken, keyword);
-      console.log("API response:", res);
 
       if (res?.status === "ERROR") {
         throw new Error(res.message);
@@ -106,6 +105,38 @@ const OrderPage = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId) => {
+    console.log("Hủy đơn hàng với:", orderId);
+
+    try {
+      let { storageData, decoded } = handleDecoded();
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      const status = "cancelled";
+      const order = allData.find(
+        (item) => item._id === orderId || item.id === orderId
+      );
+
+      console.log("Đơn hàng được xác nhận:", order);
+
+      const res = await OrderServices.cancelledOrder(accessToken, {
+        status,
+        order,
+      });
+
+      message.success("Đã hủy đơn hàng!");
+      fetchAllOrderByStatus();
+    } catch (error) {
+      console.error("Lỗi khi xác nhận đơn hàng:", error.message || error);
+    }
+  };
+
   return (
     <AccountPage>
       <div style={{ display: "flex", backgroundColor: "#fff" }}>
@@ -150,27 +181,42 @@ const OrderPage = () => {
                 : order.items || []
               ) // còn lại dùng "items"
                 .map((item, index) => (
-                  <Row key={index} style={{ marginBottom: "10px" }}>
-                    <Col span={4}>
-                      <img
-                        src={item.product_image || item.image}
-                        alt="ảnh sản phẩm"
-                        width="100%"
-                      />
-                    </Col>
-                    <Col span={16}>
-                      <div>{item.product_name || item.name}</div>
-                      <div style={{ display: "flex", gap: "20px" }}>
-                        <div>{item.size || "Không có size"}</div>
-                        <div>{item.color || "Không có màu"}</div>
-                      </div>
-                      <div>Số lượng: {item.quantity}</div>
-                    </Col>
-                    <Col span={4} style={{ textAlign: "end" }}>
-                      {item.price?.toLocaleString()}₫
-                    </Col>
-                  </Row>
+                  <>
+                    <Row key={index} style={{ marginBottom: "10px" }}>
+                      <Col span={4}>
+                        <img
+                          src={item.product_image || item.image}
+                          alt="ảnh sản phẩm"
+                          width="100%"
+                        />
+                      </Col>
+                      <Col span={16}>
+                        <div>{item.product_name || item.name}</div>
+                        <div style={{ display: "flex", gap: "20px" }}>
+                          <div>{item.size || "Không có size"}</div>
+                          <div>{item.color || "Không có màu"}</div>
+                        </div>
+                        <div>Số lượng: {item.quantity}</div>
+                      </Col>
+                      <Col span={4} style={{ textAlign: "end" }}>
+                        {item.price?.toLocaleString()}₫
+                      </Col>
+                    </Row>
+                  </>
                 ))}
+
+              <div>
+                <div>
+                  Số điện thoại:{" "}
+                  {order.shipping_address.phone || "Không có số giao hàng"}
+                </div>
+                <div>
+                  Địa chỉ:{" "}
+                  {order.shipping_address.address ||
+                    "Không có địa chỉ giao hàng"}
+                  ,{order.shipping_address.city}
+                </div>
+              </div>
 
               {keyword === "shipped" && (
                 <div
@@ -192,7 +238,15 @@ const OrderPage = () => {
               )}
 
               {(keyword === "pending" || keyword === "processing") && (
-                <div style={{ textAlign: "end" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexFlow: "column",
+                  }}
+                >
+                  <div style={{ textAlign: "end" }}>
+                    Tổng đơn hàng: {order.total_price?.toLocaleString()}
+                  </div>
                   <button
                     style={{
                       backgroundColor: "#fff",
@@ -200,6 +254,9 @@ const OrderPage = () => {
                       padding: "9px 20px",
                       border: "1px solid #333",
                       borderRadius: "2px",
+                    }}
+                    onClick={() => {
+                      handleCancelOrder(order._id || order.id);
                     }}
                   >
                     Hủy đơn hàng
