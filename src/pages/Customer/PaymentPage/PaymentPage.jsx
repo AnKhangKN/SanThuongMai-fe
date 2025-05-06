@@ -129,8 +129,8 @@ const PaymentPage = () => {
 
   const handleCancel = () => {
     setIsModalOpen(false);
-    setIsAddingAddress(false);
     setNewAddress({ phone: "", address: "", city: "" });
+    setIsAddingAddress(true);
   };
 
   const handleAddNewAddressClick = () => {
@@ -181,8 +181,11 @@ const PaymentPage = () => {
       // thêm địa chỉ mới vào danh sách địa chỉ
       const newId = res.data?._id || Date.now().toString(); // ưu tiên ID từ server nếu có
       const updatedAddresses = [...addresses, { _id: newId, ...newAddress }];
+      // Cập nhật danh sách hiển thị ngay
       setAddresses(updatedAddresses);
       setSelectedAddressId(newId);
+
+      // Reset form và đóng modal
       handleCancel();
     } catch (error) {
       console.error("Error saving address:", error);
