@@ -88,19 +88,21 @@ const OrderPage = () => {
       }
 
       const status = "delivered";
+      const order = allData.find(
+        (item) => item._id === orderId || item.id === orderId
+      );
 
-      const order_id = orderId;
+      console.log("Đơn hàng được xác nhận:", order);
 
       const res = await OrderServices.successfulDelivered(accessToken, {
         status,
-        order_id,
+        order,
       });
 
       message.success("Xác nhận thành công!");
-
       fetchAllOrderByStatus();
     } catch (error) {
-      console.error("Lỗi khi lấy đơn hàng:", error.message || error);
+      console.error("Lỗi khi xác nhận đơn hàng:", error.message || error);
     }
   };
 
@@ -133,7 +135,9 @@ const OrderPage = () => {
         <Row>
           <Col span={4}></Col>
           <Col span={16}>Sản phẩm</Col>
-          <Col span={4}>Đơn giá</Col>
+          <Col span={4} style={{ textAlign: "end" }}>
+            Đơn giá
+          </Col>
         </Row>
       </DetailBox>
 
@@ -162,12 +166,22 @@ const OrderPage = () => {
                       </div>
                       <div>Số lượng: {item.quantity}</div>
                     </Col>
-                    <Col span={4}>{item.price?.toLocaleString()}₫</Col>
+                    <Col span={4} style={{ textAlign: "end" }}>
+                      {item.price?.toLocaleString()}₫
+                    </Col>
                   </Row>
                 ))}
 
               {keyword === "shipped" && (
-                <div style={{ textAlign: "end" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexFlow: "column",
+                  }}
+                >
+                  <div style={{ textAlign: "end" }}>
+                    Tổng đơn hàng: {order.total_price?.toLocaleString()}
+                  </div>
                   <ButtonComponent
                     name="Xác nhận đơn hàng"
                     onClick={() =>

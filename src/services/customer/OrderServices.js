@@ -86,6 +86,7 @@ export const getAllOrderByStatus = async (accessToken, keyword) => {
 };
 
 export const successfulDelivered = async (accessToken, data) => {
+  console.log(data);
   try {
     const res = await axios.patch(
       `${process.env.REACT_APP_API_URL}/customer/successful-delivered`,
