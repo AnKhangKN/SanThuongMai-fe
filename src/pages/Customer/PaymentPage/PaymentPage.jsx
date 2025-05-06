@@ -11,6 +11,7 @@ import * as OrderServices from "../../../services/customer/OrderServices";
 import { useDispatch, useSelector } from "react-redux";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { resetCheckout } from "../../../redux/slices/checkoutSlice";
+import { IoMdClose } from "react-icons/io";
 
 const PaymentPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -122,15 +123,17 @@ const PaymentPage = () => {
     fetchAllAddress();
   }, []);
 
-  const showModal = () => {
+  const showModal = async () => {
     setIsModalOpen(true);
     setIsAddingAddress(false);
+    // Gọi lại danh sách từ server
+    await fetchAllAddress();
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
     setNewAddress({ phone: "", address: "", city: "" });
-    setIsAddingAddress(true);
+    setIsAddingAddress(false);
   };
 
   const handleAddNewAddressClick = () => {
@@ -144,7 +147,7 @@ const PaymentPage = () => {
 
   const handleSaveAddress = async () => {
     if (!newAddress.phone || !newAddress.address || !newAddress.city) {
-      message.error("Please fill in all fields.");
+      message.error("Hãy chọn đủ thông tin!.");
       return;
     }
 
@@ -153,7 +156,7 @@ const PaymentPage = () => {
       let accessToken = token;
 
       if (!accessToken || decoded?.exp * 1000 < Date.now()) {
-        const res = await AuthServices.refreshToken(); // thêm await ở đây
+        const res = await AuthServices.refreshToken();
         if (!res?.access_token) {
           message.error("Unable to refresh session!");
           return;
@@ -171,21 +174,16 @@ const PaymentPage = () => {
       };
 
       const res = await OrderServices.addAddress(accessToken, payload);
-      if (!res || res.status !== "OK") {
+      if (!res || res.status !== "SUCCESS") {
         message.error(res?.message || "Failed to add address!");
         return;
       }
 
-      message.success("Address added successfully!");
+      message.success("Thêm địa chỉ giao hàng thành công!");
 
-      // thêm địa chỉ mới vào danh sách địa chỉ
-      const newId = res.data?._id || Date.now().toString(); // ưu tiên ID từ server nếu có
-      const updatedAddresses = [...addresses, { _id: newId, ...newAddress }];
-      // Cập nhật danh sách hiển thị ngay
-      setAddresses(updatedAddresses);
-      setSelectedAddressId(newId);
+      // Gọi lại danh sách từ server
+      await fetchAllAddress();
 
-      // Reset form và đóng modal
       handleCancel();
     } catch (error) {
       console.error("Error saving address:", error);
@@ -290,9 +288,20 @@ const PaymentPage = () => {
                         checked={addr._id === selectedAddressId}
                         onChange={() => setSelectedAddressId(addr._id)}
                       />
-                      <div>{addr.phone}</div>
-                      <div>
+                      <div style={{ width: "100px" }}>{addr.phone}</div>
+                      <div
+                        style={{
+                          maxWidth: "200px",
+                          width: "200px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {addr.address}, {addr.city}
+                      </div>
+                      <div style={{ textAlign: "end", width: "110px" }}>
+                        <IoMdClose />
                       </div>
                     </div>
                   ))
