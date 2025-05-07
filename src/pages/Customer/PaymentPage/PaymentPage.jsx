@@ -516,6 +516,21 @@ const PaymentPage = () => {
               >
                 <PayPalButtons
                   createOrder={(data, actions) => {
+                    if (!selectedAddressId) {
+                      message.warning("Hãy thêm địa chỉ!");
+                      return;
+                    }
+
+                    // Giả lập số dư trong PayPal Sandbox (5,000 USD)
+                    const simulatedBalance = 100000000000;
+                    const totalPayment = totalAmount + 30000;
+
+                    // Kiểm tra nếu số dư giả lập nhỏ hơn số tiền cần thanh toán
+                    if (totalPayment > simulatedBalance) {
+                      message.error("Số dư PayPal không đủ để thanh toán!");
+                      return;
+                    }
+
                     return actions.order.create({
                       purchase_units: [
                         {
@@ -528,11 +543,6 @@ const PaymentPage = () => {
                   }}
                   onApprove={async (data, actions) => {
                     const details = await actions.order.capture();
-
-                    if (!selectedAddressId) {
-                      message.warning("Hãy thêm địa chỉ!");
-                      return;
-                    }
 
                     const selectedAddress = addresses.find(
                       (addr) => addr._id === selectedAddressId
@@ -587,9 +597,13 @@ const PaymentPage = () => {
                   }}
                   onError={(err) => {
                     console.error("PayPal Error:", err);
-                    message.error(
-                      "Lỗi trong quá trình thanh toán bằng PayPal!"
-                    );
+                    if (err?.details?.[0]?.issue === "PAYER_CANNOT_PAY") {
+                      message.error("Số dư PayPal không đủ để thanh toán!");
+                    } else {
+                      message.error(
+                        "Lỗi trong quá trình thanh toán bằng PayPal!"
+                      );
+                    }
                   }}
                 />
               </PayPalScriptProvider>
