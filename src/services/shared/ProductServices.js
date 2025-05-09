@@ -56,7 +56,6 @@ export const getAllCategoryHome = async () => {
 };
 
 export const getSearchCategory = async (keyword) => {
-  console.log(keyword);
 
   try {
     const res = await axios.get(

@@ -43,6 +43,10 @@ import AdminProfilePage from "../pages/Admin/AdminProfilePage/AdminProfilePage";
 import VendorManagementPage from "../pages/Admin/VendorManagementPage/VendorManagementpage";
 import PaymentPage from "../pages/Customer/PaymentPage/PaymentPage";
 import OrderPage from "../pages/Customer/AccountPage/OrderPage/OrderPage";
+import DeleteAccount from "../pages/Customer/AccountPage/DeleteAccount/DeleteAccount";
+import PasswordChangePage from "../pages/Customer/AccountPage/PasswordChangePage/PasswordChangePage";
+import WalletPage from "../pages/Customer/AccountPage/WalletPage/WalletPage";
+import ShopDetailPage from "../pages/Customer/ShopDetailPage/ShopDetailPage";
 
 export const routes = [
   //auth
@@ -79,6 +83,11 @@ export const routes = [
     isShowHeader: true,
   },
   {
+    path: "/shop/:id_owner",
+    page: ShopDetailPage,
+    isShowHeader: true,
+  },
+  {
     path: "/cart",
     page: CartPage,
     isShowHeader: true,
@@ -94,11 +103,25 @@ export const routes = [
     isShowHeader: true,
   },
   {
+    path: "/user/account/wallet",
+    page: WalletPage,
+    isShowHeader: true,
+  },
+  {
     path: "/user/notification",
     page: NotificationPage,
     isShowHeader: true,
   },
-
+  {
+    path: "/user/account/delete",
+    page: DeleteAccount,
+    isShowHeader: true,
+  },
+  {
+    path: "/user/account/change-password",
+    page: PasswordChangePage,
+    isShowHeader: true,
+  },
   {
     path: "/user/purchase/:status-order",
     page: OrderPage,

@@ -2,7 +2,6 @@ import axios from "axios";
 
 // Lấy tất của user
 export const getAllProducts = async (accessToken) => {
-  console.log("accessToken", accessToken);
 
   const res = await axios.get(
     `${process.env.REACT_APP_API_URL}/admin/get-all-products`,

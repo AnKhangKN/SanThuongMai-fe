@@ -6,11 +6,13 @@ const ButtonComponent = ({
   width = "auto",
   height = "auto",
   onClick,
+  fontSize = "15px",
 }) => {
   return (
     <button
-      onClick={onClick} // Properly handling onClick event
+      onClick={onClick}
       style={{
+        fontSize: fontSize,
         height: height,
         width: width,
         padding: "10px 30px",

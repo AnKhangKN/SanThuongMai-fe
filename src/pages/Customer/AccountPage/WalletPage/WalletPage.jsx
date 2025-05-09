@@ -2,14 +2,16 @@ import React from "react";
 import AccountPage from "../AccountPage";
 import { Wrapper } from "./style";
 
-const NotificationPage = () => {
+const WalletPage = () => {
   return (
     <AccountPage>
       <Wrapper>
-        <div>Chưa có thông báo nào!</div>
+        <div style={{ fontSize: "20px" }}>
+          Tài khoản của bạn hiện có: 200000đ
+        </div>
       </Wrapper>
     </AccountPage>
   );
 };
 
-export default NotificationPage;
+export default WalletPage;

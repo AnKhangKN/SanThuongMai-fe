@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { resetCheckout } from "../../../redux/slices/checkoutSlice";
 import { IoMdClose } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 
 const PaymentPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +25,8 @@ const PaymentPage = () => {
     address: "",
     city: "",
   });
+
+  const navigate = useNavigate();
 
   const products = useSelector((state) => state.checkout.products);
 
@@ -67,6 +70,12 @@ const PaymentPage = () => {
       return;
     }
 
+    if (!products) {
+      message.warning("Hãy thêm sản phẩm để thanh toán!");
+      navigate("/cart");
+      return;
+    }
+
     try {
       let { decoded, token } = decodeToken();
       if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
@@ -90,7 +99,7 @@ const PaymentPage = () => {
       message.success("Đặt hàng thành công!");
     } catch (err) {
       console.error("Error confirming order:", err);
-      message.error("Order confirmation failed!");
+      message.warning("Hãy thêm sản phẩm để tạo đơn hàng!");
     }
   };
 
@@ -142,12 +151,29 @@ const PaymentPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "phone") {
+      // Kiểm tra số điện thoại ngay khi người dùng nhập
+      const phoneRegex = /^[0-9]*$/;
+      if (!phoneRegex.test(value)) {
+        message.warning("Số điện thoại chỉ được chứa số!");
+        return;
+      }
+    }
+
     setNewAddress((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveAddress = async () => {
     if (!newAddress.phone || !newAddress.address || !newAddress.city) {
       message.error("Hãy chọn đủ thông tin!.");
+      return;
+    }
+
+    // Kiểm tra định dạng số điện thoại (10-11 chữ số)
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(newAddress.phone)) {
+      message.warning("Hãy kiểm tra lại số điện thoại của bạn!");
       return;
     }
 
@@ -507,115 +533,129 @@ const PaymentPage = () => {
             </div>
           </div>
 
-          <div style={{ textAlign: "end", margin: "20px 0px" }}>
-            {selectedMethod === "credit_card" ? (
-              <PayPalScriptProvider
-                options={{
-                  "client-id": process.env.REACT_APP_CLIENT_ID,
-                }}
-              >
-                <PayPalButtons
-                  createOrder={(data, actions) => {
-                    if (!selectedAddressId) {
-                      message.warning("Hãy thêm địa chỉ!");
-                      return;
-                    }
-
-                    // Giả lập số dư trong PayPal Sandbox (5,000 USD)
-                    const simulatedBalance = 100000000000;
-                    const totalPayment = totalAmount + 30000;
-
-                    // Kiểm tra nếu số dư giả lập nhỏ hơn số tiền cần thanh toán
-                    if (totalPayment > simulatedBalance) {
-                      message.error("Số dư PayPal không đủ để thanh toán!");
-                      return;
-                    }
-
-                    return actions.order.create({
-                      purchase_units: [
-                        {
-                          amount: {
-                            value: (totalAmount + 30000).toString(),
-                          },
-                        },
-                      ],
-                    });
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
+            <div
+              style={{
+                width: "350px",
+                margin: "20px 0px",
+              }}
+            >
+              {selectedMethod === "credit_card" ? (
+                <PayPalScriptProvider
+                  options={{
+                    "client-id": process.env.REACT_APP_CLIENT_ID,
                   }}
-                  onApprove={async (data, actions) => {
-                    const details = await actions.order.capture();
-
-                    const selectedAddress = addresses.find(
-                      (addr) => addr._id === selectedAddressId
-                    );
-
-                    if (!selectedAddress) {
-                      message.error("Không tìm thấy địa chỉ đã chọn!");
-                      return;
-                    }
-
-                    const shippingInfo = {
-                      phone: selectedAddress.phone,
-                      address: selectedAddress.address,
-                      city: selectedAddress.city,
-                    };
-
-                    const paymentMethod = selectedMethod;
-
-                    try {
-                      let { decoded, token } = decodeToken();
-
-                      if (
-                        !token ||
-                        (decoded && decoded.exp < Date.now() / 1000)
-                      ) {
-                        const refreshed = await AuthServices.refreshToken();
-                        token = refreshed?.access_token;
-                        localStorage.setItem(
-                          "access_token",
-                          JSON.stringify(token)
-                        );
+                >
+                  <PayPalButtons
+                    createOrder={(data, actions) => {
+                      if (!selectedAddressId) {
+                        message.warning("Hãy thêm địa chỉ!");
+                        return;
                       }
 
-                      const totalBill = totalAmount + 30000;
+                      // Giả lập số dư trong PayPal Sandbox (5,000 USD)
+                      const simulatedBalance = 100000000000;
+                      const totalPayment = totalAmount + 30000;
 
-                      await OrderServices.addPayment(
-                        token,
-                        shippingInfo,
-                        products,
-                        totalBill,
-                        paymentMethod
+                      // Kiểm tra nếu số dư giả lập nhỏ hơn số tiền cần thanh toán
+                      if (totalPayment > simulatedBalance) {
+                        message.error("Số dư PayPal không đủ để thanh toán!");
+                        return;
+                      }
+
+                      if (totalAmount === 0) {
+                        message.warning("Hãy thêm sản phẩm để tạo đơn hàng!");
+                        return;
+                      }
+
+                      return actions.order.create({
+                        purchase_units: [
+                          {
+                            amount: {
+                              value: (totalAmount + 30000).toString(),
+                            },
+                          },
+                        ],
+                      });
+                    }}
+                    onApprove={async (data, actions) => {
+                      const details = await actions.order.capture();
+
+                      const selectedAddress = addresses.find(
+                        (addr) => addr._id === selectedAddressId
                       );
 
-                      message.success("Đặt hàng thành công!");
-                    } catch (err) {
-                      console.error("Lỗi xác nhận đơn hàng:", err);
-                      message.error("Xác nhận đơn hàng thất bại!");
-                      return;
-                    }
+                      const shippingInfo = {
+                        phone: selectedAddress.phone,
+                        address: selectedAddress.address,
+                        city: selectedAddress.city,
+                      };
 
-                    message.success("Thanh toán thành công qua PayPal!");
-                  }}
-                  onError={(err) => {
-                    console.error("PayPal Error:", err);
-                    if (err?.details?.[0]?.issue === "PAYER_CANNOT_PAY") {
-                      message.error("Số dư PayPal không đủ để thanh toán!");
-                    } else {
-                      message.error(
-                        "Lỗi trong quá trình thanh toán bằng PayPal!"
-                      );
-                    }
-                  }}
+                      const paymentMethod = selectedMethod;
+
+                      try {
+                        let { decoded, token } = decodeToken();
+
+                        if (
+                          !token ||
+                          (decoded && decoded.exp < Date.now() / 1000)
+                        ) {
+                          const refreshed = await AuthServices.refreshToken();
+                          token = refreshed?.access_token;
+                          localStorage.setItem(
+                            "access_token",
+                            JSON.stringify(token)
+                          );
+                        }
+
+                        const totalBill = totalAmount + 30000;
+
+                        await OrderServices.addPayment(
+                          token,
+                          shippingInfo,
+                          products,
+                          totalBill,
+                          paymentMethod
+                        );
+
+                        message.success("Đặt hàng thành công!");
+                      } catch (err) {
+                        console.error("Lỗi xác nhận đơn hàng:", err);
+                        message.error("Xác nhận đơn hàng thất bại!");
+                        return;
+                      }
+
+                      message.success("Thanh toán thành công qua PayPal!");
+                    }}
+                    onError={(err) => {
+                      console.error("PayPal Error:", err);
+                      if (err?.details?.[0]?.issue === "PAYER_CANNOT_PAY") {
+                        console.log("Số dư PayPal không đủ để thanh toán!");
+                      } else {
+                        console.log(
+                          "Lỗi trong quá trình thanh toán bằng PayPal!"
+                        );
+                      }
+                    }}
+                  />
+                </PayPalScriptProvider>
+              ) : (
+                <ButtonComponent
+                  width="100%"
+                  height="45px"
+                  fontSize="18px"
+                  name="Đặt hàng"
+                  type="primary"
+                  disabled={!selectedMethod}
+                  onClick={handleConfirmOrder}
                 />
-              </PayPalScriptProvider>
-            ) : (
-              <ButtonComponent
-                style={{ width: "100%" }}
-                name="Confirm Order"
-                type="primary"
-                disabled={!selectedMethod}
-                onClick={handleConfirmOrder}
-              />
-            )}
+              )}
+            </div>
           </div>
         </div>
       </Container>

@@ -4,12 +4,14 @@ import { PiBellSimpleRingingBold } from "react-icons/pi";
 import { FaRegUser } from "react-icons/fa";
 import { MdOutlineBorderColor } from "react-icons/md";
 import { LiaListAltSolid } from "react-icons/lia";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SidebarAccount = () => {
+  const navigage = useNavigate();
+
   return (
     <>
-      <div style={{ display: "flex", flexFlow: "column" }}>
+      <div style={{ display: "flex", flexFlow: "column", gap: "20px" }}>
         <div
           style={{
             display: "flex",
@@ -53,6 +55,7 @@ const SidebarAccount = () => {
             </Link>
           </div>
         </div>
+
         <Link
           to="/user/notification"
           style={{
@@ -69,39 +72,62 @@ const SidebarAccount = () => {
           <div>Thông báo</div>
         </Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ fontSize: "24px" }}>
-            <FaRegUser />
+        <div style={{ display: "flex", flexFlow: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ fontSize: "24px" }}>
+              <FaRegUser />
+            </div>
+            <div>Tài khoản của tôi</div>
           </div>
-          <div>Tài khoản của tôi</div>
+
+          <div>
+            <div style={{ display: "flex", flexFlow: "column", gap: "10px" }}>
+              <Link
+                to="/user/account/profile"
+                style={{
+                  marginLeft: "34px",
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Hồ sơ
+              </Link>
+              <Link
+                to="/user/account/wallet"
+                style={{
+                  marginLeft: "34px",
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Ví HKN
+              </Link>
+              <Link
+                to="/user/account/change-password"
+                style={{
+                  marginLeft: "34px",
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Đổi mật khẩu
+              </Link>
+              <Link
+                to="/user/account/delete"
+                style={{
+                  marginLeft: "34px",
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Xóa tài khoản
+              </Link>
+            </div>
+          </div>
         </div>
-        <Link
-          to="/user/account/profile"
-          style={{ marginLeft: "34px", textDecoration: "none", color: "#333" }}
-        >
-          Hồ sơ
-        </Link>
-        <Link
-          to="/user/account/payment"
-          style={{ marginLeft: "34px", textDecoration: "none", color: "#333" }}
-        >
-          Ngân hàng
-        </Link>
-        <Link
-          to="/user/account/change-password"
-          style={{ marginLeft: "34px", textDecoration: "none", color: "#333" }}
-        >
-          Đổi mật khẩu
-        </Link>
-        <Link
-          to="/user/account/delete-account"
-          style={{ marginLeft: "34px", textDecoration: "none", color: "#333" }}
-        >
-          Xóa tài khoản
-        </Link>
 
         <Link
-          to="/user/purchase"
+          to="/user/purchase/delivered"
           style={{
             display: "flex",
             alignItems: "center",

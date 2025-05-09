@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DetailBox } from "./style";
-import { Col, message, Row } from "antd";
+import { Avatar, Col, message, Row, Space } from "antd";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import { BsCartPlus } from "react-icons/bs";
 import { FiMinus, FiPlus } from "react-icons/fi";
@@ -12,6 +12,9 @@ import * as AuthServices from "../../../services/shared/AuthServices";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 import { updateCart } from "../../../redux/slices/cartSlice";
+import { AiOutlineShop } from "react-icons/ai";
+import { FaUserAlt } from "react-icons/fa";
+import { IoIosChatboxes } from "react-icons/io";
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
@@ -32,6 +35,7 @@ const ProductDetailPage = () => {
   const [detailSize, setDetailSize] = useState(null);
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
   const [listImages, setListImages] = useState([]);
+  const [detailShop, setDetailShop] = useState();
 
   const maxVisible = 5;
 
@@ -39,8 +43,15 @@ const ProductDetailPage = () => {
     const fetchDetailProduct = async () => {
       try {
         const res = await ProductServices.getDetailProduct(id);
-        const newData = res.data.data;
 
+        console.log("res", res);
+
+        const newData = res?.data?.data?.product;
+        const shopData = res?.data?.data?.shop;
+
+        console.log("Shop data từ API:", shopData); // Kiểm tra dữ liệu shop từ API
+
+        setDetailShop(shopData);
         setProductDetail(newData);
         setListImages(newData.images);
         setCurrentImage(newData.images[0]); // Đảm bảo ảnh đầu tiên được chọn
@@ -48,6 +59,7 @@ const ProductDetailPage = () => {
         console.error("Lỗi khi lấy sản phẩm:", error);
       }
     };
+
     fetchDetailProduct();
   }, [id]);
 
@@ -135,7 +147,6 @@ const ProductDetailPage = () => {
         owner_id: productDetail.user_id, // Chủ sản phẩm
         product_id_module: id.id, // id của sản phẩm
       };
-      console.log("payload", payload);
 
       if (payload.quantity <= 0) {
         message.warning("Hãy thêm số lượng bạn cần!");
@@ -173,7 +184,7 @@ const ProductDetailPage = () => {
       message.success("Đã thêm vào giỏ hàng!");
     } catch (error) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      message.error("Không thể thêm sản phẩm vào giỏ hàng!");
+      message.error(error?.message || "Không thể thêm sản phẩm vào giỏ hàng!");
     }
   };
 
@@ -399,6 +410,123 @@ const ProductDetailPage = () => {
                 >
                   <BsCartPlus /> Thêm vào giỏ hàng
                 </button>
+              </div>
+            </Col>
+          </Row>
+        </DetailBox>
+
+        <DetailBox>
+          <Row>
+            <Col span={8} style={{ display: "flex", alignItems: "center" }}>
+              <div>
+                <Space direction="vertical" size={16}>
+                  <Space wrap size={16}>
+                    <Avatar size={64} icon={<FaUserAlt />} />
+                  </Space>
+                </Space>
+              </div>
+              <div>
+                <div style={{ margin: "0px 0px 5px 10px" }}>
+                  {detailShop?.name}
+                </div>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <button
+                    style={{
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "3px",
+                      padding: "0px 15px",
+                      margin: "0px 10px 17px 10px",
+                      fontSize: "14px",
+                      border: "1px solid rgb(248, 74, 47)",
+                      color: "#d0011b",
+                      background: "rgba(208, 1, 27, .08)",
+                      outline: "none",
+                    }}
+                  >
+                    <div>
+                      <IoIosChatboxes />
+                    </div>
+                    <div>Chat ngay</div>
+                  </button>
+                  <button
+                    style={{
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "3px",
+                      padding: "0px 15px",
+                      margin: "0px 10px 17px 0px",
+                      fontSize: "14px",
+                      border: "1px solid #555555",
+                      color: "#555555",
+                      background: "#FFFFFF",
+                      outline: "none",
+                    }}
+                  >
+                    <div>
+                      <AiOutlineShop />
+                    </div>
+                    <div onClick={() => navigate("/shop/:id_owner")}>
+                      Xem shop
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </Col>
+            <Col
+              span={16}
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ margin: "0px 12px 0px 0px" }}>
+                <div style={{ display: "flex", gap: "40px" }}>
+                  <div style={{ color: "#00000066" }}>Đánh giá</div>
+                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
+                    573
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "40px" }}>
+                  <div style={{ color: "#00000066" }}>Sản phẩm</div>
+                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
+                    42
+                  </div>
+                </div>
+              </div>
+              <div
+                style={{
+                  margin: "0px 0px 0px 10px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "52px",
+                    margin: "0px 0px 0px 60px",
+                  }}
+                >
+                  <div style={{ color: "#00000066" }}>Tham gia </div>
+                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
+                    12 tháng
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "40px",
+                    margin: "0px 0px 0px 60px",
+                  }}
+                >
+                  <div style={{ color: "#00000066" }}>Người theo dõi</div>
+                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
+                    3432
+                  </div>
+                </div>
               </div>
             </Col>
           </Row>

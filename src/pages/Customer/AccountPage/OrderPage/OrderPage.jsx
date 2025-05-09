@@ -74,8 +74,6 @@ const OrderPage = () => {
   };
 
   const handleSucessfulDelivered = async (orderId) => {
-    console.log("Xác nhận đơn hàng với ID:", orderId);
-
     try {
       let { storageData, decoded } = handleDecoded();
       let accessToken = storageData;
@@ -91,8 +89,6 @@ const OrderPage = () => {
         (item) => item._id === orderId || item.id === orderId
       );
 
-      console.log("Đơn hàng được xác nhận:", order);
-
       const res = await OrderServices.successfulDelivered(accessToken, {
         status,
         order,
@@ -106,8 +102,6 @@ const OrderPage = () => {
   };
 
   const handleCancelOrder = async (orderId) => {
-    console.log("Hủy đơn hàng với:", orderId);
-
     try {
       let { storageData, decoded } = handleDecoded();
       let accessToken = storageData;
@@ -122,8 +116,6 @@ const OrderPage = () => {
       const order = allData.find(
         (item) => item._id === orderId || item.id === orderId
       );
-
-      console.log("Đơn hàng được xác nhận:", order);
 
       const res = await OrderServices.cancelledOrder(accessToken, {
         status,
@@ -202,6 +194,13 @@ const OrderPage = () => {
                         {item.price?.toLocaleString()}₫
                       </Col>
                     </Row>
+                    <div
+                      style={{
+                        height: "1px",
+                        margin: "20px 0px",
+                        backgroundColor: "#ccc",
+                      }}
+                    ></div>
                   </>
                 ))}
 
@@ -254,6 +253,7 @@ const OrderPage = () => {
                       padding: "9px 20px",
                       border: "1px solid #333",
                       borderRadius: "2px",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
                       handleCancelOrder(order._id || order.id);

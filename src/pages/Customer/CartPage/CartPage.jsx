@@ -1,4 +1,4 @@
-import { Col, Row, Tooltip, Pagination, message } from "antd";
+import { Col, Row, Tooltip, Pagination, message, Checkbox } from "antd";
 import React, { useCallback, useEffect, useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
@@ -12,6 +12,8 @@ import { useDispatch } from "react-redux";
 import { updateCart } from "../../../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { setCheckoutInfo } from "../../../redux/slices/checkoutSlice";
+import { LuPlus } from "react-icons/lu";
+import { LuMinus } from "react-icons/lu";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -43,6 +45,7 @@ const CartPage = () => {
       }
 
       const response = await CartServices.getAllItem(token);
+
       const data = response?.data[0]?.items || [];
 
       const items = data.map((item) => ({
@@ -91,12 +94,25 @@ const CartPage = () => {
 
       const newQuantity = itemToUpdate.quantity + 1;
 
-      await CartServices.updateQuantity(token, {
+      const response = await CartServices.updateQuantity(token, {
         detailCartId: itemToUpdate._id,
+        product_id: itemToUpdate.product_id,
         size: itemToUpdate.size,
         color: itemToUpdate.color,
         quantity: newQuantity,
       });
+
+      console.log("API Response:", response);
+
+      if (response?.status === "ERROR") {
+        return message.warning(
+          response.message || "Cập nhật số lượng thất bại."
+        );
+      }
+
+      if (!response || typeof response !== "object") {
+        return message.error("Phản hồi từ máy chủ không hợp lệ.");
+      }
 
       const updatedItems = cartItems.map((item) =>
         item.key === itemKey ? { ...item, quantity: newQuantity } : item
@@ -105,6 +121,7 @@ const CartPage = () => {
       setCartItems(updatedItems);
     } catch (err) {
       console.error("Lỗi khi tăng số lượng:", err);
+      message.error(err?.message || "Đã xảy ra lỗi trong quá trình cập nhật.");
     }
   };
 
@@ -125,6 +142,7 @@ const CartPage = () => {
 
       await CartServices.updateQuantity(token, {
         detailCartId: itemToUpdate._id,
+        product_id: itemToUpdate.product_id,
         size: itemToUpdate.size,
         color: itemToUpdate.color,
         quantity: newQuantity,
@@ -194,8 +212,6 @@ const CartPage = () => {
       return;
     }
 
-    console.log("selectedProducts", selectedProducts);
-
     const checkoutData = {
       products: selectedProducts.map((item) => ({
         product_id: item.product_id,
@@ -210,8 +226,6 @@ const CartPage = () => {
         cartItem_id: item._id,
       })),
     };
-
-    console.log("checkoutData", checkoutData);
 
     dispatch(setCheckoutInfo(checkoutData));
     navigate("/checkout");
@@ -228,8 +242,7 @@ const CartPage = () => {
         >
           <Row>
             <Col span={2}>
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selectedItems.length === cartItems.length}
                 onChange={() => {
                   if (selectedItems.length === cartItems.length) {
@@ -260,8 +273,7 @@ const CartPage = () => {
           >
             <Row align="middle">
               <Col span={2}>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selectedItems.includes(item.key)}
                   onChange={() => handleItemSelection(item.key)}
                 />
@@ -295,16 +307,24 @@ const CartPage = () => {
               <Col span={3}>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <button
-                    style={{ border: "1px solid #ddd", height: 30, width: 30 }}
+                    style={{
+                      border: "1px solid #ddd",
+                      height: 30,
+                      width: 30,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                     onClick={() => handleReduceItem(item.key)}
                   >
-                    <FaMinus />
+                    <LuMinus />
                   </button>
 
                   <input
                     style={{
                       width: 30,
                       textAlign: "center",
+                      outline: "none",
                       border: "none",
                       height: 30,
                     }}
@@ -314,10 +334,17 @@ const CartPage = () => {
                   />
 
                   <button
-                    style={{ border: "1px solid #ddd", height: 30, width: 30 }}
+                    style={{
+                      border: "1px solid #ddd",
+                      height: 30,
+                      width: 30,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                     onClick={() => handleMoreItem(item.key)}
                   >
-                    <FaPlus />
+                    <LuPlus />
                   </button>
                 </div>
               </Col>
@@ -341,8 +368,7 @@ const CartPage = () => {
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            paddingBottom: 20,
-            paddingRight: 35,
+            padding: "20px 55px 20px 0px",
             backgroundColor: "#fff",
           }}
         >
@@ -374,9 +400,14 @@ const CartPage = () => {
             }}
           >
             <BsTicketPerforated />
-            <span>Shopee Voucher</span>
+            <span>Voucher</span>
           </div>
-          <div style={{ fontSize: 14 }}>Chọn hoặc nhập mã</div>
+          <div
+            onClick={() => message.warning("Bạn chưa có mã giảm giá nào!")}
+            style={{ fontSize: 14, cursor: "pointer" }}
+          >
+            Chọn hoặc nhập mã
+          </div>
         </div>
 
         {/* Tổng cộng */}

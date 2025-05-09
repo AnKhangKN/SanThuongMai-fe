@@ -46,10 +46,9 @@ const SuggestComponent = () => {
                   <img
                     style={{ width: "100%" }}
                     src={
-                      Array.isArray(product.img)
-                        ? product.img[0]
-                        : product.img ||
-                          "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
+                      Array.isArray(product.images)
+                        ? product.images[0]
+                        : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                     }
                     alt={product.name}
                   />

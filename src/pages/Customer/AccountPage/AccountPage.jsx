@@ -10,7 +10,7 @@ const AccountPage = ({ children }) => {
         style={{
           marginTop: "120px",
           backgroundColor: "#f5f5f5",
-          height: "100vh",
+          height: "100%",
         }}
       >
         <Row
@@ -19,7 +19,7 @@ const AccountPage = ({ children }) => {
             width: "1200px",
             margin: "auto",
             padding: " 20px 0px 50px 0px",
-            height: "100vh",
+            height: "100%",
           }}
         >
           <Col span={4}>

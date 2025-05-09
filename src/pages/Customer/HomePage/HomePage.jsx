@@ -6,8 +6,17 @@ import CategoryComponent from "../../../components/CustomerComponents/HomePageCo
 import TopSearchComponent from "../../../components/CustomerComponents/HomePageComponent/TopSearchComponent/TopSearchComponent";
 import SuggestComponent from "../../../components/CustomerComponents/HomePageComponent/SuggestComponent/SuggestComponent";
 import { LineSuggest } from "./style";
+import SliderComponent from "../../../components/CustomerComponents/SliderComponent/SliderComponent";
+import slide_1 from "../../../assets/images/slides/slide_1.jpg";
+import slide_2 from "../../../assets/images/slides/slide_2.jpg";
+import slide_3 from "../../../assets/images/slides/slide_3.jpg";
+import slide_4 from "../../../assets/images/slides/slide_4.jpg";
+import slide_5 from "../../../assets/images/slides/slide_5.jpg";
+import slide_6 from "../../../assets/images/slides/slide_6.jpg";
 
 const HomePage = () => {
+  const images = [slide_1, slide_2, slide_3, slide_4, slide_5, slide_6];
+
   return (
     <>
       <div
@@ -18,11 +27,13 @@ const HomePage = () => {
         }}
       >
         {/* slide voucher */}
-        <div style={{ backgroundColor: "#fff" }}>
+        <div style={{ backgroundColor: "#fff", paddingBottom: "10px" }}>
           <div style={{ width: "1200px", margin: "0 auto" }}>
             <Row>
               <Col span={16}>
-                <div></div>
+                <div style={{ marginRight: "10px" }}>
+                  <SliderComponent arrImages={images} height="245px" />
+                </div>
               </Col>
               <Col span={8}>
                 <div>

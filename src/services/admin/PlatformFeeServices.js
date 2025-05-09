@@ -15,7 +15,6 @@ export const getAllFees = async (accessToken) => {
 
 // Tạo chi phí nền tảng mới
 export const createFee = async (accessToken, data) => {
-  console.log(data);
   const res = await axios.post(
     `${process.env.REACT_APP_API_URL}/admin/create-fee`,
     data,

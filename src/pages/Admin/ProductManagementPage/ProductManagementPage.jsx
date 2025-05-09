@@ -124,14 +124,12 @@ const ProductManagementPage = () => {
 
       const res = await ProductServices.getAllProducts(accessToken);
 
-      console.log("res", res);
 
       const productsWithKeys = res.data.map((product) => ({
         ...product,
         key: product._id || product.id,
       }));
 
-      console.log("productsWithKeys", productsWithKeys)
 
       setAllData(productsWithKeys);
     } catch (error) {

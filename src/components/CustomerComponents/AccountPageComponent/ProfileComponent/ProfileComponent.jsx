@@ -2,8 +2,11 @@ import React from "react";
 import { BoxChange, TextNameChange, Wrapper, WrapperChange } from "./style";
 import logo from "../../../../assets/images/Logo_Trang.jpg";
 import ButtonComponent from "../../ButtonComponent/ButtonComponent";
+import { Input } from "antd";
+import { useSelector } from "react-redux";
 
 const ProfileComponent = () => {
+  const user = useSelector((state) => state.user);
   return (
     <>
       <Wrapper>
@@ -16,36 +19,21 @@ const ProfileComponent = () => {
             <WrapperChange>
               <TextNameChange>Tên</TextNameChange>
               <BoxChange>
-                <input style={{ width: "50%" }} type="text" />
+                <Input placeholder={user?.name} />
               </BoxChange>
             </WrapperChange>
+
             <WrapperChange>
               <TextNameChange>Email</TextNameChange>
               <BoxChange style={{ gap: "20px" }}>
-                <div>khang****.com</div>
+                <div>{user?.email}</div>
                 <div>Thay đổi</div>
               </BoxChange>
             </WrapperChange>
+
             <WrapperChange>
-              <TextNameChange>Số điện thoại</TextNameChange>
-              <BoxChange>Thêm</BoxChange>
-            </WrapperChange>
-            <WrapperChange>
-              <TextNameChange>Giới tính </TextNameChange>
-              <BoxChange style={{ gap: "20px" }}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <input type="radio" />
-                  <div>Nam</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <input type="radio" />
-                  <div>Nữ</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <input type="radio" />
-                  <div>Khác</div>
-                </div>
-              </BoxChange>
+              <TextNameChange>Địa chỉ giao hàng</TextNameChange>
+              <BoxChange style={{ gap: "20px" }}>Thêm địa chỉ</BoxChange>
             </WrapperChange>
 
             <div style={{ marginLeft: "172px" }}>

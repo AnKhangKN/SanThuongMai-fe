@@ -50,7 +50,6 @@ const SignupPage = () => {
         },
       }
     );
-    console.log(email, password, confirmPassword);
   };
 
   const handleNavigateLogin = () => {

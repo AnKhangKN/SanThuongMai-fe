@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import img from "../../../../assets/images/products/ao-demo.webp";
 import { Link } from "react-router-dom";
 import * as ProductServices from "../../../../services/shared/ProductServices";
 
@@ -18,8 +17,6 @@ const CategoryComponent = () => {
       const res = await ProductServices.getAllCategoryHome();
 
       const lsProduct = res.data;
-
-      console.log(lsProduct);
 
       setProducts(lsProduct);
     } catch (err) {
@@ -70,7 +67,10 @@ const CategoryComponent = () => {
               <div style={{ width: "80%", margin: "auto" }}>
                 <img
                   style={{ width: "100%", objectFit: "cover" }}
-                  src={product.img || img}
+                  src={
+                    product.image ||
+                    "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
+                  }
                   alt=""
                 />
               </div>

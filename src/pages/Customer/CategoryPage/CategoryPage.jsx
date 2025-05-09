@@ -5,10 +5,18 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import * as ProductServices from "../../../services/shared/ProductServices";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { ChoosePrice, ContainerPrice, WrapperPrice } from "./style";
+import slide_1 from "../../../assets/images/slides/slide_1.jpg";
+import slide_2 from "../../../assets/images/slides/slide_2.jpg";
+import slide_3 from "../../../assets/images/slides/slide_3.jpg";
+import slide_4 from "../../../assets/images/slides/slide_4.jpg";
+import slide_5 from "../../../assets/images/slides/slide_5.jpg";
+import slide_6 from "../../../assets/images/slides/slide_6.jpg";
+import SliderComponent from "../../../components/CustomerComponents/SliderComponent/SliderComponent";
 
 const CategoryPage = () => {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleCount, setVisibleCount] = useState(6);
   const [sortedProducts, setSortedProducts] = useState([]);
@@ -18,6 +26,8 @@ const CategoryPage = () => {
   const itemsPerPage = 10;
   const { "name-category": keyword } = useParams(); // Dùng để lấy danh mục từ URL
   const navigate = useNavigate();
+
+  const images = [slide_1, slide_2, slide_3, slide_4, slide_5, slide_6];
 
   // Tính toán chỉ mục bắt đầu và sản phẩm hiện tại
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
@@ -31,6 +41,7 @@ const CategoryPage = () => {
   const fetchProductsByCategory = async () => {
     try {
       const res = await ProductServices.getSearchCategory(keyword);
+
       setProducts(res.data); // Cập nhật danh sách sản phẩm
       setSortedProducts(res.data);
     } catch (error) {
@@ -41,7 +52,6 @@ const CategoryPage = () => {
   const fetchAllCategory = async () => {
     const res = await ProductServices.getAllCategoryHome();
     setCategory(res.data);
-    console.log(category);
   };
 
   // Lấy sản phẩm khi thay đổi danh mục (hoặc khi trang được load lần đầu)
@@ -116,11 +126,15 @@ const CategoryPage = () => {
       style={{
         marginTop: "120px",
         backgroundColor: "#f5f5f5",
-        height: "100vh",
+        height: "100%",
       }}
     >
       <div style={{ width: "1200px", margin: "auto" }}>
-        <div>slide</div>
+        <div style={{ height: "15px" }}></div>
+        <div>
+          <SliderComponent arrImages={images} height="450px" />
+        </div>
+        <div style={{ height: "15px" }}></div>
 
         <div style={{ marginTop: "30px" }}>
           <Row gutter={[16, 16]}>
@@ -315,14 +329,6 @@ const CategoryPage = () => {
       </div>
     </div>
   );
-};
-
-const buttonStyle = {
-  padding: "10px 15px",
-  border: "none",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  cursor: "pointer",
 };
 
 export default CategoryPage;

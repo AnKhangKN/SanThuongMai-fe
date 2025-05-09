@@ -24,7 +24,6 @@ export const getAllProducts = async (accessToken) => {
 };
 
 export const updatedProduct = async (accessToken, productData) => {
-  console.log(productData);
   return await axios.put(
     `${process.env.REACT_APP_API_URL}/vendor/update-product`,
     productData,
