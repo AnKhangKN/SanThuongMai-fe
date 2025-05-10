@@ -9,6 +9,8 @@ import * as OrderServices from "../../../../services/customer/OrderServices";
 import { isJsonString } from "../../../../utils";
 import { jwtDecode } from "jwt-decode";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const statuses = [
   { label: "Hoàn thành", value: "delivered" },
   { label: "Chờ xử lý", value: "pending" },
@@ -176,11 +178,19 @@ const OrderPage = () => {
                   <>
                     <Row key={index} style={{ marginBottom: "10px" }}>
                       <Col span={4}>
-                        <img
-                          src={item.product_image || item.image}
-                          alt="ảnh sản phẩm"
-                          width="100%"
-                        />
+                        <div style={{ padding: "10px" }}>
+                          <img
+                            src={
+                              `${imageURL}${item.product_image}` || item.image
+                            }
+                            alt="ảnh sản phẩm"
+                            style={{
+                              width: "100%",
+                              height: "100px",
+                              objectFit: "contain",
+                            }}
+                          />
+                        </div>
                       </Col>
                       <Col span={16}>
                         <div>{item.product_name || item.name}</div>

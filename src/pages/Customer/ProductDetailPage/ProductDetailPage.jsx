@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { DetailBox } from "./style";
 import { Avatar, Col, message, Row, Space } from "antd";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
@@ -15,6 +15,8 @@ import { updateCart } from "../../../redux/slices/cartSlice";
 import { AiOutlineShop } from "react-icons/ai";
 import { FaUserAlt } from "react-icons/fa";
 import { IoIosChatboxes } from "react-icons/io";
+
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
@@ -239,8 +241,12 @@ const ProductDetailPage = () => {
                 }}
               >
                 <img
-                  style={{ width: "100%" }}
-                  src={currentImage}
+                  style={{
+                    width: "100%",
+                    height: "450px",
+                    objectFit: "contain",
+                  }}
+                  src={`${imageURL}${currentImage}`}
                   alt="Sản phẩm"
                 />
               </div>
@@ -269,9 +275,13 @@ const ProductDetailPage = () => {
                       }}
                     >
                       <img
-                        src={item}
+                        src={`${imageURL}${item}`}
                         alt=""
-                        style={{ width: "100%" }}
+                        style={{
+                          width: "100%",
+                          height: "82px",
+                          objectFit: "contain",
+                        }}
                         onClick={() => handleImageClick(item)}
                       />
                     </div>

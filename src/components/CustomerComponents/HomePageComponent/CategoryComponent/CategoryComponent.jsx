@@ -8,6 +8,8 @@ const itemsPerRow = 10;
 const rowsPerPage = 2;
 const itemsPerPage = itemsPerRow * rowsPerPage;
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const CategoryComponent = () => {
   const [products, setProducts] = useState([]);
   const [startIndex, setStartIndex] = useState(0);
@@ -66,9 +68,13 @@ const CategoryComponent = () => {
             >
               <div style={{ width: "80%", margin: "auto" }}>
                 <img
-                  style={{ width: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "94px",
+                    objectFit: "contain",
+                  }}
                   src={
-                    product.image ||
+                    `${imageURL}${product.image}` ||
                     "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                   }
                   alt=""

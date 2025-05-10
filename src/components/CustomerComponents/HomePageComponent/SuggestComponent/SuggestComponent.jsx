@@ -4,6 +4,8 @@ import ButtonComponent from "../../ButtonComponent/ButtonComponent";
 import { Link } from "react-router-dom";
 import * as ProductServices from "../../../../services/shared/ProductServices";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const SuggestComponent = () => {
   const [visibleRows, setVisibleRows] = useState(4); // 4 dòng mặc định
   const [allData, setAllData] = useState([]); // chứa sản phẩm thực tế
@@ -44,13 +46,17 @@ const SuggestComponent = () => {
               <div style={{ border: "1px solid #ccc" }}>
                 <div style={{ width: "100%" }}>
                   <img
-                    style={{ width: "100%" }}
                     src={
-                      Array.isArray(product.images)
-                        ? product.images[0]
+                      Array.isArray(product.images) && product.images.length > 0
+                        ? `${imageURL}${product.images[0]}`
                         : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                     }
-                    alt={product.name}
+                    alt={product.product_name}
+                    style={{
+                      width: "100%",
+                      height: "300px",
+                      objectFit: "contain",
+                    }}
                   />
                 </div>
                 <div style={{ padding: "10px" }}>

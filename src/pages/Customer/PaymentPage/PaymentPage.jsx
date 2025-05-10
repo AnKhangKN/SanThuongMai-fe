@@ -14,6 +14,8 @@ import { resetCheckout } from "../../../redux/slices/checkoutSlice";
 import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const PaymentPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -231,6 +233,8 @@ const PaymentPage = () => {
     0
   );
 
+  console.log(products);
+
   return (
     <Wrapper>
       <Container>
@@ -425,8 +429,8 @@ const PaymentPage = () => {
                 <div style={{ width: "40px", height: "40px" }}>
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
-                    src={product.image || imgTest} // dùng product.image nếu có
-                    alt={product.name}
+                    src={`${imageURL}${product.product_img}` || imgTest} // dùng product.image nếu có
+                    alt={product.product_name}
                   />
                 </div>
 

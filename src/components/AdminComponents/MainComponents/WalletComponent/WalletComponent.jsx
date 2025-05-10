@@ -1,8 +1,9 @@
-import React from "react";
 import { IoMdMore } from "react-icons/io";
 import { Wrapper } from "./style";
+import { useSelector } from "react-redux";
 
 const WalletComponent = () => {
+  const user = useSelector((state) => state.user);
   return (
     <>
       <Wrapper>
@@ -21,7 +22,9 @@ const WalletComponent = () => {
           </div>
         </div>
         <div>
-          <div style={{ fontSize: "30px" }}>200.000.000đ</div>
+          <div style={{ fontSize: "30px" }}>
+            {user?.wallet?.toLocaleString("vi-VN")} VNĐ
+          </div>
         </div>
       </Wrapper>
     </>

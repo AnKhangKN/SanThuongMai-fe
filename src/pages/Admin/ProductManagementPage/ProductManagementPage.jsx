@@ -6,6 +6,8 @@ import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ProductServices from "../../../services/admin/ProductServices";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const columns = [
   {
     title: "Mã sản phẩm",
@@ -59,7 +61,11 @@ const columns = [
     dataIndex: "images",
     key: "images",
     render: (image) => (
-      <img src={image} alt="product" style={{ width: 80, borderRadius: 4 }} />
+      <img
+        src={`${imageURL}${image[0]}`}
+        alt="product"
+        style={{ width: 100, borderRadius: 4, height: 50, objectFit: "cover" }}
+      />
     ),
   },
   {
@@ -124,12 +130,10 @@ const ProductManagementPage = () => {
 
       const res = await ProductServices.getAllProducts(accessToken);
 
-
       const productsWithKeys = res.data.map((product) => ({
         ...product,
         key: product._id || product.id,
       }));
-
 
       setAllData(productsWithKeys);
     } catch (error) {

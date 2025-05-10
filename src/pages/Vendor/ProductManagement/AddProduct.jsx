@@ -1,241 +1,133 @@
-import React from "react";
-import { WrapperVendor } from '../VendorMain/styleVendorMain';
-import { Card, Col, Form, List, Typography, Input, Button, Upload, Space, message } from 'antd';
-import {
-  CheckCircleFilled,
-  UploadOutlined 
-} from '@ant-design/icons';
-import * as AuthServices from '../../../services/shared/AuthServices';
-import * as ProductServices from '../../../services/vendor/ProductService';
+import { useState } from "react";
+import { WrapperVendor } from "../VendorMain/styleVendorMain";
+import { Col, Form, Input, Button, Upload, Space, message } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as ProductServices from "../../../services/vendor/ProductService";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
-import { useSelector } from "react-redux";
-
-const { Text } = Typography;
-const { TextArea } = Input;
-
-const checklist = [
-  { text: 'Thêm ít nhất 3 hình ảnh', done: false },
-  { text: 'Tên sản phẩm có ít nhất 25~100 kí tự', done: false },
-  { text: 'Thêm ít nhất 100 kí tự trong mô tả sản phẩm', done: false },
-  { text: 'Thêm thương hiệu', done: false },
-];
 
 const AddProduct = () => {
   const [form] = Form.useForm();
-  const user = useSelector((state) => state.user);
+  const [newProduct, setNewProduct] = useState({
+    product_name: "",
+    category: "",
+    description: "",
+    size: "",
+    color: "",
+    price: "",
+    quantity: "",
+  });
 
-  const handleDecoded = () => {
-    let storageData = localStorage.getItem("access_token");
-    let decoded = {};
-    if (storageData && isJsonString(storageData)) {
-      const parsed = JSON.parse(storageData);
-      decoded = jwtDecode(parsed);
-      return { decoded, storageData: parsed };
-    }
-    return { decoded, storageData };
+  const [images, setImages] = useState([]);
+
+  const handleFileChange = ({ fileList }) => {
+    const validFiles = fileList.filter((file) => {
+      if (file.size / 1024 / 1024 > 1) {
+        message.error(`File ${file.name} vượt quá kích thước 1MB.`);
+        return false;
+      }
+      return true;
+    });
+    setImages(validFiles);
   };
 
-  const fetchCreateProduct = async (productData) => {
-    try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewProduct((prev) => ({ ...prev, [name]: value }));
+  };
 
+  const handleDecoded = async () => {
+    let storageData = localStorage.getItem("access_token");
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      const decoded = jwtDecode(storageData);
       if (decoded?.exp < Date.now() / 1000) {
         const res = await AuthServices.refreshToken();
-        if (res?.access_token) {
-          accessToken = res.access_token;
-          localStorage.setItem("access_token", JSON.stringify(accessToken));
-        }
+        const accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        return accessToken;
       }
+      return storageData;
+    }
+    return null;
+  };
 
-      const res = await ProductServices.createProduct(accessToken, productData);
+  const fetchCreateProduct = async () => {
+    const formData = new FormData();
+    images.forEach((file) =>
+      formData.append("productImages", file.originFileObj)
+    );
 
-      console.log('res',res)
-      if (res?.status === 200) {
+    Object.keys(newProduct).forEach((key) => {
+      formData.append(key, newProduct[key]);
+    });
+
+    try {
+      const accessToken = await handleDecoded();
+      const res = await ProductServices.createProduct(accessToken, formData);
+
+      if (res.status === 200) {
         message.success("Tạo sản phẩm thành công!");
         form.resetFields();
+        setNewProduct({
+          product_name: "",
+          category: "",
+          description: "",
+          size: "",
+          color: "",
+          price: "",
+          quantity: "",
+        });
+        setImages([]);
       } else {
         message.error("Tạo sản phẩm thất bại!");
       }
-
     } catch (error) {
-      console.error("Lỗi khi tạo sản phẩm:", error);
       message.error("Có lỗi xảy ra khi tạo sản phẩm.");
     }
   };
 
-  const onFinish = (values) => {
-    const productData = {
-      user_id: user?.id, // đúng với model
-      product_name: values.productName,
-      description: values.description,
-      category: values.category,
-      images: values.images?.map(file => file.originFileObj?.name) || [],
-  
-      details: [
-        {
-          size: values.size,
-          color: values.colors?.trim(), // vì model yêu cầu String, không phải mảng
-          price: Number(values.costPrice),
-          quantity: Number(values.quantity),
-        },
-      ],
-    };
-  
-    console.log('Dữ liệu gửi lên:', productData);
-    fetchCreateProduct(productData);
-  };
-
   return (
-    <div>
-      <WrapperVendor>
-        <Card
-          title="Gợi ý điền Thông tin"
-          headStyle={{ backgroundColor: '#e6f4ff' }}
-          style={{ width: '100%', borderTop: '5px solid blue' }}
-        >
-          <List
-            dataSource={checklist}
-            renderItem={(item) => (
-              <List.Item>
-                <CheckCircleFilled style={{ color: item.done ? '#52c41a' : '#d9d9d9', marginRight: 8 }} />
-                <Text type={item.done ? 'default' : 'secondary'}>{item.text}</Text>
-              </List.Item>
-            )}
-          />
-        </Card>
-
-        <Col span={24}>
-          <div style={{ padding: '24px' }}>
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={onFinish}
-              style={{ maxWidth: 800, margin: '0 auto' }}
+    <WrapperVendor>
+      <Col span={24} style={{ padding: "24px" }}>
+        <h2>Thêm sản phẩm mới</h2>
+        <Form form={form} layout="vertical" onFinish={fetchCreateProduct}>
+          {Object.keys(newProduct).map((field) => (
+            <Form.Item
+              label={field.charAt(0).toUpperCase() + field.slice(1)}
+              key={field}
             >
-              {/* THÔNG TIN CƠ BẢN */}
-              <h2>Thông tin cơ bản</h2>
+              <Input
+                name={field}
+                onChange={handleInputChange}
+                value={newProduct[field]}
+              />
+            </Form.Item>
+          ))}
 
-              <Form.Item
-                name="images"
-                label="Hình ảnh sản phẩm"
-                valuePropName="fileList"
-                getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
-                rules={[{ required: true, message: 'Vui lòng chọn hình ảnh sản phẩm!' }]}
-              >
-                <Upload
-                  name="productImages"
-                  beforeUpload={() => false}
-                  multiple
-                  listType="picture"
-                >
-                  <Button icon={<UploadOutlined />}>Tải lên hình ảnh</Button>
-                </Upload>
-              </Form.Item>
+          <Form.Item label="Hình ảnh">
+            <Upload
+              listType="picture"
+              beforeUpload={() => false}
+              multiple
+              onChange={handleFileChange}
+            >
+              <Button icon={<UploadOutlined />}>Chọn hình ảnh</Button>
+            </Upload>
+          </Form.Item>
 
-              <Form.Item
-                name="productName"
-                label="Tên sản phẩm"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
-                  { min: 5, message: 'Tên sản phẩm phải có ít nhất 5 kí tự' },
-                ]}
-              >
-                <Input placeholder="Nhập tên sản phẩm" />
-              </Form.Item>
-
-              <Form.Item
-                name="description"
-                label="Mô tả sản phẩm"
-                rules={[{ required: true, message: 'Vui lòng nhập mô tả sản phẩm!' }]}
-              >
-                <TextArea rows={5} placeholder="Nhập mô tả sản phẩm" />
-              </Form.Item>
-
-              {/* THÔNG TIN CHI TIẾT */}
-              <h2>Thông tin chi tiết</h2>
-
-              <Form.Item
-                label="Kích thước"
-                name="size"
-              >
-                <Input placeholder="Nhập kích thước" />
-              </Form.Item>
-
-              <Form.Item
-                label="Màu sắc"
-                name="colors"
-              >
-                <Input placeholder="Nhập màu sắc" />
-              </Form.Item>
-
-              <Form.Item
-                label="Loại sản phẩm"
-                name="category"
-                rules={[{ required: true, message: 'Vui lòng nhập loại sản phẩm' }]}
-              >
-                <Input placeholder="Nhập loại sản phẩm" />
-              </Form.Item>
-
-              <Form.Item
-                label="Số lượng"
-                name="quantity"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập số lượng!' },
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === '') {
-                        return Promise.resolve(); // Để tránh báo lỗi khi chưa nhập
-                      }
-                      return value >= 0
-                        ? Promise.resolve()
-                        : Promise.reject(new Error('số lượng phải là số không âm!'));
-                    },
-                  },
-                ]}
-              >
-                <Input type="number" placeholder="Nhập số lượng" />
-              </Form.Item>
-
-              {/* GIÁ SẢN PHẨM */}
-              <h2>Giá sản phẩm</h2>
-
-              <Form.Item
-                name="costPrice"
-                label="Giá bán"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập giá bán!' },
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === '') {
-                        return Promise.resolve(); // Để tránh báo lỗi khi chưa nhập
-                      }
-                      return value >= 0
-                        ? Promise.resolve()
-                        : Promise.reject(new Error('Giá bán phải là số không âm!'));
-                    },
-                  },
-                ]}
-              >
-                <Input type="number" placeholder="Nhập giá bán" />
-              </Form.Item>
-
-              <Form.Item>
-                <Space>
-                  <Button type="primary" htmlType="submit" style={{ backgroundColor: "#333", color: "#fff" }}>
-                    Lưu sản phẩm
-                  </Button>
-                  <Button htmlType="button" onClick={() => form.resetFields()}>
-                    Xóa hết
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          </div>
-        </Col>
-      </WrapperVendor>
-    </div>
+          <Space>
+            <Button type="primary" htmlType="submit">
+              Lưu sản phẩm
+            </Button>
+            <Button htmlType="button" onClick={() => form.resetFields()}>
+              Xóa hết
+            </Button>
+          </Space>
+        </Form>
+      </Col>
+    </WrapperVendor>
   );
 };
 

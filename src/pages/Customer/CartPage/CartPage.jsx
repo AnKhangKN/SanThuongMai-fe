@@ -15,6 +15,8 @@ import { setCheckoutInfo } from "../../../redux/slices/checkoutSlice";
 import { LuPlus } from "react-icons/lu";
 import { LuMinus } from "react-icons/lu";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const CartPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -282,7 +284,7 @@ const CartPage = () => {
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <div style={{ width: 80 }}>
                     <img
-                      src={item.product_img}
+                      src={`${imageURL}${item.product_img}`}
                       alt=""
                       style={{ width: "100%" }}
                     />

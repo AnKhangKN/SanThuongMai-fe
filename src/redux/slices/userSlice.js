@@ -7,6 +7,7 @@ const initialState = {
   access_token: "",
   img: "",
   phone: "",
+  wallet: "",
   isAdmin: false,
   isVendor: false,
 };
@@ -24,6 +25,7 @@ export const userSlice = createSlice({
         images = "", // Đường dẫn ảnh từ backend
         access_token = "",
         phone = "",
+        wallet = "",
         isAdmin = false,
         isVendor = false,
       } = action.payload;
@@ -38,6 +40,7 @@ export const userSlice = createSlice({
 
       state.access_token = access_token;
       state.phone = phone;
+      state.wallet = wallet;
       state.isAdmin = isAdmin;
       state.isVendor = isVendor;
     },
@@ -49,6 +52,7 @@ export const userSlice = createSlice({
       state.img = "";
       state.access_token = "";
       state.phone = "";
+      state.wallet = "";
       state.isAdmin = false;
       state.isVendor = false;
     },

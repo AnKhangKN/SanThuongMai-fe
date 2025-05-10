@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import * as ProductServices from "../../../../services/shared/ProductServices";
 import { ImageCart } from "./style";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const TopSearchComponent = () => {
   const [index, setIndex] = useState(0);
   const [visibleItems, setVisibleItems] = useState(6);
@@ -97,12 +99,17 @@ const TopSearchComponent = () => {
                   <ImageCart>
                     <img
                       src={
-                        Array.isArray(product.images)
-                          ? product.images[0]
+                        Array.isArray(product.images) &&
+                        product.images.length > 0
+                          ? `${imageURL}${product.images[0]}`
                           : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                       }
-                      alt=""
-                      style={{ width: "100%" }}
+                      alt={product.product_name}
+                      style={{
+                        width: "100%",
+                        height: "180px",
+                        objectFit: "contain",
+                      }}
                     />
                   </ImageCart>
 

@@ -8,6 +8,8 @@ import anh from "../../../assets/images/Logo_Den.jpg";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import { useSelector } from "react-redux";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const HeaderInfoComponent = () => {
   const cart = useSelector((state) => state.cart);
   const cartItems = cart.products;
@@ -70,7 +72,7 @@ const HeaderInfoComponent = () => {
                 <div style={{ width: "40px", height: "40px" }}>
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
-                    src={item.product_img || anh}
+                    src={`${imageURL}${item.product_img}` || anh}
                     alt=""
                   />
                 </div>

@@ -15,7 +15,6 @@ const columns = [
   },
   { title: "Chủ sở hữu", dataIndex: "user_name", ellipsis: true },
   { title: "Email", dataIndex: "email", ellipsis: true },
-  { title: "Điện thoại", dataIndex: "phone", ellipsis: true },
   {
     title: "Tên cửa hàng",
     render: (record) => record.shop?.name || "Chưa có",

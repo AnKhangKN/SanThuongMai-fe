@@ -71,8 +71,6 @@ const ProfileComponent = () => {
     try {
       const result = await ImageServices.uploadAvatar(token, formData);
 
-      console.log("image", result?.imageName);
-
       // Kiểm tra kết quả từ server
       if (result) {
         message.success("Upload thành công!");
@@ -103,16 +101,13 @@ const ProfileComponent = () => {
               <BoxChange>
                 <Input placeholder={user?.name} />
               </BoxChange>
+              <div>Thay tên</div>
             </WrapperChange>
 
             <WrapperChange>
               <TextNameChange>Địa chỉ giao hàng</TextNameChange>
               <BoxChange style={{ gap: "20px" }}>Thêm địa chỉ</BoxChange>
             </WrapperChange>
-
-            <div style={{ marginLeft: "172px" }}>
-              <ButtonComponent name="Lưu" onClick={submitImage} />
-            </div>
           </div>
           <div style={{ flex: "0 0 34%" }}>
             <div>
@@ -145,6 +140,16 @@ const ProfileComponent = () => {
                   type="file"
                   accept="image/*"
                 />
+
+                <div
+                  style={{
+                    cursor: "pointer",
+                  }}
+                  onClick={submitImage}
+                >
+                  Lưu ảnh
+                </div>
+
                 <div>
                   <div>Dung lượng file tối đa 1 MB</div>
                   <div>Định dạng: .JPEG, .PNG</div>

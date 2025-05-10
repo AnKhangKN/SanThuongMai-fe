@@ -10,6 +10,8 @@ import slide_5 from "../../../assets/images/slides/slide_5.jpg";
 import slide_6 from "../../../assets/images/slides/slide_6.jpg";
 import SliderComponent from "../../../components/CustomerComponents/SliderComponent/SliderComponent";
 
+const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+
 const SearchPage = () => {
   const itemsPerPage = 30;
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,8 +134,12 @@ const SearchPage = () => {
               >
                 <div style={{ border: "0.5px solid #cdcdcd" }}>
                   <img
-                    style={{ width: "100%" }}
-                    src={product.images[0]}
+                    style={{
+                      width: "100%",
+                      height: "200px",
+                      objectFit: "contain",
+                    }}
+                    src={`${imageURL}${product.images[0]}`}
                     alt={product.product_name}
                   />
                   <div

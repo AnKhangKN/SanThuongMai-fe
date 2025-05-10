@@ -1,13 +1,17 @@
 import React from "react";
 import AccountPage from "../AccountPage";
 import { Wrapper } from "./style";
+import { useSelector } from "react-redux";
 
 const WalletPage = () => {
+  const user = useSelector((state) => state.user);
+  console.log(user);
+
   return (
     <AccountPage>
       <Wrapper>
         <div style={{ fontSize: "20px" }}>
-          Tài khoản của bạn hiện có: 200000đ
+          Tài khoản của bạn hiện có: {user.wallet} đ
         </div>
       </Wrapper>
     </AccountPage>
