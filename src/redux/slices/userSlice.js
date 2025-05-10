@@ -34,7 +34,7 @@ export const userSlice = createSlice({
 
       state.img = images.includes("/")
         ? images
-        : `${process.env.REACT_APP_API_URL}/images/${images}`;
+        : `${process.env.REACT_APP_API_URL}/avatar/${images}`;
 
       state.access_token = access_token;
       state.phone = phone;
