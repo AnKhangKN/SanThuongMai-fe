@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button, Card, Input, Typography } from "antd";
+import { Button, Card, Input, message, Typography } from "antd";
 import logo_den from "../../../assets/images/Logo_Den.jpg";
 import logo_removebg from "../../../assets/images/Logo_Den-removebg-preview.png";
 import * as AuthServices from "../../../services/shared/AuthServices";
@@ -96,10 +96,19 @@ const LoginPage = () => {
 
   // Xử lý
   const handleLogin = () => {
-    mutation.mutate({
-      email,
-      password,
-    });
+    mutation.mutate(
+      {
+        email,
+        password,
+      },
+      {
+        onError: (error) => {
+          if (error.status === 401) {
+            message.error("Người dùng chưa xác định hoặc chưa có tài khoản!");
+          }
+        },
+      }
+    );
   };
 
   return (

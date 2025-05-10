@@ -36,6 +36,7 @@ const ProductDetailPage = () => {
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
   const [listImages, setListImages] = useState([]);
   const [detailShop, setDetailShop] = useState();
+  const [countProductShop, setCountProductShop] = useState("");
 
   const maxVisible = 5;
 
@@ -44,13 +45,11 @@ const ProductDetailPage = () => {
       try {
         const res = await ProductServices.getDetailProduct(id);
 
-        console.log("res", res);
-
         const newData = res?.data?.data?.product;
         const shopData = res?.data?.data?.shop;
+        const countProductsOwner = res?.data?.data?.countProductsOwner;
 
-        console.log("Shop data từ API:", shopData); // Kiểm tra dữ liệu shop từ API
-
+        setCountProductShop(countProductsOwner);
         setDetailShop(shopData);
         setProductDetail(newData);
         setListImages(newData.images);
@@ -494,7 +493,7 @@ const ProductDetailPage = () => {
                 <div style={{ display: "flex", gap: "40px" }}>
                   <div style={{ color: "#00000066" }}>Sản phẩm</div>
                   <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
-                    42
+                    {countProductShop}
                   </div>
                 </div>
               </div>

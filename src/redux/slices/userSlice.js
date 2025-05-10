@@ -21,17 +21,21 @@ export const userSlice = createSlice({
         _id = "",
         user_name = "",
         email = "",
-        img = "",
+        images = "", // Đường dẫn ảnh từ backend
         access_token = "",
         phone = "",
-        isAdmin,
-        isVendor,
+        isAdmin = false,
+        isVendor = false,
       } = action.payload;
 
       state.id = _id;
       state.name = user_name || email;
       state.email = email;
-      state.img = Array.isArray(img) && img.length > 0 ? img[0] : "";
+
+      state.img = images.includes("/")
+        ? images
+        : `${process.env.REACT_APP_API_URL}/images/${images}`;
+
       state.access_token = access_token;
       state.phone = phone;
       state.isAdmin = isAdmin;
