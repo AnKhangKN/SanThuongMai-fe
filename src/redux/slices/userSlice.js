@@ -8,6 +8,8 @@ const initialState = {
   img: "",
   phone: "",
   wallet: "",
+  wishlist: [],
+  following: "",
   isAdmin: false,
   isVendor: false,
 };
@@ -26,6 +28,8 @@ export const userSlice = createSlice({
         access_token = "",
         phone = "",
         wallet = "",
+        wishlist = [],
+        following = "",
         isAdmin = false,
         isVendor = false,
       } = action.payload;
@@ -41,6 +45,8 @@ export const userSlice = createSlice({
       state.access_token = access_token;
       state.phone = phone;
       state.wallet = wallet;
+      state.following = following;
+      state.wishlist = wishlist;
       state.isAdmin = isAdmin;
       state.isVendor = isVendor;
     },
@@ -53,6 +59,8 @@ export const userSlice = createSlice({
       state.access_token = "";
       state.phone = "";
       state.wallet = "";
+      state.wishlist = [];
+      state.following = "";
       state.isAdmin = false;
       state.isVendor = false;
     },

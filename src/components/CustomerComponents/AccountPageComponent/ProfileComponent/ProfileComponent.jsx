@@ -8,10 +8,11 @@ import * as ImageServices from "../../../../services/customer/ImageServices";
 import { isJsonString } from "../../../../utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../../services/shared/AuthServices";
-import { updateUser } from "../../../../redux/slices/userSlice";
+import { avatarUser } from "../../../../redux/slices/avatarSlice";
 
 const ProfileComponent = () => {
   const user = useSelector((state) => state.user);
+  const avatar = useSelector((state) => state.avatar);
 
   const [file, setFile] = useState(null);
 
@@ -77,7 +78,7 @@ const ProfileComponent = () => {
 
         const imageUrl = result?.imageName;
 
-        dispatch(updateUser({ images: imageUrl }));
+        dispatch(avatarUser({ images: imageUrl }));
       } else {
         message.error("Lỗi khi upload ảnh.");
       }
@@ -130,7 +131,7 @@ const ProfileComponent = () => {
                 >
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
-                    src={user?.img}
+                    src={avatar?.img ? avatar.img : user?.img}
                     alt="Avatar"
                   />
                 </div>

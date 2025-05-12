@@ -47,6 +47,10 @@ import DeleteAccount from "../pages/Customer/AccountPage/DeleteAccount/DeleteAcc
 import PasswordChangePage from "../pages/Customer/AccountPage/PasswordChangePage/PasswordChangePage";
 import WalletPage from "../pages/Customer/AccountPage/WalletPage/WalletPage";
 import ShopDetailPage from "../pages/Customer/ShopDetailPage/ShopDetailPage";
+import DashboardShopPage from "../pages/Customer/ShopDetailPage/DashboardShopPage/DashboardShopPage";
+import ProductsShopPage from "../pages/Customer/ShopDetailPage/ProductsShopPage/ProductsShopPage";
+import ChatShopPage from "../pages/Customer/ShopDetailPage/ChatShopPage/ChatShopPage";
+import WishListPage from "../pages/Customer/AccountPage/WishListPage/WishListPage";
 
 export const routes = [
   //auth
@@ -83,10 +87,21 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/shop/:id_owner",
-    page: ShopDetailPage,
+    path: "/shop/:id/dashboard",
+    page: DashboardShopPage,
     isShowHeader: true,
   },
+  {
+    path: "/shop/:id/products",
+    page: ProductsShopPage,
+    isShowHeader: true,
+  },
+  {
+    path: "/shop/:id/chat",
+    page: ChatShopPage,
+    isShowHeader: true,
+  },
+
   {
     path: "/cart",
     page: CartPage,
@@ -120,6 +135,11 @@ export const routes = [
   {
     path: "/user/account/change-password",
     page: PasswordChangePage,
+    isShowHeader: true,
+  },
+  {
+    path: "/user/account/wish-list",
+    page: WishListPage,
     isShowHeader: true,
   },
   {

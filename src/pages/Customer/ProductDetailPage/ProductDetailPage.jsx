@@ -39,6 +39,7 @@ const ProductDetailPage = () => {
   const [listImages, setListImages] = useState([]);
   const [detailShop, setDetailShop] = useState();
   const [countProductShop, setCountProductShop] = useState("");
+  const [shopName, setShopName] = useState();
 
   const maxVisible = 5;
 
@@ -56,6 +57,10 @@ const ProductDetailPage = () => {
         setProductDetail(newData);
         setListImages(newData.images);
         setCurrentImage(newData.images[0]); // Đảm bảo ảnh đầu tiên được chọn
+
+        const ten_shop = res?.data?.data?.shop?.name;
+
+        setShopName(ten_shop);
       } catch (error) {
         console.error("Lỗi khi lấy sản phẩm:", error);
       }
@@ -225,6 +230,30 @@ const ProductDetailPage = () => {
     }
 
     setQuantity(value);
+  };
+
+  const handleNavigateShopDetail = () => {
+    const id_owner = productDetail.user_id;
+
+    // Kiểm tra giá trị cụ thể
+    if (!id_owner) {
+      message.error("Thông tin shop không đầy đủ!");
+      return;
+    }
+
+    navigate(`/shop/${id_owner}/dashboard`);
+  };
+
+  const handleNavigateShopDetailChat = () => {
+    const id_owner = productDetail.user_id;
+
+    // Kiểm tra giá trị cụ thể
+    if (!id_owner) {
+      message.error("Thông tin shop không đầy đủ!");
+      return;
+    }
+
+    navigate(`/shop/${id_owner}/chat`);
   };
 
   return (
@@ -458,7 +487,12 @@ const ProductDetailPage = () => {
                     <div>
                       <IoIosChatboxes />
                     </div>
-                    <div>Chat ngay</div>
+                    <div
+                      style={{ cursor: "pointer" }}
+                      onClick={handleNavigateShopDetailChat}
+                    >
+                      Chat ngay
+                    </div>
                   </button>
                   <button
                     style={{
@@ -479,7 +513,10 @@ const ProductDetailPage = () => {
                     <div>
                       <AiOutlineShop />
                     </div>
-                    <div onClick={() => navigate("/shop/:id_owner")}>
+                    <div
+                      style={{ cursor: "pointer" }}
+                      onClick={handleNavigateShopDetail}
+                    >
                       Xem shop
                     </div>
                   </button>

@@ -1,7 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-
-
 const initialState = {
   products: [], // Giỏ hàng sẽ chứa một mảng các sản phẩm
   total_item: 0, // Tổng số lượng sản phẩm trong giỏ hàng

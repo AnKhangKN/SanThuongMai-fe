@@ -102,6 +102,18 @@ const SidebarAccount = () => {
               >
                 Ví HKN
               </Link>
+
+              <Link
+                to="/user/account/wish-list"
+                style={{
+                  marginLeft: "34px",
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Danh sách ước
+              </Link>
+
               <Link
                 to="/user/account/change-password"
                 style={{

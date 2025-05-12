@@ -15,11 +15,13 @@ import { PiBellSimpleRingingBold } from "react-icons/pi";
 import { SlQuestion } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import * as AuthServices from "../../../services/shared/AuthServices";
-import { resetUser, updateUser } from "../../../redux/slices/userSlice";
+import { resetUser } from "../../../redux/slices/userSlice";
 
 const HeaderNavbarComponent = () => {
   // redux để lưu trạng thái người dùng
   const user = useSelector((state) => state.user);
+
+  const avatar = useSelector((state) => state.avatar);
 
   const dispatch = useDispatch();
 
@@ -132,7 +134,7 @@ const HeaderNavbarComponent = () => {
               }}
             >
               <img
-                src={user?.img}
+                src={avatar?.img ? avatar.img : user?.img}
                 alt=""
                 style={{
                   width: "100%",
