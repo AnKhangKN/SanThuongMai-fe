@@ -13,7 +13,7 @@ export const SumCart = styled.div`
   top: 16px;
   border-radius: 50%;
   line-height: 22px;
-  color: #f6402e;
+  color: #194a7a;
   font-size: 12px;
   background: #fff;
   height: 22px;

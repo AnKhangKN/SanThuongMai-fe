@@ -162,9 +162,9 @@ const OrderPage = () => {
               alignItems: "center",
               lineHeight: "50px",
               fontWeight: status === statusItem.value ? "bold" : "normal",
-              color: status === statusItem.value ? "#ee4d2d" : "#000",
+              color: status === statusItem.value ? "#194a7a" : "#000",
               borderBottom:
-                status === statusItem.value ? "2px solid #ee4d2d" : "none",
+                status === statusItem.value ? "2px solid #194a7a" : "none",
               cursor: "pointer",
             }}
           >

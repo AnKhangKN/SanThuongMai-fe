@@ -110,7 +110,7 @@ const RegisterTransport = () => {
                 Thêm Đơn Vị Vân Chuyển
               </WrapperVendorTextTransport>
               <div style={{ color: "#999", display: "flex" }}>
-                Lưu ý: Shopee không hỗ trợ theo dõi quá trình cho các phương
+                Lưu ý: KHN không hỗ trợ theo dõi quá trình cho các phương
                 thức vận chuyển không có tích hợp và cũng sẽ không chịu trách
                 nhiệm về bất kỳ sản phẩm nào bị thiếu hoặc hư hỏng.
               </div>

@@ -19,7 +19,7 @@ const ButtonComponent = ({
         border: "none",
         outline: "none",
         borderRadius: "2px",
-        backgroundColor: "#f53d2d",
+        backgroundColor: "#194a7a",
         color: "#fff",
         cursor: "pointer",
       }}

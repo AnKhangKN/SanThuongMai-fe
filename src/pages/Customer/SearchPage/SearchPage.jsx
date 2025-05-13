@@ -25,6 +25,7 @@ const SearchPage = () => {
     const fetchData = async () => {
       try {
         const response = await ProductServices.getSearchProducts(keyword);
+
         setProducts(response.data);
         setSortedProducts(response.data);
       } catch (error) {
@@ -87,14 +88,17 @@ const SearchPage = () => {
             style={{
               display: "flex",
               justifyContent: "space-between",
-              padding: "20px",
+              padding: "20px 5px",
             }}
           >
             <div style={{ display: "flex", gap: "10px" }}>
               <button
                 style={{
                   backgroundColor:
-                    selectedButton === "price" ? "orange" : "#fff",
+                    selectedButton === "price" ? "#194a7a" : "#fff",
+                  color: selectedButton === "price" ? "#fff" : "#194a7a",
+                  border: "0.5px solid #b1b1b1",
+                  padding: "10px 20px",
                 }}
                 onClick={() => handleSortChange("price", "asc")}
               >
@@ -103,7 +107,10 @@ const SearchPage = () => {
               <button
                 style={{
                   backgroundColor:
-                    selectedButton === "newest" ? "orange" : "#fff",
+                    selectedButton === "newest" ? "#194a7a" : "#fff",
+                  color: selectedButton === "newest" ? "#fff" : "#194a7a",
+                  border: "0.5px solid #b1b1b1",
+                  padding: "10px 20px",
                 }}
                 onClick={() => handleSortChange("newest")}
               >
@@ -112,7 +119,10 @@ const SearchPage = () => {
               <button
                 style={{
                   backgroundColor:
-                    selectedButton === "best" ? "orange" : "#fff",
+                    selectedButton === "best" ? "#194a7a" : "#fff",
+                  color: selectedButton === "best" ? "#fff" : "#194a7a",
+                  border: "0.5px solid #b1b1b1",
+                  padding: "10px 20px",
                 }}
                 onClick={() => handleSortChange("best")}
               >

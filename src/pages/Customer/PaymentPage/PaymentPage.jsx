@@ -567,9 +567,9 @@ const PaymentPage = () => {
                 padding: "10px",
                 border:
                   selectedMethod === "cod"
-                    ? "1px solid #ff3333"
+                    ? "1px solid #194a7a"
                     : "1px solid #ddd",
-                color: selectedMethod === "cod" ? "#ff3333" : "#333",
+                color: selectedMethod === "cod" ? "#194a7a" : "#333",
                 cursor: "pointer",
               }}
             >
@@ -581,9 +581,9 @@ const PaymentPage = () => {
                 padding: "10px",
                 border:
                   selectedMethod === "credit_card"
-                    ? "1px solid #ff3333"
+                    ? "1px solid #194a7a"
                     : "1px solid #ddd",
-                color: selectedMethod === "credit_card" ? "#ff3333" : "#333",
+                color: selectedMethod === "credit_card" ? "#194a7a" : "#333",
                 cursor: "pointer",
               }}
             >

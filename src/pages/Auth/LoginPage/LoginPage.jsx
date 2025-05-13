@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, Input, message, Typography } from "antd";
-import logo_den from "../../../assets/images/Logo_Den.jpg";
+import logo_den from "../../../assets/images/Logo_Trang.jpg";
 import logo_removebg from "../../../assets/images/Logo_Den-removebg-preview.png";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { useMutationHooks } from "../../../hook/useMutationHook";
@@ -123,7 +123,14 @@ const LoginPage = () => {
           alignItems: "center",
         }}
       >
-        <div style={{ width: "40px", height: "40px" }}>
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <img
             style={{ width: "40px", objectFit: "cover" }}
             src={logo_den}
@@ -136,7 +143,7 @@ const LoginPage = () => {
       </div>
 
       {/* Main */}
-      <div style={{ backgroundColor: "#ee4d2d", minHeight: "600px" }}>
+      <div style={{ backgroundColor: "#194a7a", minHeight: "600px" }}>
         <div
           style={{
             width: "1200px",
@@ -150,7 +157,7 @@ const LoginPage = () => {
           {/* Logo bên trái */}
           <div style={{ textAlign: "center", color: "#fff" }}>
             <img src={logo_removebg} alt="logo" style={{ width: 300 }} />
-            <div style={{ fontSize: 24, fontWeight: "bold" }}>Shopee</div>
+            <div style={{ fontSize: 24, fontWeight: "bold" }}>HKN</div>
           </div>
 
           {/* Form đăng nhập */}
@@ -196,9 +203,9 @@ const LoginPage = () => {
               size="large"
               style={{
                 backgroundColor:
-                  !email.length || !password.length ? "#ccc" : "#f53d2d",
+                  !email.length || !password.length ? "#ccc" : "#194a7a",
                 borderColor:
-                  !email.length || !password.length ? "#ccc" : "#f53d2d",
+                  !email.length || !password.length ? "#ccc" : "#194a7a",
                 color: "#fff",
               }}
               onClick={handleLogin}
