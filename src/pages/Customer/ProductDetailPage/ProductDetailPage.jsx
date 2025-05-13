@@ -288,7 +288,17 @@ const ProductDetailPage = () => {
                   marginTop: 10,
                 }}
               >
-                <button onClick={handlePrev} disabled={startIndex === 0}>
+                <button
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "30px",
+                    width: "30px",
+                  }}
+                  onClick={handlePrev}
+                  disabled={startIndex === 0}
+                >
                   <GrFormPrevious />
                 </button>
                 {listImages
@@ -300,7 +310,7 @@ const ProductDetailPage = () => {
                         width: 82,
                         margin: "0 5px",
                         border:
-                          selectedImage === item ? "2px solid #d0011b" : "none",
+                          selectedImage === item ? "2px solid #194a7a" : "none",
                       }}
                     >
                       <img
@@ -308,7 +318,7 @@ const ProductDetailPage = () => {
                         alt=""
                         style={{
                           width: "100%",
-                          height: "82px",
+                          height: "60px",
                           objectFit: "contain",
                         }}
                         onClick={() => handleImageClick(item)}
@@ -316,6 +326,13 @@ const ProductDetailPage = () => {
                     </div>
                   ))}
                 <button
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "30px",
+                    width: "30px",
+                  }}
                   onClick={handleNext}
                   disabled={startIndex + maxVisible >= listImages.length}
                 >
@@ -324,12 +341,19 @@ const ProductDetailPage = () => {
               </div>
             </Col>
             <Col span={14}>
-              <h4>{productDetail?.product_name}</h4>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <p style={{ fontSize: "25px" }}>{productDetail?.product_name}</p>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px",
+                }}
+              >
                 <div>{productDetail?.sold_count} Lượt mua</div>
-                <div>Tố cáo</div>
+                <div style={{ cursor: "pointer" }}>Tố cáo</div>
               </div>
-              <div style={{ backgroundColor: "#f5f5f5", padding: 20 }}>
+              <div style={{ backgroundColor: "#f5f5f5", padding: "10px 20px" }}>
                 <div style={{ display: "flex" }}>
                   <div>đ</div>
                   <p style={{ fontSize: 30, margin: 0 }}>
@@ -337,7 +361,6 @@ const ProductDetailPage = () => {
                   </p>
                 </div>
               </div>
-              <div style={{ marginTop: 20 }}>Giá vận chuyển</div>
 
               {/* Lọc */}
               {productDetail?.details?.some((d) => d.color) ? (
@@ -346,7 +369,7 @@ const ProductDetailPage = () => {
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
-                    marginTop: 20,
+                    marginTop: 25,
                   }}
                 >
                   <div style={{ width: 100 }}>Màu sắc</div>
@@ -358,10 +381,11 @@ const ProductDetailPage = () => {
                         key={color}
                         onClick={() => handleChooseColor(color)}
                         style={{
-                          padding: 10,
+                          padding: "8px 10px",
+                          marginLeft: "15px",
                           border:
                             detailColor === color
-                              ? "2px solid #d0011b"
+                              ? "2px solid #194a7a"
                               : "1px solid #ccc",
                           cursor: "pointer",
                         }}
@@ -394,9 +418,10 @@ const ProductDetailPage = () => {
                         onClick={() => handleChooseSize(size)}
                         style={{
                           padding: 10,
+                          marginLeft: "15px",
                           border:
                             detailSize === size
-                              ? "2px solid #d0011b"
+                              ? "2px solid #194a7a"
                               : "1px solid #ccc",
                           cursor: "pointer",
                         }}
@@ -413,40 +438,100 @@ const ProductDetailPage = () => {
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
+                  flexFlow: "column",
                   gap: 20,
                   marginTop: 20,
                 }}
               >
                 <div>
-                  {selectedProductDetail
-                    ? `Số lượng còn lại: ${selectedProductDetail?.quantity}`
-                    : "Số lượng còn lại: 0"}
+                  {selectedProductDetail ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <div>Số lượng còn lại:</div>
+                        <div style={{ marginLeft: "20px" }}>
+                          {selectedProductDetail?.quantity}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <div>Số lượng còn lại:</div>
+                        <div style={{ marginLeft: "20px" }}>0</div>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <button onClick={handleReduce}>
-                    <FiMinus />
-                  </button>
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={handleQuantityChange}
-                    style={{ width: 50, textAlign: "center" }}
-                  />
-                  <button onClick={handleIncrease}>
-                    <FiPlus />
-                  </button>
+                  <div style={{ width: "100px" }}>Số lượng</div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginLeft: "25px",
+                    }}
+                  >
+                    <button
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "30px",
+                        border: "0.5px solid #cfcfcf",
+                        backgroundColor: "#fff",
+                        height: "30px",
+                      }}
+                      onClick={handleReduce}
+                    >
+                      <FiMinus />
+                    </button>
+                    <input
+                      type="text"
+                      value={quantity}
+                      onChange={handleQuantityChange}
+                      style={{
+                        textAlign: "center",
+                        width: "50px",
+                        border: "0.5px solid #cfcfcf",
+                        outline: "none",
+                        height: "27px",
+                      }}
+                    />
+                    <button
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "#fff",
+                        width: "30px",
+                        border: "0.5px solid #cfcfcf",
+                        height: "30px",
+                      }}
+                      onClick={handleIncrease}
+                    >
+                      <FiPlus />
+                    </button>
+                  </div>
                 </div>
+
                 <button
                   onClick={handleAddToCart}
                   style={{
-                    background: "#d0011b",
+                    background: "#194a7a",
                     color: "white",
-                    padding: 10,
+                    padding: "15px 10px",
                     border: "none",
+                    display: "flex",
+                    borderRadius: "2px",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    gap: "20px",
+                    width: "35%",
+                    justifyContent: "center",
                   }}
                 >
-                  <BsCartPlus /> Thêm vào giỏ hàng
+                  <BsCartPlus /> <div>Thêm vào giỏ hàng</div>
                 </button>
               </div>
             </Col>
@@ -479,7 +564,7 @@ const ProductDetailPage = () => {
                       margin: "0px 10px 17px 10px",
                       fontSize: "14px",
                       border: "1px solid rgb(248, 74, 47)",
-                      color: "#d0011b",
+                      color: "#194a7a",
                       background: "rgba(208, 1, 27, .08)",
                       outline: "none",
                     }}
@@ -530,20 +615,6 @@ const ProductDetailPage = () => {
                 alignItems: "center",
               }}
             >
-              <div style={{ margin: "0px 12px 0px 0px" }}>
-                <div style={{ display: "flex", gap: "40px" }}>
-                  <div style={{ color: "#00000066" }}>Đánh giá</div>
-                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
-                    573
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "40px" }}>
-                  <div style={{ color: "#00000066" }}>Sản phẩm</div>
-                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
-                    {countProductShop}
-                  </div>
-                </div>
-              </div>
               <div
                 style={{
                   margin: "0px 0px 0px 10px",
@@ -552,15 +623,18 @@ const ProductDetailPage = () => {
                 <div
                   style={{
                     display: "flex",
-                    gap: "52px",
+                    gap: "40px",
                     margin: "0px 0px 0px 60px",
                   }}
                 >
-                  <div style={{ color: "#00000066" }}>Tham gia </div>
-                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
-                    12 tháng
+                  <div style={{ color: "#00000066", width: "100px" }}>
+                    Sản phẩm
+                  </div>
+                  <div style={{ color: "#194a7a", margin: "0px 0px 0px 20px" }}>
+                    {countProductShop}
                   </div>
                 </div>
+
                 <div
                   style={{
                     display: "flex",
@@ -568,9 +642,28 @@ const ProductDetailPage = () => {
                     margin: "0px 0px 0px 60px",
                   }}
                 >
-                  <div style={{ color: "#00000066" }}>Người theo dõi</div>
-                  <div style={{ color: "#d0011b", margin: "0px 0px 0px 20px" }}>
-                    3432
+                  <div style={{ color: "#00000066", width: "100px" }}>
+                    Tham gia{" "}
+                  </div>
+                  <div style={{ color: "#194a7a", margin: "0px 0px 0px 20px" }}>
+                    {new Date(detailShop?.created_at).toLocaleString("vi-VN", {
+                      timeZone: "Asia/Ho_Chi_Minh",
+                    })}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "40px",
+                    margin: "0px 0px 0px 60px",
+                  }}
+                >
+                  <div style={{ color: "#00000066", width: "100px" }}>
+                    Người theo dõi
+                  </div>
+                  <div style={{ color: "#194a7a", margin: "0px 0px 0px 20px" }}>
+                    {detailShop?.followers}
                   </div>
                 </div>
               </div>

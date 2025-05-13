@@ -201,7 +201,8 @@ const CategoryPage = () => {
                         border: "none",
                         outline: "none",
                         backgroundColor:
-                          selectedButton === "price" ? "orange" : "#fff", // Đổi màu khi được chọn
+                          selectedButton === "price" ? "#194a7a" : "#fff",
+                        color: selectedButton === "price" ? "#fff" : "#194a7a",
                         borderRadius: "2px",
                         cursor: "pointer",
                       }}
@@ -215,7 +216,8 @@ const CategoryPage = () => {
                         border: "none",
                         outline: "none",
                         backgroundColor:
-                          selectedButton === "newest" ? "orange" : "#fff", // Đổi màu khi được chọn
+                          selectedButton === "newest" ? "#194a7a" : "#fff",
+                        color: selectedButton === "newest" ? "#fff" : "#194a7a",
                         borderRadius: "2px",
                         cursor: "pointer",
                       }}
@@ -229,7 +231,8 @@ const CategoryPage = () => {
                         border: "none",
                         outline: "none",
                         backgroundColor:
-                          selectedButton === "best" ? "orange" : "#fff", // Đổi màu khi được chọn
+                          selectedButton === "best" ? "#194a7a" : "#fff",
+                        color: selectedButton === "best" ? "#fff" : "#194a7a",
                         borderRadius: "2px",
                         cursor: "pointer",
                       }}
@@ -246,11 +249,14 @@ const CategoryPage = () => {
                     <ChoosePrice>
                       <div
                         onClick={() => handleSortChange("price", "asc")}
-                        style={{ marginBottom: "15px" }}
+                        style={{ marginBottom: "15px", cursor: "pointer" }}
                       >
                         Từ thấp đến cao
                       </div>
-                      <div onClick={() => handleSortChange("price", "desc")}>
+                      <div
+                        onClick={() => handleSortChange("price", "desc")}
+                        style={{ cursor: "pointer" }}
+                      >
                         Từ cao đến thấp
                       </div>
                     </ChoosePrice>

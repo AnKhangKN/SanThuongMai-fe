@@ -105,10 +105,10 @@ const ProfileComponent = () => {
               <div>Thay tên</div>
             </WrapperChange>
 
-            <WrapperChange>
+            {/* <WrapperChange>
               <TextNameChange>Địa chỉ giao hàng</TextNameChange>
               <BoxChange style={{ gap: "20px" }}>Thêm địa chỉ</BoxChange>
-            </WrapperChange>
+            </WrapperChange> */}
           </div>
           <div style={{ flex: "0 0 34%" }}>
             <div>
@@ -136,15 +136,38 @@ const ProfileComponent = () => {
                   />
                 </div>
 
-                <input
-                  onChange={handleFileChange}
-                  type="file"
-                  accept="image/*"
-                />
+                <div>
+                  <input
+                    onChange={handleFileChange}
+                    type="file"
+                    accept="image/*"
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: "5px",
+                      padding: "5px 10px",
+                      height: "35px",
+                      width: "148px",
+                      backgroundColor: "#f9f9f9",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      transition: "background-color 0.3s",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "#f0f0f0")
+                    }
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "#f9f9f9")
+                    }
+                  />
+                </div>
 
                 <div
                   style={{
                     cursor: "pointer",
+                    padding: "10px 20px",
+                    border: "0.5px solid #bebebe",
+                    margin: "10px 0px",
+                    textAlign: "center",
                   }}
                   onClick={submitImage}
                 >

@@ -11,6 +11,7 @@ export const Wrapper = styled.div`
 export const WrapperChange = styled.div`
   width: 100%;
   display: flex;
+  gap: 10px;
   align-items: center;
   padding-bottom: 30px;
 `;

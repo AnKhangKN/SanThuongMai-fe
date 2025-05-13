@@ -51,7 +51,7 @@ const RegisterTax = () => {
             Việc thu thập Thông Tin Thuế và Thông Tin Định Danh là bắt buộc theo
             quy định của Luật an ninh mạng, Thương mại điện tử và Thuế của Việt
             Nam. Thông Tin Thuế và Thông Tin Định Danh sẽ được bảo vệ theo chính
-            sách bảo mật của Shopee. Người bán hoàn toàn chịu trách nhiệm về
+            sách bảo mật của HIN. Người bán hoàn toàn chịu trách nhiệm về
             tính chính xác của thông tin.
           </span>
         </WrapperVendorInfoTaxIn>

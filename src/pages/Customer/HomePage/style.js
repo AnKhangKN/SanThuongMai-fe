@@ -10,7 +10,7 @@ export const LineSuggest = styled.div`
   justify-content: center;
   align-items: center;
   margin: 20px 0px 10px 0px;
-  color: #ee4d2d;
+  color: #194a7a;
   text-transform: uppercase;
 
   &::after {
@@ -20,6 +20,6 @@ export const LineSuggest = styled.div`
     left: 0;
     right: 0;
     height: 5px;
-    background-color: #ee4d2d;
+    background-color: #194a7a;
   }
 `;

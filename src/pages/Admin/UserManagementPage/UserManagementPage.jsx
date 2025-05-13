@@ -164,7 +164,7 @@ const UserManagenetPage = () => {
 
   return (
     <Wrapper>
-      <h3>Quản lý Cộng tác viên</h3>
+      <h3>Quản lý người dùng</h3>
 
       <div
         style={{
@@ -181,7 +181,7 @@ const UserManagenetPage = () => {
             marginBottom: "20px",
           }}
         >
-          <h5>Danh sách Cộng tác viên</h5>
+          <h5>Danh sách người dùng</h5>
 
           <Select
             value={selectedStatus}

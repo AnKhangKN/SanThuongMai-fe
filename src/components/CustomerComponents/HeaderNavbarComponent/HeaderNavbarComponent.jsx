@@ -66,7 +66,7 @@ const HeaderNavbarComponent = () => {
         ) : !user.id ? (
           <VendorText>
             <Link to="/login" style={{ color: "#fff", textDecoration: "none" }}>
-              Trở thành người bán Shopee
+              Trở thành người bán HKN
             </Link>
           </VendorText>
         ) : (
@@ -75,7 +75,7 @@ const HeaderNavbarComponent = () => {
               to="/vendor/register"
               style={{ color: "#fff", textDecoration: "none" }}
             >
-              Trở thành người bán Shopee
+              Trở thành người bán HKN
             </Link>
           </VendorText>
         )}

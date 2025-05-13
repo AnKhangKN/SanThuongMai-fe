@@ -5,7 +5,7 @@ import * as AuthServices from "../../../services/shared/AuthServices";
 import { useMutationHooks } from "../../../hook/useMutationHook";
 import logo_remove_bg from "../../../assets/images/Logo_Den-removebg-preview.png";
 import * as MessageComponent from "../../../components/CustomerComponents/MessageComponent/MessageComponent";
-import logo_den from "../../../assets/images/Logo_Den.jpg";
+import logo_den from "../../../assets/images/Logo_Trang.jpg";
 
 const { Title, Text, Link: AntLink } = Typography;
 
@@ -68,7 +68,14 @@ const SignupPage = () => {
           alignItems: "center",
         }}
       >
-        <div style={{ width: "40px", height: "40px" }}>
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <img
             style={{ width: "40px", objectFit: "cover" }}
             src={logo_den}
@@ -81,7 +88,7 @@ const SignupPage = () => {
       </div>
 
       {/* Main */}
-      <div style={{ backgroundColor: "#ee4d2d", minHeight: "600px" }}>
+      <div style={{ backgroundColor: "#194a7a", minHeight: "600px" }}>
         <div
           style={{
             width: "1200px",
@@ -95,7 +102,7 @@ const SignupPage = () => {
           {/* Logo bên trái */}
           <div style={{ textAlign: "center", color: "#fff" }}>
             <img src={logo_remove_bg} alt="logo" style={{ width: 300 }} />
-            <div style={{ fontSize: 24, fontWeight: "bold" }}>Shopee</div>
+            <div style={{ fontSize: 24, fontWeight: "bold" }}>HKN</div>
           </div>
 
           {/* Form đăng ký */}
@@ -153,11 +160,11 @@ const SignupPage = () => {
                 backgroundColor:
                   !email.length || !password.length || !confirmPassword.length
                     ? "#ccc"
-                    : "#f53d2d",
+                    : "#194a7a",
                 borderColor:
                   !email.length || !password.length || !confirmPassword.length
                     ? "#ccc"
-                    : "#f53d2d",
+                    : "#194a7a",
                 color: "#fff",
               }}
               onClick={handleSignUp}
@@ -169,7 +176,7 @@ const SignupPage = () => {
               type="secondary"
               style={{ display: "block", marginTop: 20, fontSize: 12 }}
             >
-              Bằng việc đăng ký, bạn đã đồng ý với Shopee về{" "}
+              Bằng việc đăng ký, bạn đã đồng ý với HKN về{" "}
               <AntLink href="#">Điều khoản dịch vụ</AntLink> &{" "}
               <AntLink href="#">Chính sách bảo mật</AntLink>
             </Text>
