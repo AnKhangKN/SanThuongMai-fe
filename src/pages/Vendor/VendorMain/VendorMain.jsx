@@ -19,22 +19,22 @@ const VendorMain = () => {
             <WrapperVendorTextMain>Danh sách cần làm</WrapperVendorTextMain>
             <WrapperVendorMainItem>
               <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>0</WrapperItemNumber>
+                <WrapperItemNumber>5</WrapperItemNumber>
                 <WrapperItemText>Chờ lấy hàng</WrapperItemText>
               </WrapperVendorBackgroundItem>
 
               <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>0</WrapperItemNumber>
+                <WrapperItemNumber>10</WrapperItemNumber>
                 <WrapperItemText>Đã xử lý</WrapperItemText>
               </WrapperVendorBackgroundItem>
 
               <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>0</WrapperItemNumber>
+                <WrapperItemNumber>2</WrapperItemNumber>
                 <WrapperItemText>Đơn trả hàng/Hoàn tiền/Hủy</WrapperItemText>
               </WrapperVendorBackgroundItem>
 
               <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>0</WrapperItemNumber>
+                <WrapperItemNumber>3</WrapperItemNumber>
                 <WrapperItemText>Sản phẩm bị tạm khóa</WrapperItemText>
               </WrapperVendorBackgroundItem>
             </WrapperVendorMainItem>
