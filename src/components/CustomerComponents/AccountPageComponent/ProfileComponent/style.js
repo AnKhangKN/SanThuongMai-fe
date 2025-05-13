@@ -17,8 +17,7 @@ export const WrapperChange = styled.div`
 `;
 
 export const TextNameChange = styled.div`
-  width: 152px;
-  text-align: end;
+  width: 110px;
 `;
 
 export const BoxChange = styled.div`
