@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Lấy tất cả địa chỉ giao hàng của khách hàng
 export const getAllAddress = async (accessToken) => {
   try {
     const response = await axios.get(
@@ -20,7 +19,6 @@ export const getAllAddress = async (accessToken) => {
   }
 };
 
-// Thêm một địa chỉ giao hàng mới cho khách hàng
 export const addAddress = async (accessToken, payload) => {
   try {
     const response = await axios.patch(
@@ -46,12 +44,13 @@ export const addPayment = async (
   shippingInfo,
   items,
   totalBill,
-  paymentMethod
+  paymentMethod,
+  orderNote
 ) => {
   try {
     const response = await axios.post(
       `${process.env.REACT_APP_API_URL}/customer/order-product`,
-      { shippingInfo, items, totalBill, paymentMethod },
+      { shippingInfo, items, totalBill, paymentMethod, orderNote },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -107,6 +106,24 @@ export const cancelledOrder = async (accessToken, data) => {
   try {
     const res = await axios.patch(
       `${process.env.REACT_APP_API_URL}/customer/cancel-order`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Đảm bảo có header Authorization
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch search products:", error);
+    throw error;
+  }
+};
+
+export const removeShippingAddress = async (accessToken, data) => {
+  try {
+    const res = await axios.patch(
+      `${process.env.REACT_APP_API_URL}/customer/remove-shipping-address`,
       data,
       {
         headers: {

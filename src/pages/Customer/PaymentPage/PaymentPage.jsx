@@ -13,6 +13,7 @@ import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { resetCheckout } from "../../../redux/slices/checkoutSlice";
 import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
+import TextArea from "antd/es/input/TextArea";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -22,6 +23,7 @@ const PaymentPage = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState();
+  const [orderNote, setOrderNote] = useState("");
   const [newAddress, setNewAddress] = useState({
     phone: "",
     address: "",
@@ -93,12 +95,15 @@ const PaymentPage = () => {
         shippingInfo,
         products,
         totalBill,
-        paymentMethod
+        paymentMethod,
+        orderNote
       );
 
       dispatch(resetCheckout());
 
       message.success("Đặt hàng thành công!");
+
+      setOrderNote("");
     } catch (err) {
       console.error("Error confirming order:", err);
       message.warning("Hãy thêm sản phẩm để tạo đơn hàng!");
@@ -209,7 +214,6 @@ const PaymentPage = () => {
 
       message.success("Thêm địa chỉ giao hàng thành công!");
 
-      // Gọi lại danh sách từ server
       await fetchAllAddress();
 
       handleCancel();
@@ -233,7 +237,43 @@ const PaymentPage = () => {
     0
   );
 
-  console.log(products);
+  const handleRemoveAddress = async () => {
+    const selectedAddress = addresses.find(
+      (addr) => addr._id === selectedAddressId
+    );
+
+    if (!selectedAddress) {
+      return message.warning("Địa chỉ không tồn tại!");
+    }
+
+    const shippingInfo = {
+      phone: selectedAddress.phone,
+      address: selectedAddress.address,
+      city: selectedAddress.city,
+    };
+
+    try {
+      let { decoded, token } = decodeToken();
+      if (!token || !decoded || decoded.exp < Date.now() / 1000) {
+        const refreshed = await AuthServices.refreshToken();
+        token = refreshed?.access_token;
+        if (token) {
+          localStorage.setItem("access_token", token); // Lưu lại token mới
+        } else {
+          return message.warning("Không thể làm mới token!");
+        }
+      }
+
+      await OrderServices.removeShippingAddress(token, shippingInfo);
+
+      message.success("Địa chỉ đã xóa!");
+
+      handleCancel();
+    } catch (err) {
+      console.error("Error removing address:", err);
+      message.warning("Xóa địa chỉ không thành công!");
+    }
+  };
 
   return (
     <Wrapper>
@@ -330,8 +370,26 @@ const PaymentPage = () => {
                       >
                         {addr.address}, {addr.city}
                       </div>
-                      <div style={{ textAlign: "end", width: "110px" }}>
-                        <IoMdClose />
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          alignItems: "center",
+                          width: "110px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "20px",
+                            height: "20px",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            alignItems: "center",
+                          }}
+                          onClick={handleRemoveAddress}
+                        >
+                          <IoMdClose />
+                        </div>
                       </div>
                     </div>
                   ))
@@ -455,10 +513,34 @@ const PaymentPage = () => {
           ))}
 
           <div
-            style={{ textAlign: "end", marginTop: "30px", fontWeight: "bold" }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "50px",
+              backgroundColor: "#fafdff",
+              padding: "30px",
+              borderTop: "0.5px dashed #c6e8ff",
+              borderBottom: "0.5px dashed #c6e8ff",
+            }}
           >
-            Tổng số tiền ({totalQuantity} products): ₫
-            {totalAmount.toLocaleString()}
+            <div style={{ width: "60%" }}>
+              <TextArea
+                rows={4}
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                placeholder="Lời nhắn cho người bán (giới hạn 500 kí tự)"
+                maxLength={500}
+              />
+            </div>
+
+            <div
+              style={{
+                fontWeight: "bold",
+              }}
+            >
+              Tổng số tiền ({totalQuantity} products): ₫
+              {totalAmount.toLocaleString()}
+            </div>
           </div>
         </div>
 

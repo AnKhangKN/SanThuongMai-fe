@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import AccountPage from "../AccountPage";
 import { DetailBox } from "./style";
 import { useNavigate, useParams } from "react-router-dom";
-import { Col, message, Row } from "antd";
+import { Col, message, Modal, Row } from "antd";
 import ButtonComponent from "../../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import * as AuthServices from "../../../../services/shared/AuthServices";
 import * as OrderServices from "../../../../services/customer/OrderServices";
 import { isJsonString } from "../../../../utils";
 import { jwtDecode } from "jwt-decode";
+import TextArea from "antd/es/input/TextArea";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -22,6 +23,8 @@ const statuses = [
 const OrderPage = () => {
   const [allData, setAllData] = useState([]);
   const [status, setStatus] = useState();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const { "status-order": keyword } = useParams();
   const navigate = useNavigate();
@@ -103,6 +106,18 @@ const OrderPage = () => {
     }
   };
 
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
   const handleCancelOrder = async (orderId) => {
     try {
       let { storageData, decoded } = handleDecoded();
@@ -122,9 +137,11 @@ const OrderPage = () => {
       const res = await OrderServices.cancelledOrder(accessToken, {
         status,
         order,
+        cancelReason,
       });
 
       message.success("Đã hủy đơn hàng!");
+
       fetchAllOrderByStatus();
     } catch (error) {
       console.error("Lỗi khi xác nhận đơn hàng:", error.message || error);
@@ -247,31 +264,53 @@ const OrderPage = () => {
               )}
 
               {(keyword === "pending" || keyword === "processing") && (
-                <div
-                  style={{
-                    display: "flex",
-                    flexFlow: "column",
-                  }}
-                >
-                  <div style={{ textAlign: "end" }}>
-                    Tổng đơn hàng: {order.total_price?.toLocaleString()}
-                  </div>
-                  <button
+                <>
+                  <div
                     style={{
-                      backgroundColor: "#fff",
-                      color: "#333",
-                      padding: "9px 20px",
-                      border: "1px solid #333",
-                      borderRadius: "2px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      handleCancelOrder(order._id || order.id);
+                      display: "flex",
+                      flexFlow: "column",
                     }}
                   >
-                    Hủy đơn hàng
-                  </button>
-                </div>
+                    <div style={{ textAlign: "end" }}>
+                      Tổng đơn hàng: {order.total_price?.toLocaleString()}
+                    </div>
+                    <button
+                      style={{
+                        backgroundColor: "#fff",
+                        color: "#333",
+                        padding: "9px 20px",
+                        border: "1px solid #333",
+                        borderRadius: "2px",
+                        cursor: "pointer",
+                      }}
+                      onClick={showModal}
+                    >
+                      Hủy đơn hàng
+                    </button>
+                  </div>
+
+                  <Modal
+                    title="Lý do hủy đơn"
+                    open={isModalOpen}
+                    zIndex={2000}
+                    styles={{
+                      mask: {
+                        backgroundColor: "rgba(0, 0, 0, 0.1)", // ✅ Đã đổi sang styles.mask
+                      },
+                    }}
+                    onOk={() => {
+                      handleCancelOrder(order._id || order.id);
+                    }}
+                    onCancel={handleCancel}
+                  >
+                    <TextArea
+                      placeholder="Hãy thêm lý do bạn hủy đơn hàng"
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      rows={4}
+                    />
+                  </Modal>
+                </>
               )}
             </DetailBox>
           </div>
