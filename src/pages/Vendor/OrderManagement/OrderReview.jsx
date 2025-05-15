@@ -1,43 +1,125 @@
-import React, { useState } from 'react';
-import { Table, Tag, Space, Button, Dropdown, Menu } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
-import OrderFilter from '../../../components/VendorComponents/OrderFilter/OrderFilter';
+import React, { useState, useCallback, useEffect } from "react";
+import { Table, Tag, Space, Button, message } from "antd";
+import OrderFilter from "../../../components/VendorComponents/OrderFilter/OrderFilter";
+import * as OrderProductService from "../../../services/vendor/OrderProductService";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
 
 const OrderReview = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState(null);
   const [dateRange, setDateRange] = useState([]);
+  const [allData, setAllData] = useState([]);
 
   const handleSearch = (value) => {
     setSearchText(value);
-    // Gọi API hoặc lọc dữ liệu
   };
 
   const handleStatusChange = (value) => {
     setStatusFilter(value);
-    // Gọi API hoặc lọc dữ liệu
   };
 
   const handleDateRangeChange = (dates) => {
     setDateRange(dates);
-    // Gọi API hoặc lọc dữ liệu
   };
+
+  const handleDecoded = () => {
+    const storageData = localStorage.getItem("access_token");
+    let decoded = {};
+
+    if (storageData && isJsonString(storageData)) {
+      const parsed = JSON.parse(storageData);
+      decoded = jwtDecode(parsed);
+      return { decoded, storageData: parsed };
+    }
+
+    return { decoded, storageData };
+  };
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+      let accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+
+      const res = await OrderProductService.getAllOrders(accessToken);
+
+      // ✅ Lọc đơn hàng có trạng thái "pending" hoặc "processing"
+      const filteredOrders = res.data.data.filter(
+        (order) =>
+          order.status === "pending" || order.status === "processing"
+      );
+
+      const ordersWithKeys = filteredOrders.map((order, index) => ({
+        key: order._id || index,
+        order_id: order._id,
+        owner_id:
+          order.items?.find((item) => item.owner_id)?.owner_id || "N/A",
+        user_id: order.user_id || "Ẩn danh",
+        status:
+          order.status === "pending"
+            ? "Chờ duyệt"
+            : order.status === "processing"
+            ? "Đã đóng gói"
+            : order.status,
+        raw_status: order.status,
+      }));
+
+      setAllData(ordersWithKeys);
+    } catch (error) {
+      console.error("Lỗi khi lấy đơn hàng:", error);
+    }
+  }, []);
+
+  // const handleApprove = async (record) => {
+  //   try {
+  //     const { storageData, decoded } = handleDecoded();
+  //     let accessToken = storageData;
+
+  //     if (decoded?.exp < Date.now() / 1000) {
+  //       const res = await AuthServices.refreshToken();
+  //       accessToken = res?.access_token;
+  //       localStorage.setItem("access_token", JSON.stringify(accessToken));
+  //     }
+
+  //     // Gọi API cập nhật trạng thái đơn hàng
+  //     await OrderProductService.updateOrderStatus(accessToken, record.order_id, "shipped");
+  //     message.success(`Đã duyệt đơn hàng ${record.order_id}`);
+  //     // Ẩn khỏi danh sách sau khi duyệt
+  //     setAllData((prev) =>
+  //       prev.filter((order) => order.order_id !== record.order_id)
+  //     );
+  //   } catch (err) {
+  //     console.error("Lỗi khi duyệt đơn:", err);
+  //     message.error("Duyệt đơn hàng thất bại");
+  //   }
+  // };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const columns = [
     {
+      title: "ID Cửa hàng",
+      dataIndex: "owner_id",
+      key: "owner_id",
+    },
+    {
       title: "Mã đơn hàng",
-      dataIndex: "orderId",
-      key: "orderId",
+      dataIndex: "order_id",
+      key: "order_id",
     },
     {
       title: "Khách hàng",
-      dataIndex: "customerName",
-      key: "customerName",
-    },
-    {
-      title: "Ngày đặt",
-      dataIndex: "orderDate",
-      key: "orderDate",
+      dataIndex: "user_id",
+      key: "user_id",
     },
     {
       title: "Trạng thái",
@@ -49,8 +131,6 @@ const OrderReview = () => {
             ? "orange"
             : status === "Đã đóng gói"
             ? "blue"
-            : status === "Đang giao hàng"
-            ? "green"
             : "default";
         return <Tag color={color}>{status}</Tag>;
       },
@@ -58,47 +138,14 @@ const OrderReview = () => {
     {
       title: "Thao tác",
       key: "action",
-      render: (_, record) => {
-        const handleMenuClick = (e) => {
-          console.log(`Cập nhật đơn ${record.orderId} sang trạng thái:`, e.key);
-          // Bạn có thể gọi API cập nhật trạng thái tại đây
-        };
-
-        const menu = (
-          <Menu onClick={handleMenuClick}>
-            <Menu.Item key="Đã đóng gói">Đã đóng gói</Menu.Item>
-            <Menu.Item key="Đang giao hàng">Đang giao hàng</Menu.Item>
-          </Menu>
-        );
-
-        return (
-          <Space size="middle">
-            <Button type="primary">Duyệt</Button>
-            <Dropdown overlay={menu}>
-              <Button>
-                Cập nhật <DownOutlined />
-              </Button>
-            </Dropdown>
-          </Space>
-        );
-      },
-    },
-  ];
-
-  const data = [
-    {
-      key: "1",
-      orderId: "DH001",
-      customerName: "Nguyễn Văn A",
-      orderDate: "2025-04-10",
-      status: "Chờ duyệt",
-    },
-    {
-      key: "2",
-      orderId: "DH002",
-      customerName: "Trần Thị B",
-      orderDate: "2025-04-09",
-      status: "Đã đóng gói",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button type="primary" > 
+            {/* onClick={() => handleApprove(record)} */}
+            Duyệt
+          </Button>
+        </Space>
+      ),
     },
   ];
 
@@ -110,7 +157,7 @@ const OrderReview = () => {
         onStatusChange={handleStatusChange}
         onDateRangeChange={handleDateRangeChange}
       />
-      <Table columns={columns} dataSource={data} />
+      <Table columns={columns} dataSource={allData} />
     </div>
   );
 };
