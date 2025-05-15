@@ -13,10 +13,10 @@ import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 import { updateCart } from "../../../redux/slices/cartSlice";
 import { AiOutlineShop } from "react-icons/ai";
-import { FaUserAlt } from "react-icons/fa";
 import { IoIosChatboxes } from "react-icons/io";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+const imageAvatar = `${process.env.REACT_APP_API_URL}/avatar/`;
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
@@ -40,6 +40,7 @@ const ProductDetailPage = () => {
   const [detailShop, setDetailShop] = useState();
   const [countProductShop, setCountProductShop] = useState("");
   const [shopName, setShopName] = useState();
+  const [imageShop, setImageShop] = useState();
 
   const maxVisible = 5;
 
@@ -49,9 +50,11 @@ const ProductDetailPage = () => {
         const res = await ProductServices.getDetailProduct(id);
 
         const newData = res?.data?.data?.product;
-        const shopData = res?.data?.data?.shop;
+        const shopData = res?.data?.data?.shop?.shop;
         const countProductsOwner = res?.data?.data?.countProductsOwner;
+        const imageShop = res?.data?.data?.shop?.imageShop;
 
+        setImageShop(imageShop);
         setCountProductShop(countProductsOwner);
         setDetailShop(shopData);
         setProductDetail(newData);
@@ -311,6 +314,7 @@ const ProductDetailPage = () => {
                         margin: "0 5px",
                         border:
                           selectedImage === item ? "2px solid #194a7a" : "none",
+                        cursor: "pointer",
                       }}
                     >
                       <img
@@ -541,12 +545,12 @@ const ProductDetailPage = () => {
         <DetailBox>
           <Row>
             <Col span={8} style={{ display: "flex", alignItems: "center" }}>
-              <div>
-                <Space direction="vertical" size={16}>
-                  <Space wrap size={16}>
-                    <Avatar size={64} icon={<FaUserAlt />} />
-                  </Space>
-                </Space>
+              <div style={{ width: "60px", height: "60px" }}>
+                <img
+                  style={{ width: "100%" }}
+                  src={`${imageAvatar}${imageShop}`}
+                  alt=""
+                />
               </div>
               <div>
                 <div style={{ margin: "0px 0px 5px 10px" }}>

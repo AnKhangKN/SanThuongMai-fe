@@ -34,7 +34,6 @@ const FormOfVendorRegister = ({ form}) => {
 
       const res = await UserVendorService.createUserVendor(accessToken, UserVendorData);
 
-      console.log("res", res);
       if (res?.status === 200) {
         message.success("Tạo người bán thành công!");
         form.resetFields();
@@ -57,8 +56,7 @@ const FormOfVendorRegister = ({ form}) => {
         address: values.address,
       },
     };
-
-    console.log("Dữ liệu gửi lên:", UserVendorData);
+    
     fetchCreateVendor(UserVendorData);
   };
 

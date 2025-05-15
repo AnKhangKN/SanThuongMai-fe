@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import AccountPage from "../AccountPage";
 import { DetailBox } from "./style";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,6 +25,7 @@ const OrderPage = () => {
   const [status, setStatus] = useState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const { "status-order": keyword } = useParams();
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ const OrderPage = () => {
     navigate(`/user/purchase/${statusValue}`);
   };
 
-  const handleSucessfulDelivered = async (orderId) => {
+  const handleSuccessfulDelivered = async (orderId) => {
     try {
       let { storageData, decoded } = handleDecoded();
       let accessToken = storageData;
@@ -94,7 +95,7 @@ const OrderPage = () => {
         (item) => item._id === orderId || item.id === orderId
       );
 
-      const res = await OrderServices.successfulDelivered(accessToken, {
+      await OrderServices.successfulDelivered(accessToken, {
         status,
         order,
       });
@@ -106,20 +107,18 @@ const OrderPage = () => {
     }
   };
 
-  const showModal = () => {
+  const showModal = (orderId) => {
+    setSelectedOrderId(orderId);
     setIsModalOpen(true);
   };
 
-  const handleOk = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleCancelOrder = async (orderId) => {
+  const handleCancelOrder = async () => {
     try {
+      if (!selectedOrderId) {
+        message.error("Không xác định được đơn hàng cần hủy.");
+        return;
+      }
+
       let { storageData, decoded } = handleDecoded();
       let accessToken = storageData;
 
@@ -131,17 +130,24 @@ const OrderPage = () => {
 
       const status = "cancelled";
       const order = allData.find(
-        (item) => item._id === orderId || item.id === orderId
+        (item) => item._id === selectedOrderId || item.id === selectedOrderId
       );
 
-      const res = await OrderServices.cancelledOrder(accessToken, {
+      if (!order) {
+        message.error("Không tìm thấy đơn hàng.");
+        return;
+      }
+
+      await OrderServices.cancelledOrder(accessToken, {
         status,
         order,
         cancelReason,
       });
 
       message.success("Đã hủy đơn hàng!");
-
+      setIsModalOpen(false);
+      setSelectedOrderId(null);
+      setCancelReason("");
       fetchAllOrderByStatus();
     } catch (error) {
       console.error("Lỗi khi xác nhận đơn hàng:", error.message || error);
@@ -257,7 +263,7 @@ const OrderPage = () => {
                   <ButtonComponent
                     name="Xác nhận đơn hàng"
                     onClick={() =>
-                      handleSucessfulDelivered(order._id || order.id)
+                      handleSuccessfulDelivered(order._id || order.id)
                     }
                   />
                 </div>
@@ -270,6 +276,7 @@ const OrderPage = () => {
                       display: "flex",
                       flexFlow: "column",
                     }}
+                    key={order._id}
                   >
                     <div style={{ textAlign: "end" }}>
                       Tổng đơn hàng: {order.total_price?.toLocaleString()}
@@ -283,33 +290,27 @@ const OrderPage = () => {
                         borderRadius: "2px",
                         cursor: "pointer",
                       }}
-                      onClick={showModal}
+                      onClick={() => showModal(order._id)}
                     >
                       Hủy đơn hàng
                     </button>
-                  </div>
 
-                  <Modal
-                    title="Lý do hủy đơn"
-                    open={isModalOpen}
-                    zIndex={2000}
-                    styles={{
-                      mask: {
-                        backgroundColor: "rgba(0, 0, 0, 0.1)", // ✅ Đã đổi sang styles.mask
-                      },
-                    }}
-                    onOk={() => {
-                      handleCancelOrder(order._id || order.id);
-                    }}
-                    onCancel={handleCancel}
-                  >
-                    <TextArea
-                      placeholder="Hãy thêm lý do bạn hủy đơn hàng"
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      rows={4}
-                    />
-                  </Modal>
+                    <Modal
+                      title="Lý do hủy đơn"
+                      open={isModalOpen}
+                      zIndex={2000}
+                      maskStyle={{ backgroundColor: "rgba(0, 0, 0, 0.1)" }}
+                      onOk={handleCancelOrder} // ✅ Đã sửa
+                      onCancel={() => setIsModalOpen(false)}
+                    >
+                      <TextArea
+                        placeholder="Hãy thêm lý do bạn hủy đơn hàng"
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        rows={4}
+                      />
+                    </Modal>
+                  </div>
                 </>
               )}
             </DetailBox>

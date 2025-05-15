@@ -55,7 +55,7 @@ const CategoryComponent = () => {
       >
         {currentItems.map((product) => (
           <div
-            key={product.id}
+            key={product.name}
             style={{
               width: `${100 / itemsPerRow}%`,
               boxSizing: "border-box",
@@ -74,10 +74,11 @@ const CategoryComponent = () => {
                     objectFit: "contain",
                   }}
                   src={
-                    `${imageURL}${product.image}` ||
-                    "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
+                    product.image
+                      ? `${imageURL}${product.image}`
+                      : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                   }
-                  alt=""
+                  alt={product.name || "Product Image"}
                 />
               </div>
               <div style={{ textAlign: "center" }}>{product.name}</div>

@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { BoxChange, TextNameChange, Wrapper, WrapperChange } from "./style";
 import logo from "../../../../assets/images/Logo_Trang.jpg";
 import ButtonComponent from "../../ButtonComponent/ButtonComponent";
-import { Input, message } from "antd";
+import { Input, message, Modal } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import * as ImageServices from "../../../../services/customer/ImageServices";
 import { isJsonString } from "../../../../utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../../services/shared/AuthServices";
+import * as UserServices from "../../../../services/customer/UserServices";
 import { avatarUser } from "../../../../redux/slices/avatarSlice";
 
 const ProfileComponent = () => {
@@ -15,6 +16,8 @@ const ProfileComponent = () => {
   const avatar = useSelector((state) => state.avatar);
 
   const [file, setFile] = useState(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const dispatch = useDispatch();
 
@@ -32,7 +35,6 @@ const ProfileComponent = () => {
   // Hàm xử lý khi chọn file
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    console.log("File selected:", selectedFile); // Kiểm tra file đã được chọn
     if (selectedFile) {
       setFile(selectedFile);
     } else {
@@ -88,6 +90,47 @@ const ProfileComponent = () => {
     }
   };
 
+  // const showModal = () => {
+  //   setIsModalOpen(true);
+  // };
+
+  // const handleOk = () => {
+  //   setIsModalOpen(false);
+  // };
+
+  // const handleCancel = () => {
+  //   setIsModalOpen(false);
+  // };
+
+  const handleChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleChangeUserName = async () => {
+    try {
+      let { decoded, token } = decodeToken();
+
+      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
+        const refreshed = await AuthServices.refreshToken();
+        token = refreshed?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(token));
+      }
+
+      if (!inputValue) {
+        message.warning("Hãy nhập tên mới của bạn!");
+        return;
+      }
+
+      await UserServices.updateUser(token, inputValue);
+
+      message.success("Cập nhật tên thành công!");
+
+      setInputValue("");
+    } catch (err) {
+      console.error("Lỗi thay đổi tên người dùng:", err);
+    }
+  };
+
   return (
     <>
       <Wrapper>
@@ -100,14 +143,33 @@ const ProfileComponent = () => {
             <WrapperChange>
               <TextNameChange>Tên</TextNameChange>
               <BoxChange>
-                <Input placeholder={user?.name} />
+                <Input
+                  placeholder={user?.name}
+                  value={inputValue}
+                  onChange={handleChange}
+                />
               </BoxChange>
-              <div>Thay tên</div>
+              <div onClick={handleChangeUserName} style={{ cursor: "pointer" }}>
+                Thay tên
+              </div>
             </WrapperChange>
 
             {/* <WrapperChange>
               <TextNameChange>Địa chỉ giao hàng</TextNameChange>
-              <BoxChange style={{ gap: "20px" }}>Thêm địa chỉ</BoxChange>
+              <BoxChange onClick={showModal} style={{ gap: "20px" }}>
+                Thêm địa chỉ
+              </BoxChange>
+
+              <Modal
+                title="Basic Modal"
+                closable={{ "aria-label": "Custom Close Button" }}
+                zIndex={2000}
+                open={isModalOpen}
+                onOk={handleOk}
+                onCancel={handleCancel}
+              >
+
+              </Modal>
             </WrapperChange> */}
           </div>
           <div style={{ flex: "0 0 34%" }}>
@@ -136,29 +198,47 @@ const ProfileComponent = () => {
                   />
                 </div>
 
-                <div>
+                <div style={{ position: "relative", display: "inline-block" }}>
                   <input
                     onChange={handleFileChange}
                     type="file"
                     accept="image/*"
                     style={{
-                      border: "1px solid #ddd",
-                      borderRadius: "5px",
-                      padding: "5px 10px",
-                      height: "35px",
-                      width: "148px",
-                      backgroundColor: "#f9f9f9",
+                      opacity: 0,
+                      position: "absolute",
+                      width: "100%",
+                      height: "100%",
                       cursor: "pointer",
-                      fontSize: "14px",
-                      transition: "background-color 0.3s",
                     }}
-                    onMouseOver={(e) =>
-                      (e.target.style.backgroundColor = "#f0f0f0")
-                    }
-                    onMouseOut={(e) =>
-                      (e.target.style.backgroundColor = "#f9f9f9")
-                    }
                   />
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px dashed #ddd",
+                      borderRadius: "8px",
+                      padding: "8px 15px",
+                      width: "135px",
+                      height: "30px",
+                      backgroundColor: "#f9f9f9",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#555",
+                      cursor: "pointer",
+                      transition: "background-color 0.3s, color 0.3s",
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = "#f0f0f0";
+                      e.target.style.color = "#333";
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = "#f9f9f9";
+                      e.target.style.color = "#555";
+                    }}
+                  >
+                    Chọn hình ảnh
+                  </label>
                 </div>
 
                 <div

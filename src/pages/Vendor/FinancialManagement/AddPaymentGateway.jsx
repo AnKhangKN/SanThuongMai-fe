@@ -6,7 +6,6 @@ const AddPaymentGateway = () => {
   const [form] = Form.useForm();
 
   const handleSubmit = (values) => {
-    console.log("Dữ liệu đã gửi:", values);
     message.success("Đã thêm cổng thanh toán thành công!");
     form.resetFields();
   };

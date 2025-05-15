@@ -104,8 +104,6 @@ const CartPage = () => {
         quantity: newQuantity,
       });
 
-      console.log("API Response:", response);
-
       if (response?.status === "ERROR") {
         return message.warning(
           response.message || "Cập nhật số lượng thất bại."

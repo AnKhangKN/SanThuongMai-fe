@@ -68,7 +68,6 @@ const RegisterForm = () => {
         address: values.address,
       },
     };
-    console.log("Dữ liệu gửi lên:", UserVendorData);
     await fetchCreateVendor(UserVendorData);
   };
 

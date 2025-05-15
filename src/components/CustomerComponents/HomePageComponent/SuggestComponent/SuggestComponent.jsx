@@ -60,7 +60,7 @@ const SuggestComponent = () => {
                   />
                 </div>
                 <div style={{ padding: "10px" }}>
-                  <div style={{ marginBottom: "30px" }}>
+                  <div style={{ marginBottom: "30px", fontSize: "20px" }}>
                     {product.product_name}
                   </div>
                   <div

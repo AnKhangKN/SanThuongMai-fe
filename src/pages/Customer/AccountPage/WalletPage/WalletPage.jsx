@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 
 const WalletPage = () => {
   const user = useSelector((state) => state.user);
-  console.log(user);
 
   return (
     <AccountPage>
