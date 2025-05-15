@@ -1,0 +1,26 @@
+import styled from "styled-components";
+
+export const Wrapper = styled.div`
+  width: 85%;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.4);
+  padding: 10px 30px;
+  margin: 30px 0px 30px 30px;
+`;
+
+export const WrapperChange = styled.div`
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 30px;
+`;
+
+export const TextNameChange = styled.div``;
+
+export const BoxChange = styled.div`
+  padding-left: 20px;
+  display: flex;
+  align-items: center;
+`;

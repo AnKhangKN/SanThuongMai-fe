@@ -1,20 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { IconContainer, OptionContainer, OptionSelect, Wrapper } from "./style";
 import { BiSolidDashboard } from "react-icons/bi";
 import { AiFillProduct } from "react-icons/ai";
 import { MdAccountBox } from "react-icons/md";
-import { IoWarning } from "react-icons/io5";
-import { FaChartPie } from "react-icons/fa";
+import { FaChartPie, FaShippingFast } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import * as UserServices from "../../../services/admin/UserServices";
-import { useDispatch } from "react-redux";
 
 const SidebarActionListComponent = ({ isCollapsed }) => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const [isShowAccountOptions, setIsShowAccountOptions] = useState(false);
-  const [isShowViolationOptions, setIsShowViolationOptions] = useState(false);
 
   const handleNavigateManagementUser = () => {
     navigate("/admin/users");
@@ -97,8 +92,25 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
         </Link>
       </OptionContainer>
 
+      {/* Quản lý ship hàng */}
+      <OptionContainer>
+        <Link
+          to="/admin/shipping"
+          style={{ textDecoration: "none", color: "#333" }}
+        >
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <IconContainer>
+              <FaShippingFast />
+            </IconContainer>
+            {!isCollapsed && (
+              <div style={{ paddingLeft: "10px" }}>Giao hàng</div>
+            )}
+          </div>
+        </Link>
+      </OptionContainer>
+
       {/* Quản lý vi phạm */}
-      <OptionContainer
+      {/* <OptionContainer
         onClick={() => setIsShowViolationOptions(!isShowViolationOptions)}
       >
         <OptionSelect>
@@ -157,7 +169,7 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
             </div>
           </Link>
         </OptionContainer>
-      )}
+      )} */}
 
       {/* Thống kê */}
       <OptionContainer>

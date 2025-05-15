@@ -20,6 +20,7 @@ import { resetUser } from "../../../redux/slices/userSlice";
 
 const HeaderComponent = ({ toggleSidebar }) => {
   const user = useSelector((state) => state.user);
+  const avatar = useSelector((state) => state.avatar);
 
   const dispatch = useDispatch();
 
@@ -89,12 +90,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
 
           {/* modal notification */}
           <ModalNotification>
-            <div>
-              Shop acb bị khách hàng bca tố cáo
-              hellllllllllllllfskfsjfsfldjsssssssssssss
-            </div>
-            <div>Shop acb bị khách hàng bca tố cáo</div>
-            <div>Shop acb bị khách hàng bca tố cáo</div>
+            <div>Chưa có thông báo</div>
           </ModalNotification>
         </WrapperNotification>
 
@@ -105,7 +101,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
 
           {/* modal chat box */}
           <ModalChatBox>
-            <div>admin ơi shop tôi chưa nhận được thông báo đơn hàng mới</div>
+            <div>Chưa có tin nhắn</div>
           </ModalChatBox>
         </WrapperChatBox>
 
@@ -126,7 +122,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
                 objectFit: "contain",
                 borderRadius: "50%",
               }}
-              src={user?.img} // nếu được làm thêm default img admin
+              src={avatar?.img ? avatar?.img : user?.img} // nếu được làm thêm default img admin
               alt=""
             />
           </div>

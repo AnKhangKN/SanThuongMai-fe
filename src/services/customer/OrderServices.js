@@ -45,12 +45,13 @@ export const addPayment = async (
   items,
   totalBill,
   paymentMethod,
-  orderNote
+  orderNote,
+  email
 ) => {
   try {
     const response = await axios.post(
       `${process.env.REACT_APP_API_URL}/customer/order-product`,
-      { shippingInfo, items, totalBill, paymentMethod, orderNote },
+      { shippingInfo, items, totalBill, paymentMethod, orderNote, email },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

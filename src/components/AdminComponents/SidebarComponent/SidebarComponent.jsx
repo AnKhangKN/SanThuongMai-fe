@@ -1,4 +1,3 @@
-import React from "react";
 import { Wrapper, WrapperTitle } from "./style";
 import Logo_Trang from "../../../assets/images/Logo_Trang.jpg";
 import SidebarActionListComponent from "../SidebarActionListComponent/SidebarActionListComponent";
