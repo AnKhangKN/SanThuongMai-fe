@@ -83,7 +83,7 @@ const TopSearchComponent = () => {
           {products.length > 0 ? (
             products.map((product, idx) => (
               <div
-                key={product.id}
+                key={product._id}
                 ref={idx === 0 ? productRef : null} // Chỉ gán ref cho sản phẩm đầu tiên
                 style={{
                   flex: `0 0 calc(100% / ${visibleItems})`,

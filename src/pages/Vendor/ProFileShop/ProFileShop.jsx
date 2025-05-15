@@ -13,7 +13,6 @@ import { useSelector } from 'react-redux';
 const ProFileShop = () => {
   const user = useSelector((state) => state.user);
 
-  console.log("user", user);
 
   return (
     <ShopProfileWrapper>

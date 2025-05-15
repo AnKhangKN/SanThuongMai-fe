@@ -158,7 +158,7 @@ const CategoryPage = () => {
               {/* Hiển thị danh mục */}
               {category.slice(0, visibleCount).map((categoryItem) => (
                 <div
-                  key={categoryItem.id}
+                  key={categoryItem.name}
                   style={{ padding: "5px 0", cursor: "pointer" }}
                   onClick={() => handleCategoryClick(categoryItem.name)} // Truyền categoryItem.name để tìm sản phẩm
                 >
@@ -296,7 +296,7 @@ const CategoryPage = () => {
                       flex: "0 0 calc(100%/6)",
                     }}
                     to={`/product/${product._id}`}
-                    key={product.id}
+                    key={product._id}
                   >
                     <div
                       style={{ margin: "5px", border: "0.5px solid #cdcdcd" }}
@@ -312,24 +312,24 @@ const CategoryPage = () => {
                           alt={product.product_name}
                         />
                       </div>
-                      <div
-                        style={{
-                          textAlign: "center",
-                          marginTop: "5px",
-                          fontWeight: "bold",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {product.product_name}
-                      </div>
-                      <div
-                        style={{
-                          textAlign: "center",
-                          color: "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {product?.details[0]?.price}đ
+
+                      <div style={{ padding: "5px" }}>
+                        <div
+                          style={{
+                            marginTop: "5px",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {product.product_name}
+                        </div>
+                        <div
+                          style={{
+                            color: "red",
+                            marginTop: "20px",
+                          }}
+                        >
+                          {product?.details[0]?.price}đ
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -338,6 +338,7 @@ const CategoryPage = () => {
             </Col>
           </Row>
         </div>
+        <div style={{ height: "50px" }}></div>
       </div>
     </div>
   );

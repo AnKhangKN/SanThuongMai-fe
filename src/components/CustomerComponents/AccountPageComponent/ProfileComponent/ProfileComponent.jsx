@@ -35,7 +35,6 @@ const ProfileComponent = () => {
   // Hàm xử lý khi chọn file
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    console.log("File selected:", selectedFile); // Kiểm tra file đã được chọn
     if (selectedFile) {
       setFile(selectedFile);
     } else {

@@ -55,7 +55,6 @@ const ShopDetailPage = ({ children }) => {
         shop_name,
       });
 
-      console.log(response);
 
       if (!response) {
         message.error("Lỗi thêm vào yêu thích");
@@ -86,7 +85,6 @@ const ShopDetailPage = ({ children }) => {
         setShopDetail(shop);
       }
 
-      console.log(shopDetail);
     } catch (err) {
       console.error("Error fetching shop details:", err);
       message.error(
@@ -157,7 +155,7 @@ const ShopDetailPage = ({ children }) => {
                           (wishlist) => wishlist.owner_id === id
                         )
                           ? "#aaa" // Màu xám nếu đã theo dõi
-                          : "#ff7f00", // Màu cam nếu chưa theo dõi
+                          : "#194a7a",
                         border: "none",
                         color: "#fff",
                         cursor: user.wishlist.some(
@@ -213,9 +211,13 @@ const ShopDetailPage = ({ children }) => {
                     <button
                       style={{
                         padding: "5px 10px",
-                        background: "#ff7f00",
+                        background: "#194a7a",
                         border: "none",
                         color: "#fff",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        navigate(`/shop/${id}/chat`);
                       }}
                     >
                       Chat
@@ -289,7 +291,7 @@ const ShopDetailPage = ({ children }) => {
                     left: "0",
                     right: "0",
                     height: "3px",
-                    backgroundColor: "#ff7f00",
+                    backgroundColor: "#194a7a",
                     transition: "width 0.3s",
                   }}
                 ></div>

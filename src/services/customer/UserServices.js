@@ -22,7 +22,6 @@ export const addWishlist = async (accessToken, payload) => {
 };
 
 export const updateUser = async (accessToken, payload) => {
-  console.log(payload);
   try {
     const response = await axios.patch(
       `${process.env.REACT_APP_API_URL}/customer/partial-update`,
@@ -36,6 +35,25 @@ export const updateUser = async (accessToken, payload) => {
     return response.data; // Trả về dữ liệu phản hồi khi thành công
   } catch (error) {
     // Ném lỗi từ phản hồi hoặc một thông báo lỗi mặc định nếu yêu cầu thất bại
+    throw (
+      error.response?.data || { status: "ERROR", message: "Request failed" }
+    );
+  }
+};
+
+export const removeWishList = async (accessToken, payload) => {
+  try {
+    const response = await axios.patch(
+      `${process.env.REACT_APP_API_URL}/customer/remove-wish-list`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
     throw (
       error.response?.data || { status: "ERROR", message: "Request failed" }
     );

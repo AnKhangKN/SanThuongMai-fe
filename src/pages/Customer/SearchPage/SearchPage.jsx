@@ -136,13 +136,13 @@ const SearchPage = () => {
               <Link
                 style={{
                   textDecoration: "none",
+                  color: "#333",
                   flex: "0 0 calc(100%/6)",
-                  margin: "5px",
                 }}
                 to={`/product/${product._id}`}
                 key={product._id}
               >
-                <div style={{ border: "0.5px solid #cdcdcd" }}>
+                <div style={{ border: "0.5px solid #cdcdcd", margin: "3px" }}>
                   <img
                     style={{
                       width: "100%",
@@ -154,21 +154,40 @@ const SearchPage = () => {
                   />
                   <div
                     style={{
-                      textAlign: "center",
-                      fontWeight: "bold",
+                      padding: "10px",
                       textTransform: "uppercase",
+                      maxWidth: "100%",
                     }}
                   >
                     {product.product_name}
                   </div>
+
                   <div
                     style={{
-                      textAlign: "center",
-                      color: "red",
-                      fontWeight: "bold",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "10px",
+                      marginTop: "30px",
                     }}
                   >
-                    {product?.details[0]?.price}đ
+                    <div
+                      style={{
+                        color: "red",
+                      }}
+                    >
+                      {product?.details[0]?.price}đ
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <div>Đã bán: </div>
+                      <div>{product?.sold_count}</div>
+                    </div>
                   </div>
                 </div>
               </Link>

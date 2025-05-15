@@ -1,18 +1,19 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AccountPage from "../AccountPage";
 import { Wrapper } from "./style";
-import { useSelector } from "react-redux";
 import default_img from "../../../../assets/images/default-img.avif";
 import { Link } from "react-router-dom";
 import { isJsonString } from "../../../../utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../../services/shared/AuthServices";
 import { IoIosClose } from "react-icons/io";
+import * as UserServices from "../../../../services/customer/UserServices";
+import { message, Modal } from "antd";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/avatar/`;
 
 const WishListPage = () => {
-  const [wishlist, setWishlist] = useState({});
+  const [wishlist, setWishlist] = useState([]);
   const [following, setCountFollowing] = useState("");
 
   const handleDecoded = () => {
@@ -28,13 +29,12 @@ const WishListPage = () => {
   const handleGetDetailUser = useCallback(async (id, accessToken) => {
     try {
       const res = await AuthServices.getDetailUser(id, accessToken);
-      console.log(res.data?.wishlist);
       const wl = res.data?.wishlist || [];
       setCountFollowing(res.data?.following);
-      setWishlist({ wishlist: wl });
+      setWishlist(wl);
     } catch (error) {
       console.error("Lỗi khi lấy wishlist:", error);
-      setWishlist({ wishlist: [] });
+      setWishlist([]);
     }
   }, []);
 
@@ -45,19 +45,56 @@ const WishListPage = () => {
     }
   }, [handleGetDetailUser]);
 
+  const handleRemoveWishList = async (wishlistId) => {
+    Modal.confirm({
+      title: "Bạn có chắc muốn xóa shop khỏi wishlist?",
+      onOk: async () => {
+        try {
+          let { decoded, storageData } = handleDecoded();
+          let token = storageData;
+          if (!token || !decoded || decoded.exp < Date.now() / 1000) {
+            const refreshed = await AuthServices.refreshToken();
+            token = refreshed?.access_token;
+            if (token) {
+              localStorage.setItem("access_token", JSON.stringify(token));
+            } else {
+              return message.warning("Không thể làm mới token!");
+            }
+          }
+
+          await UserServices.removeWishList(token, { wishlistId });
+
+          // Cập nhật UI sau khi xóa thành công
+          setWishlist((prevWishlist) =>
+            prevWishlist.filter((item) => item._id !== wishlistId)
+          );
+
+          setCountFollowing((prev) => (prev > 0 ? prev - 1 : 0));
+
+          message.success("Shop đã xóa khỏi wishlist!");
+        } catch (err) {
+          console.error("Error removing wishlist:", err);
+          message.warning("Xóa shop không thành công!");
+        }
+      },
+      okText: "Xóa",
+      cancelText: "Hủy",
+    });
+  };
+
   return (
     <AccountPage>
       <Wrapper>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <div>Bạn đang theo dỗi:</div>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+          <div>Bạn đang theo dõi:</div>
           <div>{following} shop</div>
         </div>
 
-        <div style={{ display: "flex", flexFlow: "column" }}>
-          {wishlist?.wishlist?.length > 0 ? (
-            wishlist.wishlist.map((wishlist) => (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {wishlist.length > 0 ? (
+            wishlist.map((shop) => (
               <div
-                key={wishlist._id}
+                key={shop._id}
                 style={{
                   display: "flex",
                   gap: "10px",
@@ -65,21 +102,21 @@ const WishListPage = () => {
                 }}
               >
                 <Link
-                  to={`/shop/${wishlist.owner_id}/dashboard`}
+                  to={`/shop/${shop.owner_id}/dashboard`}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     textDecoration: "none",
                     color: "#333",
-                    gap: "30px",
-                    width: "500px",
+                    gap: "20px",
+                    width: "400px",
                   }}
                 >
                   <div>
                     <img
                       src={
-                        wishlist.owner_img
-                          ? `${imageURL}${wishlist.owner_img}`
+                        shop.owner_img
+                          ? `${imageURL}${shop.owner_img}`
                           : default_img
                       }
                       alt="Shop Avatar"
@@ -90,7 +127,7 @@ const WishListPage = () => {
                   </div>
 
                   <div>
-                    <strong>{wishlist.shop_name}</strong>
+                    <strong>{shop.shop_name}</strong>
                   </div>
                 </Link>
 
@@ -100,7 +137,9 @@ const WishListPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "25px",
+                    cursor: "pointer",
                   }}
+                  onClick={() => handleRemoveWishList(shop._id)}
                 >
                   <IoIosClose />
                 </div>
