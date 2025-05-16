@@ -10,12 +10,12 @@ const { Option } = Select;
 
 // Cấu hình cột cho bảng
 const columns = [
-  {
-    title: "ID",
-    dataIndex: "key",
-    sorter: (a, b) => a.key - b.key,
-    ellipsis: true,
-  },
+  // {
+  //   title: "ID",
+  //   dataIndex: "key",
+  //   sorter: (a, b) => a.key - b.key,
+  //   ellipsis: true,
+  // },
   { title: "Tên người dùng", dataIndex: "user_name" },
   { title: "Email", dataIndex: "email" },
   {

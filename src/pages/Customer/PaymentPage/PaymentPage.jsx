@@ -34,6 +34,8 @@ const PaymentPage = () => {
 
   const products = useSelector((state) => state.checkout.products);
 
+  const user = useSelector((state) => state.user);
+
   const dispatch = useDispatch();
 
   const decodeToken = () => {
@@ -96,7 +98,8 @@ const PaymentPage = () => {
         products,
         totalBill,
         paymentMethod,
-        orderNote
+        orderNote,
+        user.email
       );
 
       dispatch(resetCheckout());

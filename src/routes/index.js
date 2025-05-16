@@ -51,6 +51,7 @@ import DashboardShopPage from "../pages/Customer/ShopDetailPage/DashboardShopPag
 import ProductsShopPage from "../pages/Customer/ShopDetailPage/ProductsShopPage/ProductsShopPage";
 import ChatShopPage from "../pages/Customer/ShopDetailPage/ChatShopPage/ChatShopPage";
 import WishListPage from "../pages/Customer/AccountPage/WishListPage/WishListPage";
+import ShippingOrderPage from "../pages/Admin/ShippingOrderPage/ShippingOrderPage";
 
 export const routes = [
   //auth
@@ -147,33 +148,6 @@ export const routes = [
     page: OrderPage,
     isShowHeader: true,
   },
-
-  // {
-  //   path: "/user/purchase/:status-delivered",
-  //   page: CompleteComponent,
-  //   isShowHeader: true,
-  // },
-  // {
-  //   path: "/user/purchase/:status-cancel",
-  //   page: CancelComponent,
-  //   isShowHeader: true,
-  // },
-  // {
-  //   path: "/user/purchase/:status-shipped",
-  //   page: TransportComponent,
-  //   isShowHeader: true,
-  // },
-  // {
-  //   path: "/user/purchase/:status-pending",
-  //   page: WaitingForDelivery,
-  //   isShowHeader: true,
-  // },
-  // {
-  //   path: "/user/purchase/:status-processing",
-  //   page: WaitingForPayment,
-  //   isShowHeader: true,
-  // },
-
   // vendor
   {
     path: "/vendor",
@@ -305,6 +279,14 @@ export const routes = [
   {
     path: "/admin/profile",
     page: AdminProfilePage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+
+  // Shipping order
+  {
+    path: "/admin/shipping",
+    page: ShippingOrderPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   BoxContainer,
   BoxName,
@@ -14,8 +14,52 @@ import { MdShoppingCart } from "react-icons/md";
 import LineChartBoxComponent from "../../../components/AdminComponents/MainComponents/LineChartBoxComponent/LineChartBoxComponent";
 import WalletComponent from "../../../components/AdminComponents/MainComponents/WalletComponent/WalletComponent";
 import { Link } from "react-router-dom";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as HomeServices from "../../../services/admin/HomeServices";
+import { useSelector } from "react-redux";
 
 const DashboardPage = () => {
+  const [allData, setAllData] = useState({});
+  const user = useSelector((state) => state.user);
+
+  const handleDecoded = async () => {
+    let storageData = localStorage.getItem("access_token");
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      const decoded = jwtDecode(storageData);
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        const accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        return accessToken;
+      }
+      return storageData;
+    }
+    return null;
+  };
+
+  const fetchAllHome = useCallback(async () => {
+    try {
+      const token = await handleDecoded();
+      const res = await HomeServices.getAllHome(token);
+
+      if (res?.data) {
+        console.log("Dữ liệu nhận được từ API:", res.data);
+        setAllData(res.data);
+      } else {
+        console.error("Không nhận được phản hồi hợp lệ từ API.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm:", error);
+    }
+  }, []); // Thêm dependency [] để đảm bảo chỉ gọi khi component mount
+
+  useEffect(() => {
+    fetchAllHome();
+  }, [fetchAllHome]);
+
   return (
     <>
       <Wrapper>
@@ -23,18 +67,7 @@ const DashboardPage = () => {
           <Col span={12}>
             <h3>Tổng quan</h3>
           </Col>
-          <Col
-            span={12}
-            style={{
-              display: "flex",
-              justifyContent: "end",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <DatePicker />
-            </div>
-          </Col>
+          <Col span={12}></Col>
         </Row>
 
         <Row gutter={16}>
@@ -42,7 +75,7 @@ const DashboardPage = () => {
             <Link to="/admin/vendors">
               <BoxContainer>
                 <div>
-                  <BoxQuantity>343 </BoxQuantity>
+                  <BoxQuantity>{allData.countShop || 0}</BoxQuantity>
                   <BoxName>Shop</BoxName>
                 </div>
                 <IconContainer>
@@ -55,7 +88,7 @@ const DashboardPage = () => {
             <Link to="/admin/products">
               <BoxContainer>
                 <div>
-                  <BoxQuantity>34</BoxQuantity>
+                  <BoxQuantity>{allData.countProduct || 0}</BoxQuantity>
                   <BoxName>Sản phẩm</BoxName>
                 </div>
                 <IconContainer>
@@ -67,36 +100,39 @@ const DashboardPage = () => {
           <Col className="gutter-row" span={6}>
             <BoxContainer>
               <div>
-                <BoxQuantity>20,000,000</BoxQuantity>
-                <BoxName>Thu nhập/tháng</BoxName>
+                <BoxQuantity>
+                  {user?.wallet?.toLocaleString("vi-VN")} VNĐ
+                </BoxQuantity>
+                <BoxName>Thu nhập</BoxName>
               </div>
-
               <IconContainer>
                 <BiSolidDollarCircle />
               </IconContainer>
             </BoxContainer>
           </Col>
           <Col className="gutter-row" span={6}>
-            <BoxContainer>
-              <div>
-                <BoxQuantity>5,543</BoxQuantity>
-                <BoxName>Đơn Hàng</BoxName>
-              </div>
-              <IconContainer>
-                <MdShoppingCart />
-              </IconContainer>
-            </BoxContainer>
+            <Link to="/admin/shipping">
+              <BoxContainer>
+                <div>
+                  <BoxQuantity>{allData.countOrder || 0}</BoxQuantity>
+                  <BoxName>Đơn Hàng</BoxName>
+                </div>
+                <IconContainer>
+                  <MdShoppingCart />
+                </IconContainer>
+              </BoxContainer>
+            </Link>
           </Col>
         </Row>
 
-        <Row gutter={16} style={{ marginTop: "20px" }}>
+        {/* <Row gutter={16} style={{ marginTop: "20px" }}>
           <Col className="gutter-row" span={15}>
             <LineChartBoxComponent />
           </Col>
           <Col className="gutter-row" span={9}>
             <WalletComponent />
           </Col>
-        </Row>
+        </Row> */}
       </Wrapper>
     </>
   );
