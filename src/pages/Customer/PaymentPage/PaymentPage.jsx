@@ -291,7 +291,7 @@ const PaymentPage = () => {
           }}
         >
           <div>
-            <FaMapMarkerAlt /> Shipping Address
+            <FaMapMarkerAlt /> Địa chỉ giao hàng
           </div>
 
           <div
@@ -324,7 +324,7 @@ const PaymentPage = () => {
               onClick={showModal}
               style={{ color: "#3377ff", cursor: "pointer" }}
             >
-              Change
+              Thay đổi
             </div>
           </div>
 
@@ -467,15 +467,15 @@ const PaymentPage = () => {
           }}
         >
           <Row>
-            <Col span={12}>Product</Col>
+            <Col span={12}>Sản phẩm</Col>
             <Col span={4} style={{ textAlign: "end" }}>
-              Price
+              Giá
             </Col>
             <Col span={3} style={{ textAlign: "end" }}>
-              Quantity
+              Số lượng
             </Col>
             <Col span={5} style={{ textAlign: "end" }}>
-              Total
+              Tổng tiền
             </Col>
           </Row>
           {products.map((product, index) => (
@@ -541,7 +541,7 @@ const PaymentPage = () => {
                 fontWeight: "bold",
               }}
             >
-              Tổng số tiền ({totalQuantity} products): ₫
+              Tổng số tiền ({totalQuantity} sản phẩm): ₫
               {totalAmount.toLocaleString()}
             </div>
           </div>
@@ -576,7 +576,7 @@ const PaymentPage = () => {
                 cursor: "pointer",
               }}
             >
-              Cash on Delivery
+              Thanh toán khi nhận hàng
             </div>
             <div
               onClick={() => handleChooseMethod("credit_card")}

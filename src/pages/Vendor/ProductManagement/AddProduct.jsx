@@ -122,7 +122,12 @@ const AddProduct = () => {
               label={fieldLabels[field]}
               name={field}
               key={field}
-              rules={[{ required: true, message: `Vui lòng nhập ${fieldLabels[field]}!` }]}
+              rules={[
+                {
+                  required: true,
+                  message: `Vui lòng nhập ${fieldLabels[field]}!`,
+                },
+              ]}
             >
               <Input
                 name={field}
@@ -140,7 +145,9 @@ const AddProduct = () => {
                 validator: (_, value) =>
                   value && value.length > 0
                     ? Promise.resolve()
-                    : Promise.reject(new Error("Vui lòng chọn ít nhất 1 hình ảnh")),
+                    : Promise.reject(
+                        new Error("Vui lòng chọn ít nhất 1 hình ảnh")
+                      ),
               },
             ]}
             getValueFromEvent={(e) => e?.fileList}

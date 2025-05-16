@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
 import * as ProductServices from "../../../../services/shared/ProductServices";
+import { useNavigate } from "react-router-dom";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
 const SuggestComponent = () => {
   const [product, setProduct] = useState([]);
+
+  const navigate = useNavigate();
+
+  const handleNavigateDetailPage = (product_id) => {
+    navigate(`/product/${product_id}`);
+  };
 
   const fetchAllProduct = async () => {
     try {
@@ -19,13 +26,13 @@ const SuggestComponent = () => {
     fetchAllProduct();
   }, []);
 
-
   return (
     <div style={{ display: "flex", flexWrap: "wrap", paddingBottom: "100px" }}>
       {product.length > 0 ? (
         product.map((item) => (
           <div key={item._id} style={{ flex: "0 0 calc(100% / 6)" }}>
             <div
+              onClick={() => handleNavigateDetailPage(item._id)}
               style={{
                 margin: "3px",
                 border: "0.5px solid #b6b6b6",
