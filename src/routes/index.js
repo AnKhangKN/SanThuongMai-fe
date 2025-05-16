@@ -53,6 +53,7 @@ import ChatShopPage from "../pages/Customer/ShopDetailPage/ChatShopPage/ChatShop
 import WishListPage from "../pages/Customer/AccountPage/WishListPage/WishListPage";
 import ShippingOrderPage from "../pages/Admin/ShippingOrderPage/ShippingOrderPage";
 import EmailVerifyPage from "../pages/Auth/EmailVerifyPage/EmailVerifyPage";
+import ForgetPasswordPage from "../pages/Auth/ForgetPasswordPage/ForgetPasswordPage";
 
 export const routes = [
   //auth
@@ -69,6 +70,11 @@ export const routes = [
   {
     path: "/verify/:token",
     page: EmailVerifyPage,
+    isShowHeader: false,
+  },
+  {
+    path: "/forget-password",
+    page: ForgetPasswordPage,
     isShowHeader: false,
   },
 

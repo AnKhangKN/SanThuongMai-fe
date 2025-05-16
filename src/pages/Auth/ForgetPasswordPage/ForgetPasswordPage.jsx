@@ -12,7 +12,7 @@ import { updateUser } from "../../../redux/slices/userSlice";
 
 const { Title, Text, Link: AntLink } = Typography;
 
-const LoginPage = () => {
+const ForgetPasswordPage = () => {
   //lưu
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,8 +78,8 @@ const LoginPage = () => {
     setPassword(e.target.value);
   };
 
-  const handleNavigateSignup = () => {
-    navigate("/sign-up");
+  const handleNavigateLogin = () => {
+    navigate("/login");
   };
 
   const handleNavigateHome = () => {
@@ -92,10 +92,6 @@ const LoginPage = () => {
 
   const handleNavigateVendorPage = () => {
     navigate("/vendor");
-  };
-
-  const handleNavigateForget = () => {
-    navigate("/forget-password");
   };
 
   // Xử lý
@@ -221,13 +217,9 @@ const LoginPage = () => {
               TIẾP THEO
             </Button>
 
-            <div style={{ textAlign: "right", marginTop: 8 }}>
-              <AntLink onClick={handleNavigateForget}>Quên mật khẩu?</AntLink>
-            </div>
-
             <div style={{ textAlign: "center", marginTop: 16 }}>
               <Text type="secondary">Bạn mới biết đến HKN store? </Text>
-              <AntLink onClick={handleNavigateSignup}>Đăng ký</AntLink>
+              <AntLink onClick={handleNavigateLogin}>Đăng nhập</AntLink>
             </div>
           </Card>
         </div>
@@ -236,4 +228,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ForgetPasswordPage;

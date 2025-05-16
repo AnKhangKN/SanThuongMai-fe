@@ -1,3 +1,4 @@
+import { message } from "antd";
 import axios from "axios";
 
 // Thêm một địa chỉ giao hàng mới cho khách hàng
@@ -57,5 +58,22 @@ export const removeWishList = async (accessToken, payload) => {
     throw (
       error.response?.data || { status: "ERROR", message: "Request failed" }
     );
+  }
+};
+
+export const changePassword = async (accessToken, payload) => {
+  try {
+    const changePassword = axios.patch(
+      `${process.env.REACT_APP_API_URL}/customer/change-password`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return changePassword;
+  } catch (error) {
+    return message.error;
   }
 };
