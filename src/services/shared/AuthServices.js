@@ -50,3 +50,17 @@ export const getDetailUser = async (id, accessToken) => {
   );
   return res.data;
 };
+
+export const forgetPassword = async (email) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/shared/forget-password`,
+      { email } // Đúng định dạng gửi email trong đối tượng
+    );
+
+    return response.data; // Trả về dữ liệu từ API
+  } catch (error) {
+    console.error("Error in forgetPassword:", error);
+    throw error; // Ném lại lỗi để xử lý bên ngoài
+  }
+};

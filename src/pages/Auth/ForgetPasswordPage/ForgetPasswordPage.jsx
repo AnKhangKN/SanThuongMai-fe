@@ -1,119 +1,49 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Card, Input, message, Typography } from "antd";
 import logo_den from "../../../assets/images/Logo_Trang.jpg";
 import logo_removebg from "../../../assets/images/Logo_Den-removebg-preview.png";
 import * as AuthServices from "../../../services/shared/AuthServices";
-import { useMutationHooks } from "../../../hook/useMutationHook";
-import * as MessageComponent from "../../../components/CustomerComponents/MessageComponent/MessageComponent";
-import { jwtDecode } from "jwt-decode";
-import { useDispatch } from "react-redux";
-import { updateUser } from "../../../redux/slices/userSlice";
 
 const { Title, Text, Link: AntLink } = Typography;
 
 const ForgetPasswordPage = () => {
-  //lưu
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const dispatch = useDispatch();
-  const location = useLocation();
-
-  //call api
-  const mutation = useMutationHooks((data) => AuthServices.loginUser(data));
-
-  const { data, isError, isSuccess } = mutation;
-
-  // useEffect 1: thông báo và lưu token
-  useEffect(() => {
-    if (isSuccess) {
-      MessageComponent.success("Đăng nhập thành công");
-      localStorage.setItem("access_token", JSON.stringify(data?.access_token));
-    }
-
-    // if (isError) {
-    //   MessageComponent.error("Đăng nhập thất bại!");
-    // }
-  }, [isSuccess, isError, data]);
-
-  // useEffect 2: xử lý navigate và gọi API
-  useEffect(() => {
-    if (isSuccess && data?.access_token) {
-      const decoded = jwtDecode(data.access_token);
-
-      if (location.state) {
-        navigate(location.state);
-      } else if (decoded?.id) {
-        handleGetDetailUser(
-          decoded.id,
-          data.access_token,
-          decoded.isAdmin,
-          decoded.isVendor
-        );
-      }
-    }
-  }, [isSuccess, data, location]);
-
-  const handleGetDetailUser = async (id, accessToken, isAdmin, isVendor) => {
-    const res = await AuthServices.getDetailUser(id, accessToken);
-    dispatch(updateUser({ ...res?.data, access_token: accessToken }));
-
-    if (isAdmin) {
-      handleNavigateAdminPage();
-    } else if (isVendor) {
-      handleNavigateVendorPage();
-    } else {
-      handleNavigateHome();
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  //truyền
-  const handleOnchangeEmail = (e) => {
+  // Xử lý nhập email
+  const handleOnChangeEmail = useCallback((e) => {
     setEmail(e.target.value);
-  };
+  }, []);
 
-  const handleOnchangePassword = (e) => {
-    setPassword(e.target.value);
-  };
-
-  const handleNavigateLogin = () => {
+  // Điều hướng đến trang đăng nhập
+  const handleNavigateLogin = useCallback(() => {
     navigate("/login");
-  };
+  }, [navigate]);
 
-  const handleNavigateHome = () => {
-    navigate("/");
-  };
+  // Gửi yêu cầu lấy lại mật khẩu
+  const handleSendPassword = useCallback(async () => {
+    if (!email.trim()) {
+      return message.warning("Vui lòng nhập email.");
+    }
 
-  const handleNavigateAdminPage = () => {
-    navigate("/admin");
-  };
+    setLoading(true);
+    try {
+      const res = await AuthServices.forgetPassword({ email });
 
-  const handleNavigateVendorPage = () => {
-    navigate("/vendor");
-  };
-
-  // Xử lý
-  const handleLogin = () => {
-    mutation.mutate(
-      {
-        email,
-        password,
-      },
-      {
-        onError: (error) => {
-          if (error.status === 401) {
-            message.error(error.response.data.message);
-          }
-
-          if (error.status === 500) {
-            message.error(error.response.data.message);
-          }
-        },
+      if (res) {
+        message.success("Mật khẩu mới đã được gửi đến email của bạn.");
+        handleNavigateLogin();
       }
-    );
-  };
+    } catch (error) {
+      message.error("Lỗi đổi mật khẩu!");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [email, handleNavigateLogin]);
 
   return (
     <div>
@@ -122,19 +52,12 @@ const ForgetPasswordPage = () => {
         style={{
           lineHeight: "84px",
           display: "flex",
-          width: "1200px",
+          maxWidth: "1200px",
           margin: "auto",
           alignItems: "center",
         }}
       >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
+        <div style={{ width: "40px", height: "40px" }}>
           <img
             style={{ width: "40px", objectFit: "cover" }}
             src={logo_den}
@@ -150,7 +73,7 @@ const ForgetPasswordPage = () => {
       <div style={{ backgroundColor: "#194a7a", minHeight: "600px" }}>
         <div
           style={{
-            width: "1200px",
+            maxWidth: "1200px",
             margin: "auto",
             height: "600px",
             display: "flex",
@@ -164,57 +87,36 @@ const ForgetPasswordPage = () => {
             <div style={{ fontSize: 24, fontWeight: "bold" }}>HKN</div>
           </div>
 
-          {/* Form đăng nhập */}
-          <Card
-            style={{
-              width: 400,
-              padding: 24,
-              borderRadius: 8,
-            }}
-          >
+          {/* Form quên mật khẩu */}
+          <Card style={{ width: 400, padding: 24, borderRadius: 8 }}>
             <Title level={3} style={{ textAlign: "center" }}>
-              Đăng nhập
+              Quên mật khẩu
             </Title>
 
             <Input
               name="email"
               type="email"
-              placeholder="Tên đăng nhập hoặc Email"
+              placeholder="Nhập email của bạn"
               size="large"
               style={{ marginBottom: 16 }}
-              onChange={handleOnchangeEmail}
+              onChange={handleOnChangeEmail}
+              value={email}
             />
-
-            <Input.Password
-              name="password"
-              placeholder="Mật khẩu"
-              size="large"
-              style={{ marginBottom: 16 }}
-              onChange={handleOnchangePassword}
-            />
-
-            {data?.status === "ERROR" && (
-              <div style={{ color: "red", marginBottom: 12 }}>
-                {data?.message}
-              </div>
-            )}
 
             <Button
-              loading={mutation.isLoading}
-              disabled={!email.length || !password.length}
+              disabled={!email.trim()}
               type="primary"
               block
               size="large"
               style={{
-                backgroundColor:
-                  !email.length || !password.length ? "#ccc" : "#194a7a",
-                borderColor:
-                  !email.length || !password.length ? "#ccc" : "#194a7a",
+                backgroundColor: "#194a7a",
+                borderColor: "#194a7a",
                 color: "#fff",
               }}
-              onClick={handleLogin}
+              loading={loading}
+              onClick={handleSendPassword}
             >
-              TIẾP THEO
+              Nhận mật khẩu mới
             </Button>
 
             <div style={{ textAlign: "center", marginTop: 16 }}>

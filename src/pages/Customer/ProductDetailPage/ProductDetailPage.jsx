@@ -355,7 +355,7 @@ const ProductDetailPage = () => {
                 }}
               >
                 <div>{productDetail?.sold_count} Lượt mua</div>
-                <div style={{ cursor: "pointer" }}>Tố cáo</div>
+                <div style={{ cursor: "pointer" }}></div>
               </div>
               <div style={{ backgroundColor: "#f5f5f5", padding: "10px 20px" }}>
                 <div style={{ display: "flex" }}>
