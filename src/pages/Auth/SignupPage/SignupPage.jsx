@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, Input, Typography, message } from "antd";
+import { Button, Card, Input, Typography, message, Spin } from "antd";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { useMutationHooks } from "../../../hook/useMutationHook";
 import logo_remove_bg from "../../../assets/images/Logo_Den-removebg-preview.png";
@@ -16,6 +16,7 @@ const SignupPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Call API
   const mutation = useMutationHooks((data) => AuthServices.signupUser(data));
@@ -37,6 +38,7 @@ const SignupPage = () => {
 
   // Thực hiện signup
   const handleSignUp = () => {
+    setLoading(true);
     mutation.mutate(
       {
         email,
@@ -46,7 +48,13 @@ const SignupPage = () => {
       {
         onError: (error) => {
           const msg = error?.response?.data?.message || "Đăng ký thất bại!";
-          message.error(msg);
+          console.log(msg);
+          message.error(msg); // Hiển thị thông báo lỗi lên giao diện
+          setLoading(false);
+        },
+
+        onSuccess: () => {
+          setLoading(false);
         },
       }
     );
@@ -168,8 +176,9 @@ const SignupPage = () => {
                 color: "#fff",
               }}
               onClick={handleSignUp}
+              loading={loading} // Thêm loading ở đây
             >
-              TIẾP THEO
+              {loading ? <Spin /> : "TIẾP THEO"}
             </Button>
 
             <Text
