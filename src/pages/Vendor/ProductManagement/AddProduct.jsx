@@ -132,7 +132,19 @@ const AddProduct = () => {
             </Form.Item>
           ))}
 
-          <Form.Item label="Hình ảnh">
+          <Form.Item
+            label="Hình ảnh"
+            name="images"
+            rules={[
+              {
+                validator: (_, value) =>
+                  value && value.length > 0
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("Vui lòng chọn ít nhất 1 hình ảnh")),
+              },
+            ]}
+            getValueFromEvent={(e) => e?.fileList}
+          >
             <Upload
               listType="picture"
               beforeUpload={() => false} // Không upload ngay
