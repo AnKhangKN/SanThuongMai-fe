@@ -1,49 +1,73 @@
-import { Col } from 'antd'
-// import {
-//   AppstoreOutlined,
-//   ShoppingCartOutlined,
-//   OrderedListOutlined,
-//   DollarCircleOutlined,
-//   MessageOutlined,
-// } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Col } from 'antd';
+import {jwtDecode} from 'jwt-decode';
 import { WrapperItemNumber, WrapperItemText, WrapperVendor, WrapperVendorBackgroundItem, WrapperVendorMain, WrapperVendorMainItem, WrapperVendorTextMain } from './styleVendorMain';
-// import MenuVendorComponent from '../../../components/VendorComponents/MenuVendorComponent/MenuVendorComponent';
+import { getOrderStatus } from '../../../services/vendor/OrderProductService';
 
-const VendorMain = () => {  
+const VendorMain = () => {
+  const [orderStats, setOrderStats] = useState({});
+
+  useEffect(() => {
+    const fetchOrderStats = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        const decoded = jwtDecode(token);
+        const ownerId = decoded.userId || decoded.id || decoded._id;
+
+        if (!ownerId) return;
+
+        const response = await getOrderStatus(token, ownerId);
+
+        if (response.success) {
+          setOrderStats(response.data);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy thống kê đơn hàng:", error);
+      }
+    };
+
+    fetchOrderStats();
+  }, []);
+
   return (
-    <div>
-      <WrapperVendor>
-        <Col span={24}>
-          
-          <WrapperVendorMain>
-            <WrapperVendorTextMain>Danh sách cần làm</WrapperVendorTextMain>
-            <WrapperVendorMainItem>
-              <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>5</WrapperItemNumber>
-                <WrapperItemText>Chờ lấy hàng</WrapperItemText>
-              </WrapperVendorBackgroundItem>
+    <WrapperVendor>
+      <Col span={24}>
+        <WrapperVendorMain>
+          <WrapperVendorTextMain>Danh sách cần làm</WrapperVendorTextMain>
+          <WrapperVendorMainItem>
 
-              <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>10</WrapperItemNumber>
-                <WrapperItemText>Đã xử lý</WrapperItemText>
-              </WrapperVendorBackgroundItem>
+            <WrapperVendorBackgroundItem>
+              <WrapperItemNumber>{orderStats.pending || 0}</WrapperItemNumber>
+              <WrapperItemText>Chờ lấy hàng</WrapperItemText>
+            </WrapperVendorBackgroundItem>
 
-              <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>2</WrapperItemNumber>
-                <WrapperItemText>Đơn trả hàng/Hoàn tiền/Hủy</WrapperItemText>
-              </WrapperVendorBackgroundItem>
+            <WrapperVendorBackgroundItem>
+              <WrapperItemNumber>{orderStats.processing || 0}</WrapperItemNumber>
+              <WrapperItemText>Đang xử lý</WrapperItemText>
+            </WrapperVendorBackgroundItem>
 
-              <WrapperVendorBackgroundItem>
-                <WrapperItemNumber>3</WrapperItemNumber>
-                <WrapperItemText>Sản phẩm bị tạm khóa</WrapperItemText>
-              </WrapperVendorBackgroundItem>
-            </WrapperVendorMainItem>
-          </WrapperVendorMain>
+            <WrapperVendorBackgroundItem>
+              <WrapperItemNumber>{orderStats.shipped || 0}</WrapperItemNumber>
+              <WrapperItemText>Đã giao</WrapperItemText>
+            </WrapperVendorBackgroundItem>
 
-        </Col>
-      </WrapperVendor>
-    </div>
-  )
-}
+            <WrapperVendorBackgroundItem>
+              <WrapperItemNumber>{orderStats.delivered || 0}</WrapperItemNumber>
+              <WrapperItemText>Đã nhận hàng</WrapperItemText>
+            </WrapperVendorBackgroundItem>
 
-export default VendorMain
+            <WrapperVendorBackgroundItem>
+              <WrapperItemNumber>{orderStats.cancelled || 0}</WrapperItemNumber>
+              <WrapperItemText>Đơn hủy / Trả hàng</WrapperItemText>
+            </WrapperVendorBackgroundItem>
+
+          </WrapperVendorMainItem>
+        </WrapperVendorMain>
+      </Col>
+    </WrapperVendor>
+  );
+};
+
+export default VendorMain;

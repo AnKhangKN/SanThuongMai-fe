@@ -3,11 +3,14 @@ import { Form, Select } from 'antd';
 
 const { Option } = Select;
 
-const ComboboxComponent = ({name,
-    label,
-    placeholder,
-    options = [],
-    required = false,}) => {
+const ComboboxComponent = ({
+  name,
+  label,
+  placeholder,
+  options = [],
+  required = false,
+  onChange,
+}) => {
   return (
     <Form.Item
       name={name}
@@ -18,7 +21,7 @@ const ComboboxComponent = ({name,
           : []
       }
     >
-      <Select placeholder={placeholder}>
+      <Select placeholder={placeholder} onChange={onChange}>
         {options.map((option) => (
           <Option key={option.value} value={option.value}>
             {option.label}
