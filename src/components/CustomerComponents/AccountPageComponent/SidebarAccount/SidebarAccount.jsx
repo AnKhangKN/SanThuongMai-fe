@@ -132,7 +132,7 @@ const SidebarAccount = () => {
                   color: "#333",
                 }}
               >
-                Xóa tài khoản
+                Vô hiệu hóa
               </Link>
             </div>
           </div>

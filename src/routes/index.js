@@ -52,6 +52,7 @@ import ProductsShopPage from "../pages/Customer/ShopDetailPage/ProductsShopPage/
 import ChatShopPage from "../pages/Customer/ShopDetailPage/ChatShopPage/ChatShopPage";
 import WishListPage from "../pages/Customer/AccountPage/WishListPage/WishListPage";
 import ShippingOrderPage from "../pages/Admin/ShippingOrderPage/ShippingOrderPage";
+import EmailVerifyPage from "../pages/Auth/EmailVerifyPage/EmailVerifyPage";
 
 export const routes = [
   //auth
@@ -63,6 +64,11 @@ export const routes = [
   {
     path: "/login",
     page: LoginPage,
+    isShowHeader: false,
+  },
+  {
+    path: "/verify/:token",
+    page: EmailVerifyPage,
     isShowHeader: false,
   },
 

@@ -8,7 +8,7 @@ const DeleteAccount = () => {
     <AccountPage>
       <Wrapper>
         <div style={{ fontSize: "20px" }}>
-          Bạn có thật sự muốn xóa tài khoản này?
+          Bạn có thật sự muốn vô hiệu hóa tài khoản này?
         </div>
         <div style={{ height: "400px" }}></div>
         <div
