@@ -34,7 +34,7 @@ const PasswordChangePage = () => {
     try {
       const token = await handleDecoded();
 
-      const res = await UserServices.changePassword(token, {
+      await UserServices.changePassword(token, {
         currentPassword,
         newPassword,
       });
