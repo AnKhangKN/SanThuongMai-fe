@@ -46,71 +46,72 @@ const OrderReview = () => {
         const res = await AuthServices.refreshToken();
         accessToken = res?.access_token;
         localStorage.setItem("access_token", JSON.stringify(accessToken));
+        decoded = jwtDecode(accessToken); // Cập nhật decoded sau khi refresh
       }
 
       const res = await OrderProductService.getAllOrders(accessToken);
+      const currentVendorId = decoded?.id;
 
-      // ✅ Lọc đơn hàng có trạng thái "pending" hoặc "processing"
-      const filteredOrders = res.data.data.filter(
-        (order) =>
-          order.status === "pending" || order.status === "processing"
-      );
+      const pendingItems = [];
 
-      const ordersWithKeys = filteredOrders.map((order, index) => ({
-        key: order._id || index,
-        order_id: order._id,
-        owner_id:
-          order.items?.find((item) => item.owner_id)?.owner_id || "N/A",
-        user_id: order.user_id || "Ẩn danh",
-        status:
-          order.status === "pending"
-            ? "Chờ duyệt"
-            : order.status === "processing"
-            ? "Đã đóng gói"
-            : order.status,
-        raw_status: order.status,
-      }));
+      res.data.data.forEach((order) => {
+        order.items.forEach((item) => {
+          if (
+            item.status === "pending" &&
+            item.owner_id === currentVendorId // Lọc đúng shop
+          ) {
+            pendingItems.push({
+              key: item._id || order._id,
+              order_id: order._id,
+              owner_id: item.owner_id,
+              user_id: order.user_id?.user_name || "Ẩn danh",
+              status: "Chờ duyệt",
+              raw_status: item.status,
+              product_name: item.product_name,
+              product_image: item.product_image,
+              price: item.price,
+              quantity: item.quantity,
+              size: item.size,
+              item_id: item._id,
+            });
+          }
+        });
+      });
 
-      setAllData(ordersWithKeys);
+      setAllData(pendingItems);
     } catch (error) {
       console.error("Lỗi khi lấy đơn hàng:", error);
     }
   }, []);
 
-  // const handleApprove = async (record) => {
-  //   try {
-  //     const { storageData, decoded } = handleDecoded();
-  //     let accessToken = storageData;
-
-  //     if (decoded?.exp < Date.now() / 1000) {
-  //       const res = await AuthServices.refreshToken();
-  //       accessToken = res?.access_token;
-  //       localStorage.setItem("access_token", JSON.stringify(accessToken));
-  //     }
-
-  //     // Gọi API cập nhật trạng thái đơn hàng
-  //     await OrderProductService.updateOrderStatus(accessToken, record.order_id, "shipped");
-  //     message.success(`Đã duyệt đơn hàng ${record.order_id}`);
-  //     // Ẩn khỏi danh sách sau khi duyệt
-  //     setAllData((prev) =>
-  //       prev.filter((order) => order.order_id !== record.order_id)
-  //     );
-  //   } catch (err) {
-  //     console.error("Lỗi khi duyệt đơn:", err);
-  //     message.error("Duyệt đơn hàng thất bại");
-  //   }
-  // };
-
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
+  const handleApprove = async (item) => {
+    try {
+      let accessToken = localStorage.getItem("access_token");
+      if (!accessToken) {
+        message.error("Bạn chưa đăng nhập");
+        return;
+      }
+      // Nếu token là JSON string, parse nó
+      if (isJsonString(accessToken)) {
+        accessToken = JSON.parse(accessToken);
+      }
+
+      await OrderProductService.changeStatusOrder(accessToken, item.item_id);
+
+      message.success("Đã duyệt đơn hàng");
+
+      fetchOrders(); // load lại dữ liệu
+    } catch (error) {
+      message.error("Duyệt đơn hàng thất bại");
+      console.error(error);
+    }
+  };
+
   const columns = [
-    {
-      title: "ID Cửa hàng",
-      dataIndex: "owner_id",
-      key: "owner_id",
-    },
     {
       title: "Mã đơn hàng",
       dataIndex: "order_id",
@@ -122,16 +123,27 @@ const OrderReview = () => {
       key: "user_id",
     },
     {
+      title: "Sản phẩm",
+      dataIndex: "product_name",
+      key: "product_name",
+    },
+    {
+      title: "Size",
+      dataIndex: "size",
+      key: "size",
+      render: (size) => size || "Không có",
+    },
+    {
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
+    },
+    {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        const color =
-          status === "Chờ duyệt"
-            ? "orange"
-            : status === "Đã đóng gói"
-            ? "blue"
-            : "default";
+        const color = status === "Chờ duyệt" ? "orange" : "default";
         return <Tag color={color}>{status}</Tag>;
       },
     },
@@ -140,8 +152,7 @@ const OrderReview = () => {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          <Button type="primary" > 
-            {/* onClick={() => handleApprove(record)} */}
+          <Button type="primary" onClick={() => handleApprove(record)}>
             Duyệt
           </Button>
         </Space>
@@ -152,11 +163,12 @@ const OrderReview = () => {
   return (
     <div>
       <h2 style={{ marginBottom: 20 }}>Duyệt đơn hàng</h2>
-      <OrderFilter
+      {/*<OrderFilter
         onSearch={handleSearch}
         onStatusChange={handleStatusChange}
         onDateRangeChange={handleDateRangeChange}
       />
+      */}
       <Table columns={columns} dataSource={allData} />
     </div>
   );

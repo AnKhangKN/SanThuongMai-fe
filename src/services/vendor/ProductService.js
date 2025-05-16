@@ -34,3 +34,35 @@ export const updatedProduct = async (accessToken, productData) => {
     }
   );
 };
+
+export const searchProducts = async (accessToken, searchText) => {
+  const encodedSearch = encodeURIComponent(searchText || "");
+  return await axios.get(
+    `${process.env.REACT_APP_API_URL}/vendor/search-products?search=${encodedSearch}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+};
+
+export const filterProductsPrice = async (accessToken, minPrice, maxPrice) => {
+  const params = new URLSearchParams();
+
+  if (minPrice !== null && minPrice !== undefined)
+    params.append("minPrice", minPrice);
+  if (maxPrice !== null && maxPrice !== undefined)
+    params.append("maxPrice", maxPrice);
+
+  return await axios.get(
+    `${
+      process.env.REACT_APP_API_URL
+    }/vendor/filter-by-price?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+};

@@ -36,6 +36,9 @@ const SeeAllProduct = () => {
   const [fileList, setFileList] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
   const [allData, setAllData] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [minPrice, setMinPrice] = useState(null);
+const [maxPrice, setMaxPrice] = useState(null);
 
   const handleClickToAddProduct = () => {
     navigate("/vendor/add-product");
@@ -53,6 +56,75 @@ const SeeAllProduct = () => {
 
     return { decoded, storageData };
   };
+
+  const handleSearchProduct = async () => {
+  try {
+    let { storageData, decoded } = handleDecoded();
+    let accessToken = storageData;
+
+    if (decoded?.exp < Date.now() / 1000) {
+      const res = await AuthServices.refreshToken();
+      if (res?.access_token) {
+        accessToken = res.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+    }
+
+    const res = await ProductService.searchProducts(accessToken, searchText);
+    const searchedData = res.data.data.map((product) => ({
+       ...product,
+    key: product._id,
+    product_name: product.product_name,
+    description: product.description,
+    category: product.category,
+    status: product.status,
+    }));
+
+    setAllData(searchedData);
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm sản phẩm:", error);
+    message.error("Không tìm thấy sản phẩm phù hợp.");
+  }
+};
+
+const handlePriceChange = async (value) => {
+  try {
+    let min = null, max = null;
+    if (value && value !== "all") {
+      [min, max] = value.split("-").map(Number);
+    }
+
+    setMinPrice(min);
+    setMaxPrice(max);
+
+    let { storageData, decoded } = handleDecoded();
+    let accessToken = storageData;
+
+    if (decoded?.exp < Date.now() / 1000) {
+      const res = await AuthServices.refreshToken();
+      if (res?.access_token) {
+        accessToken = res.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      }
+    }
+
+    const res = await ProductService.filterProductsPrice(accessToken, min, max);
+    console.log("res", res);
+    const filteredData = res.data.data.map((product) => ({
+      ...product,
+      key: product._id,
+      product_name: product.product_name,
+      description: product.description,
+      category: product.category,
+      status: product.status,
+    }));
+
+    setAllData(filteredData);
+  } catch (error) {
+    console.error("Lỗi khi lọc sản phẩm theo giá:", error);
+    message.error("Lọc sản phẩm theo giá thất bại.");
+  }
+};
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -145,8 +217,10 @@ const SeeAllProduct = () => {
   };
 
   const handleCancel = () => {
-    setIsModalOpen(false);
-  };
+  form.resetFields();
+  setPreviewImages([]);
+  setIsModalOpen(false);
+};
 
   const onFinish = async (values) => {
     const updatedData = {
@@ -193,7 +267,11 @@ const SeeAllProduct = () => {
       key: "images",
       render: (images) => (
         <img
-          src={`${imageURL}${images?.[0]}` || "https://via.placeholder.com/100"}
+          src={
+            images?.[0]
+              ? `${imageURL}${images[0]}`
+              : "https://via.placeholder.com/100"
+          }
           alt="product"
           style={{ width: 60, height: 60, objectFit: "cover" }}
         />
@@ -250,17 +328,25 @@ const SeeAllProduct = () => {
       </WrapperHeaderSeeAllProduct>
 
       <WrapperUnderHeaderSeeAllProduct>
-        <InputComponent
-          name="searchProduct"
-          label="Tìm kiếm sản phẩm"
-          placeholder="Nhập tên sản phẩm"
-          icon={<SearchOutlined />}
-        />
+        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <div style={{ flex: 1 }}>
+          <InputComponent
+            name="searchProduct"
+            placeholder="Nhập tên sản phẩm"
+            icon={<SearchOutlined />}
+            onChange={(e) => setSearchText(e.target.value)}
+            onPressEnter={handleSearchProduct}
+          />
+        </div>
+        <ButtonComponents icon={<SearchOutlined />} textButton="Tìm kiếm" onClick={handleSearchProduct} />
+      </div>
+
         <ComboboxComponent
           name="searchPriceProduct"
           label="Giá sản phẩm"
           placeholder="Chọn giá sản phẩm"
           options={PriceProduct}
+          onChange={handlePriceChange}
         />
       </WrapperUnderHeaderSeeAllProduct>
 
@@ -300,7 +386,10 @@ const SeeAllProduct = () => {
               {previewImages.map((img, index) => (
                 <img
                   key={index}
-                  src={`${imageURL}${img}`}
+                  src={img.startsWith("data:")
+                    ? img
+                    : `${imageURL}${img}`
+                  }
                   alt="preview"
                   style={{
                     width: 60,
@@ -311,7 +400,7 @@ const SeeAllProduct = () => {
                 />
               ))}
             </div>
-            <Upload
+            {/* <Upload
               multiple
               beforeUpload={(file) => {
                 const reader = new FileReader();
@@ -336,7 +425,7 @@ const SeeAllProduct = () => {
                   <div style={{ marginTop: 8 }}>Thay đổi</div>
                 </div>
               )}
-            </Upload>
+            </Upload> */}
           </Form.Item>
 
           <Form.Item
@@ -377,7 +466,6 @@ const SeeAllProduct = () => {
             <Select>
               <Select.Option value="active">Hoạt động</Select.Option>
               <Select.Option value="inactive">Không hoạt động</Select.Option>
-              <Select.Option value="pending">Chờ duyệt</Select.Option>
               <Select.Option value="banned">Bị cấm</Select.Option>
             </Select>
           </Form.Item>
