@@ -24,7 +24,7 @@ const columns = [
     render: (status) => {
       let color = "default";
       if (status === "active") color = "green";
-      else if (status === "pending") color = "orange";
+      else if (status === "banned") color = "orange";
       else if (status === "inactive") color = "red";
 
       return <Tag color={color}>{status}</Tag>;
@@ -190,7 +190,7 @@ const UserManagenetPage = () => {
           >
             <Option value="all">Tất cả</Option>
             <Option value="active">Đang hoạt động</Option>
-            <Option value="pending">Chờ duyệt</Option>
+            <Option value="banned">Đã cấm</Option>
             <Option value="inactive">Ngưng hoạt động</Option>
           </Select>
         </div>
@@ -224,7 +224,7 @@ const UserManagenetPage = () => {
             style={{ width: "100%" }}
           >
             <Option value="active">Đang hoạt động</Option>
-            <Option value="pending">Chờ duyệt</Option>
+            <Option value="banned">Đã cấm</Option>
             <Option value="inactive">Ngưng hoạt động</Option>
           </Select>
         </Modal>

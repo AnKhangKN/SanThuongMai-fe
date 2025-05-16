@@ -31,9 +31,9 @@ const LoginPage = () => {
       localStorage.setItem("access_token", JSON.stringify(data?.access_token));
     }
 
-    if (isError) {
-      MessageComponent.error("Đăng nhập thất bại!");
-    }
+    // if (isError) {
+    //   MessageComponent.error("Đăng nhập thất bại!");
+    // }
   }, [isSuccess, isError, data]);
 
   // useEffect 2: xử lý navigate và gọi API
@@ -105,6 +105,10 @@ const LoginPage = () => {
         onError: (error) => {
           if (error.status === 401) {
             message.error("Người dùng chưa xác định hoặc chưa có tài khoản!");
+          }
+
+          if (error.status === 500) {
+            message.error(error.response.data.message);
           }
         },
       }
