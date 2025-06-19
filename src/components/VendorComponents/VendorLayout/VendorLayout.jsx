@@ -16,7 +16,7 @@ const VendorLayout = ({ children }) => {
         <WrapperColCenter span={18}>
           {children}
         </WrapperColCenter>
-        <WrapperColRight span={1}><NavbarOfVendorRightComponent /></WrapperColRight>
+        {/* <WrapperColRight span={1}><NavbarOfVendorRightComponent /></WrapperColRight> */}
       </WrapperBody>
     </div>
   );

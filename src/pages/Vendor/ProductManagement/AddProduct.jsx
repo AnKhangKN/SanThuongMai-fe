@@ -1,196 +1,223 @@
-import { useState } from "react";
-import { WrapperVendor } from "../VendorMain/styleVendorMain";
-import { Col, Form, Input, Button, Upload, Space, message } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Upload,
+  InputNumber,
+  Select,
+  Space,
+  DatePicker,
+  message,
+  Row,
+} from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ProductServices from "../../../services/vendor/ProductService";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 
+const { TextArea } = Input;
+
 const AddProduct = () => {
   const [form] = Form.useForm();
+  const [details, setDetails] = useState([]);
+  const [imageList, setImageList] = useState([]);
+  const [userId, setUserId] = useState(null); // lưu user_id từ token
 
-  const [newProduct, setNewProduct] = useState({
-    product_name: "",
-    category: "",
-    description: "",
-    size: "",
-    color: "",
-    price: "",
-    quantity: "",
-  });
-
-  const [images, setImages] = useState([]);
-
-  const fieldLabels = {
-    product_name: "Tên sản phẩm",
-    category: "Danh mục",
-    description: "Mô tả",
-    size: "Kích cỡ",
-    color: "Màu sắc",
-    price: "Giá",
-    quantity: "Số lượng",
-  };
-
-  const handleFileChange = ({ fileList }) => {
-    if (fileList.length > 5) {
-      message.warning("Chỉ được chọn tối đa 5 ảnh.");
-      return;
-    }
-
-    const validFiles = fileList.filter((file) => {
-      const isImage = file.type.startsWith("image/");
-      if (!isImage) {
-        message.error(`File ${file.name} không phải hình ảnh.`);
-        return false;
-      }
-
-      if (file.size / 1024 / 1024 > 1) {
-        message.error(`File ${file.name} vượt quá kích thước 1MB.`);
-        return false;
-      }
-
-      return true;
-    });
-
-    setImages(validFiles);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewProduct((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDecoded = async () => {
+  const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
+    let decoded = {};
     if (storageData && isJsonString(storageData)) {
       storageData = JSON.parse(storageData);
-      const decoded = jwtDecode(storageData);
+      decoded = jwtDecode(storageData);
+    }
+    return { decoded, storageData };
+  };
+
+  const fetchUserId = useCallback(async () => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+      let accessToken = storageData;
+
       if (decoded?.exp < Date.now() / 1000) {
         const res = await AuthServices.refreshToken();
-        const accessToken = res?.access_token;
+        accessToken = res?.access_token;
         localStorage.setItem("access_token", JSON.stringify(accessToken));
-        return accessToken;
+        decoded = jwtDecode(accessToken);
       }
-      return storageData;
-    }
-    return null;
-  };
 
-  const fetchCreateProduct = async () => {
-    const formData = new FormData();
-    images.forEach((file) =>
-      formData.append("productImages", file.originFileObj)
-    );
-
-    Object.keys(newProduct).forEach((key) => {
-      formData.append(key, newProduct[key]);
-    });
-
-    try {
-      const accessToken = await handleDecoded();
-      const res = await ProductServices.createProduct(accessToken, formData);
-
-      if (res.status === 200) {
-        message.success("Tạo sản phẩm thành công!");
-        form.resetFields();
-        setNewProduct({
-          product_name: "",
-          category: "",
-          description: "",
-          size: "",
-          color: "",
-          price: "",
-          quantity: "",
-        });
-        setImages([]);
-      } else {
-        message.error("Tạo sản phẩm thất bại!");
-      }
+      setUserId(decoded?.id); // Lưu user_id
     } catch (error) {
-      message.error("Có lỗi xảy ra khi tạo sản phẩm.");
+      console.error("Lỗi khi decode user_id:", error);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchUserId();
+  }, [fetchUserId]);
+
+  const handleAddDetail = () => {
+    setDetails([...details, { size: "", color: "", price: 0, quantity: 0 }]);
   };
+
+  const handleDetailChange = (index, field, value) => {
+    const updated = [...details];
+    updated[index][field] = value;
+    setDetails(updated);
+  };
+
+  const handleImageUpload = ({ fileList }) => {
+    setImageList(fileList.map((file) => file.name)); // hoặc file.url nếu có backend
+  };
+
+  const onFinish = async (values) => {
+  try {
+    let { storageData, decoded } = handleDecoded();
+    let accessToken = storageData;
+
+    // Kiểm tra token hết hạn
+    if (decoded?.exp < Date.now() / 1000) {
+      const res = await AuthServices.refreshToken();
+      accessToken = res?.access_token;
+      localStorage.setItem("access_token", JSON.stringify(accessToken));
+    }
+
+    const payload = {
+      product_name: values.product_name,
+      description: values.description || "",
+      category: values.category,
+      images: imageList,
+      details: details,
+      status: values.status || "active",
+      rating: 0,
+      user_id: userId, // đã gán trước từ token
+      sale: {
+        price: values.sale_price || 0,
+        start_date: values.sale_start
+          ? values.sale_start.toISOString()
+          : null,
+        end_date: values.sale_end ? values.sale_end.toISOString() : null,
+      },
+      banned_until: null,
+      reports: [],
+      sold_count: 0,
+    };
+
+    const response = await ProductServices.createProduct(accessToken, payload);
+    message.success("Thêm sản phẩm thành công!");
+    form.resetFields();
+    setDetails([]);
+    setImageList([]);
+  } catch (error) {
+    console.error("Lỗi khi thêm sản phẩm:", error);
+    message.error("Thêm sản phẩm thất bại!");
+  }
+};
 
   return (
-    <WrapperVendor>
-      <Col span={24} style={{ padding: "24px" }}>
-        <h2>Thêm sản phẩm mới</h2>
-        <Form form={form} layout="vertical" onFinish={fetchCreateProduct}>
-          {Object.keys(newProduct).map((field) => (
-            <Form.Item
-              label={fieldLabels[field]}
-              name={field}
-              key={field}
-              rules={[
-                {
-                  required: true,
-                  message: `Vui lòng nhập ${fieldLabels[field]}!`,
-                },
-              ]}
-            >
-              <Input
-                name={field}
-                onChange={handleInputChange}
-                value={newProduct[field]}
-              />
-            </Form.Item>
-          ))}
+    <div>
+      <Row>
+        <h3>Thêm sản phẩm mới</h3>
+      </Row>
+      <Form
+      layout="vertical"
+      onFinish={onFinish}
+      form={form}
+      style={{ maxWidth: 800, margin: "0 auto" }}
+    >
+      <Form.Item
+        label="Tên sản phẩm"
+        name="product_name"
+        rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
+      >
+        <Input />
+      </Form.Item>
 
-          <Form.Item
-            label="Hình ảnh"
-            name="images"
-            rules={[
-              {
-                validator: (_, value) =>
-                  value && value.length > 0
-                    ? Promise.resolve()
-                    : Promise.reject(
-                        new Error("Vui lòng chọn ít nhất 1 hình ảnh")
-                      ),
-              },
-            ]}
-            getValueFromEvent={(e) => e?.fileList}
-          >
-            <Upload
-              listType="picture"
-              beforeUpload={() => false} // Không upload ngay
-              multiple
-              fileList={images}
-              onChange={handleFileChange}
-            >
-              {images.length >= 5 ? null : (
-                <Button icon={<UploadOutlined />}>Chọn hình ảnh</Button>
-              )}
-            </Upload>
+      <Form.Item label="Mô tả" name="description">
+        <TextArea rows={4} />
+      </Form.Item>
+
+      <Form.Item
+        label="Danh mục"
+        name="category"
+        rules={[{ required: true, message: "Chọn danh mục" }]}
+      >
+        <Select placeholder="Chọn danh mục">
+          <Select.Option value="Thể thao">Thể thao</Select.Option>
+          <Select.Option value="Yoga">Yoga</Select.Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        label="Hình ảnh"
+        name="images"
+        rules={[{ required: true, message: "Vui lòng tải ít nhất 1 ảnh" }]}
+      >
+        <Upload
+          listType="picture"
+          multiple
+          beforeUpload={() => false}
+          onChange={handleImageUpload}
+        >
+          <Button icon={<PlusOutlined />}>Chọn ảnh</Button>
+        </Upload>
+      </Form.Item>
+
+      <h4>Biến thể sản phẩm (tùy chọn)</h4>
+      {details.map((item, index) => (
+        <Space key={index} style={{ marginBottom: 8 }} align="baseline">
+          <Input
+            placeholder="Màu"
+            style={{ width: 100 }}
+            onChange={(e) =>
+              handleDetailChange(index, "color", e.target.value)
+            }
+          />
+          <Input
+            placeholder="Size"
+            style={{ width: 100 }}
+            onChange={(e) =>
+              handleDetailChange(index, "size", e.target.value)
+            }
+          />
+          <InputNumber
+            placeholder="Giá"
+            min={0}
+            onChange={(val) => handleDetailChange(index, "price", val)}
+          />
+          <InputNumber
+            placeholder="Số lượng"
+            min={0}
+            onChange={(val) => handleDetailChange(index, "quantity", val)}
+          />
+        </Space>
+      ))}
+      <Button onClick={handleAddDetail}>+ Thêm biến thể</Button>
+
+      <h4>Khuyến mãi (tùy chọn)</h4>
+      <Form.Item label="Giá khuyến mãi" name="sale_price">
+        <InputNumber min={0} />
+      </Form.Item>
+
+      <Form.Item label="Thời gian khuyến mãi">
+        <Space>
+          <Form.Item name="sale_start" noStyle>
+            <DatePicker placeholder="Ngày bắt đầu" />
           </Form.Item>
+          <Form.Item name="sale_end" noStyle>
+            <DatePicker placeholder="Ngày kết thúc" />
+          </Form.Item>
+        </Space>
+      </Form.Item>
 
-          <Space>
-            <Button type="primary" htmlType="submit">
-              Lưu sản phẩm
-            </Button>
-            <Button
-              htmlType="button"
-              onClick={() => {
-                form.resetFields();
-                setNewProduct({
-                  product_name: "",
-                  category: "",
-                  description: "",
-                  size: "",
-                  color: "",
-                  price: "",
-                  quantity: "",
-                });
-                setImages([]);
-              }}
-            >
-              Xóa hết
-            </Button>
-          </Space>
-        </Form>
-      </Col>
-    </WrapperVendor>
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          Thêm sản phẩm
+        </Button>
+      </Form.Item>
+    </Form>
+    </div>
   );
 };
 
