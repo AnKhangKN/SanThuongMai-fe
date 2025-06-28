@@ -1,4 +1,4 @@
-import { Avatar, Col, Image } from "antd";
+import { Avatar, Col, Image  } from "antd";
 import React, { useState, useRef, useEffect } from "react";
 import logo from "../../../assets/images/Logo_Trang.jpg";
 import { DownOutlined, ShopOutlined, LogoutOutlined } from "@ant-design/icons";
@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { resetUser } from "../../../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
+import BreadcrumbComponent from "../BreadcrumbComponent/BreadcrumbComponent";
 
 const HeaderOfVendorComponent = (props) => {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ const HeaderOfVendorComponent = (props) => {
     }
   };
 
+  
   return (
     <WrapperHeader>
       <Col
@@ -85,7 +87,11 @@ const HeaderOfVendorComponent = (props) => {
           preview={false}
           style={{ width: "50px", height: "30px" }}
         ></WrapperHeaderImageLogo>
-        <WrapperHeaderTextLogo>{textHeader}</WrapperHeaderTextLogo>
+
+      <div>
+          <BreadcrumbComponent />
+        </div>
+      
       </Col>
 
       <Col

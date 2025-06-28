@@ -180,11 +180,11 @@ export const routes = [
     page: OrderReview,
     isShowHeaderVendor: true,
   },
-  {
-    path: "/vendor/update-status",
-    page: UpdateStatus,
-    isShowHeaderVendor: true,
-  },
+  // {
+  //   path: "/vendor/update-status",
+  //   page: UpdateStatus,
+  //   isShowHeaderVendor: true,
+  // },
   {
     path: "/vendor/revenue-report",
     page: IncomeStatisics,
