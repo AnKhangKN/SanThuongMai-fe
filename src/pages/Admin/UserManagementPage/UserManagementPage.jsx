@@ -10,17 +10,11 @@ const { Option } = Select;
 
 // Cấu hình cột cho bảng
 const columns = [
-  // {
-  //   title: "ID",
-  //   dataIndex: "key",
-  //   sorter: (a, b) => a.key - b.key,
-  //   ellipsis: true,
-  // },
-  { title: "Tên người dùng", dataIndex: "user_name" },
+  { title: "Tên người dùng", dataIndex: "fullName" },
   { title: "Email", dataIndex: "email" },
   {
     title: "Trạng thái",
-    dataIndex: "account_status",
+    dataIndex: "status",
     render: (status) => {
       let color = "default";
       if (status === "active") color = "green";
@@ -29,7 +23,7 @@ const columns = [
 
       return <Tag color={color}>{status}</Tag>;
     },
-    sorter: (a, b) => a.account_status.localeCompare(b.account_status),
+    sorter: (a, b) => a.status.localeCompare(b.status),
   },
 
   {
@@ -111,14 +105,14 @@ const UserManagenetPage = () => {
     const newData =
       selectedStatus === "all"
         ? allData
-        : allData.filter((item) => item.account_status === selectedStatus);
+        : allData.filter((item) => item.status === selectedStatus);
     setFilteredData(newData);
   }, [selectedStatus, allData]);
 
   // Cập nhật trạng thái người dùng khi click
   const handleRowClick = (record) => {
     setSelectedUser(record);
-    setNewStatus(record.account_status);
+    setNewStatus(record.status);
     setModalVisible(true);
   };
 
@@ -216,7 +210,7 @@ const UserManagenetPage = () => {
           cancelText="Hủy"
         >
           <p>
-            Người dùng: <strong>{selectedUser?.user_name}</strong>
+            Người dùng: <strong>{selectedUser?.fullName}</strong>
           </p>
           <Select
             value={newStatus}

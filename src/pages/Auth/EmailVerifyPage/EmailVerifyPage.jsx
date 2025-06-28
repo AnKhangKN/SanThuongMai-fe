@@ -10,7 +10,7 @@ const EmailVerifyPage = () => {
     const verifyEmail = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/shared/verify/${token}`,
+          `${process.env.REACT_APP_API_URL}/shared/auth/verify-email/${token}`,
           {
             method: "GET",
           }

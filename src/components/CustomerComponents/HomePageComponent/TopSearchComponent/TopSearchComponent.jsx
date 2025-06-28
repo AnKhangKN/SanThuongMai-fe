@@ -16,11 +16,13 @@ const TopSearchComponent = () => {
 
   // Hàm fetch dữ liệu sản phẩm
   const fetchAllProduct = async () => {
-    const res = await ProductServices.getAllTopSearch();
-
-    const lsProduct = res.data;
-
-    setProducts(lsProduct); // Lưu sản phẩm vào state products
+    try {
+      const res = await ProductServices.getAllTopSearch();
+      setProducts(res.data || []); // Nếu không có data thì set rỗng
+    } catch (error) {
+      console.error("Lỗi khi gọi API sản phẩm:", error);
+      setProducts([]); // Gọi thất bại cũng để rỗng
+    }
   };
 
   // Lấy dữ liệu sản phẩm khi component được mount
@@ -118,7 +120,9 @@ const TopSearchComponent = () => {
               </div>
             ))
           ) : (
-            <p>Không có sản phẩm để hiển thị.</p>
+            <div style={{ margin: "50px auto" }}>
+              Không có sản phẩm để hiển thị.
+            </div>
           )}
         </div>
       </div>

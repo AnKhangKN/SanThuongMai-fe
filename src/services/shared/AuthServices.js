@@ -3,7 +3,7 @@ export const axiosJWT = axios.create();
 
 export const signupUser = async (data) => {
   const res = await axios.post(
-    `${process.env.REACT_APP_API_URL}/shared/sign-up`,
+    `${process.env.REACT_APP_API_URL}/shared/auth/signup`,
     data
   );
   return res.data;
@@ -11,7 +11,7 @@ export const signupUser = async (data) => {
 
 export const loginUser = async (data) => {
   const res = await axios.post(
-    `${process.env.REACT_APP_API_URL}/shared/login`,
+    `${process.env.REACT_APP_API_URL}/shared/auth/login`,
     data,
     {
       withCredentials: true,
@@ -22,7 +22,7 @@ export const loginUser = async (data) => {
 
 export const refreshToken = async () => {
   const res = await axios.post(
-    `${process.env.REACT_APP_API_URL}/shared/refresh-token`,
+    `${process.env.REACT_APP_API_URL}/shared/auth/token/refresh`,
     {},
     {
       withCredentials: true,
@@ -34,7 +34,7 @@ export const refreshToken = async () => {
 
 export const logoutUser = async () => {
   const res = await axios.post(
-    `${process.env.REACT_APP_API_URL}/shared/logout`
+    `${process.env.REACT_APP_API_URL}/shared/auth/logout`
   );
   return res.data;
 };

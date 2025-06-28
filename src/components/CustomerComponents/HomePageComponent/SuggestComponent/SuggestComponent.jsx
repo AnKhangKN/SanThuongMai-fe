@@ -37,62 +37,69 @@ const SuggestComponent = () => {
   return (
     <div>
       <Row gutter={[16, 16]}>
-        {visibleProducts.map((product) => (
-          <Col span={6} key={product.key}>
-            <Link
-              to={`/product/${product._id}`}
-              style={{ textDecoration: "none", color: "#333" }}
-            >
-              <div style={{ border: "1px solid #ccc" }}>
-                <div style={{ width: "100%" }}>
-                  <img
-                    src={
-                      Array.isArray(product.images) && product.images.length > 0
-                        ? `${imageURL}${product.images[0]}`
-                        : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
-                    }
-                    alt={product.product_name}
-                    style={{
-                      width: "100%",
-                      height: "300px",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
-                <div style={{ padding: "10px" }}>
-                  <div style={{ marginBottom: "30px", fontSize: "20px" }}>
-                    {product.product_name}
+        {visibleProducts.length > 0 ? (
+          visibleProducts.map((product) => (
+            <Col span={6} key={product.key}>
+              <Link
+                to={`/product/${product._id}`}
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                <div style={{ border: "1px solid #ccc" }}>
+                  <div style={{ width: "100%" }}>
+                    <img
+                      src={
+                        Array.isArray(product.images) &&
+                        product.images.length > 0
+                          ? `${imageURL}${product.images[0]}`
+                          : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
+                      }
+                      alt={product.product_name}
+                      style={{
+                        width: "100%",
+                        height: "300px",
+                        objectFit: "contain",
+                      }}
+                    />
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
+                  <div style={{ padding: "10px" }}>
+                    <div style={{ marginBottom: "30px", fontSize: "20px" }}>
+                      {product.product_name}
+                    </div>
                     <div
                       style={{
-                        color: "#ee4d2d",
                         display: "flex",
+                        justifyContent: "space-between",
                         alignItems: "center",
-                        justifyContent: "center",
-                        gap: "2px",
                       }}
                     >
-                      <div style={{ fontSize: "10px" }}>đ</div>
-                      <div style={{ fontSize: "18px" }}>
-                        {product.details[0].price}
+                      <div
+                        style={{
+                          color: "#ee4d2d",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "2px",
+                        }}
+                      >
+                        <div style={{ fontSize: "10px" }}>đ</div>
+                        <div style={{ fontSize: "18px" }}>
+                          {product.details[0].price}
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ fontSize: "13px" }}>
-                      Đã bán: {product.sold_count}
+                      <div style={{ fontSize: "13px" }}>
+                        Đã bán: {product.sold_count}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          </Col>
-        ))}
+              </Link>
+            </Col>
+          ))
+        ) : (
+          <div style={{ margin: "auto", lineHeight: "50px" }}>
+            Chưa có sản phẩm hiển thị
+          </div>
+        )}
       </Row>
 
       <div style={{ backgroundColor: "#f5f5f5", paddingTop: "20px" }}>

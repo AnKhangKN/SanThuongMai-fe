@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Input, Typography, message, Spin } from "antd";
 import * as AuthServices from "../../../services/shared/AuthServices";
@@ -12,32 +12,52 @@ const { Title, Text, Link: AntLink } = Typography;
 const SignupPage = () => {
   const navigate = useNavigate();
 
-  // Lưu các thuộc tính vào useState
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
   const [loading, setLoading] = useState(false);
 
-  // Call API
   const mutation = useMutationHooks((data) => AuthServices.signupUser(data));
-
   const { error, isError, isSuccess } = mutation;
 
+  // ✅ Dùng useCallback để tránh warning ESLint
+  const handleNavigateLogin = useCallback(() => {
+    navigate("/login");
+  }, [navigate]);
+
+  // ✅ Khi đăng ký thành công
   useEffect(() => {
     if (isSuccess) {
-      MessageComponent.success("Đăng kí thành công");
+      MessageComponent.success(
+        "Tạo tài khoản thành công! Vui lòng kiểm tra email để xác nhận."
+      );
       handleNavigateLogin();
     }
-  }, [isSuccess]);
+  }, [isSuccess, handleNavigateLogin]);
 
-  // Theo dõi thay đổi
-  const handleOnchangeEmail = (e) => setEmail(e.target.value);
-  const handleOnchangePassword = (e) => setPassword(e.target.value);
-  const handleOnchangeConfirmPassword = (e) =>
-    setConfirmPassword(e.target.value);
+  // ✅ Tự ẩn lỗi
+  useEffect(() => {
+    if (isError) {
+      const timer = setTimeout(() => mutation.reset(), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [isError, mutation]);
 
-  // Thực hiện signup
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSignUp = () => {
+    const { email, password, confirmPassword } = form;
+
+    if (password !== confirmPassword) {
+      return message.error("Mật khẩu và xác nhận mật khẩu không khớp");
+    }
+
     setLoading(true);
     mutation.mutate(
       {
@@ -48,21 +68,16 @@ const SignupPage = () => {
       {
         onError: (error) => {
           const msg = error?.response?.data?.message || "Đăng ký thất bại!";
-          console.log(msg);
-          message.error(msg); // Hiển thị thông báo lỗi lên giao diện
+          message.error(msg);
           setLoading(false);
         },
-
-        onSuccess: () => {
-          setLoading(false);
-        },
+        onSuccess: () => setLoading(false),
       }
     );
   };
 
-  const handleNavigateLogin = () => {
-    navigate("/login");
-  };
+  const { email, password, confirmPassword } = form;
+  const isDisabled = !email || !password || !confirmPassword;
 
   return (
     <div>
@@ -131,7 +146,7 @@ const SignupPage = () => {
               size="large"
               name="email"
               style={{ marginBottom: 16 }}
-              onChange={handleOnchangeEmail}
+              onChange={handleChange}
             />
 
             <Input.Password
@@ -139,7 +154,7 @@ const SignupPage = () => {
               size="large"
               name="password"
               style={{ marginBottom: 16 }}
-              onChange={handleOnchangePassword}
+              onChange={handleChange}
             />
 
             <Input.Password
@@ -147,10 +162,10 @@ const SignupPage = () => {
               size="large"
               name="confirmPassword"
               style={{ marginBottom: 16 }}
-              onChange={handleOnchangeConfirmPassword}
+              onChange={handleChange}
             />
 
-            {/* Hiển thị thông báo lỗi */}
+            {/* Hiển thị lỗi */}
             {isError && (
               <div style={{ color: "red", marginBottom: 12 }}>
                 {error?.response?.data?.message || "Có lỗi xảy ra"}
@@ -158,25 +173,17 @@ const SignupPage = () => {
             )}
 
             <Button
-              disabled={
-                !email.length || !password.length || !confirmPassword.length
-              }
+              disabled={isDisabled}
               type="primary"
               block
               size="large"
               style={{
-                backgroundColor:
-                  !email.length || !password.length || !confirmPassword.length
-                    ? "#ccc"
-                    : "#194a7a",
-                borderColor:
-                  !email.length || !password.length || !confirmPassword.length
-                    ? "#ccc"
-                    : "#194a7a",
+                backgroundColor: isDisabled ? "#ccc" : "#194a7a",
+                borderColor: isDisabled ? "#ccc" : "#194a7a",
                 color: "#fff",
               }}
               onClick={handleSignUp}
-              loading={loading} // Thêm loading ở đây
+              loading={loading}
             >
               {loading ? <Spin /> : "TIẾP THEO"}
             </Button>
