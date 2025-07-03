@@ -11,6 +11,10 @@ import {
   message,
   Row,
 } from "antd";
+import {
+  UploadOutlined,
+  MinusCircleOutlined,
+} from '@ant-design/icons';
 import { PlusOutlined } from "@ant-design/icons";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ProductServices from "../../../services/vendor/ProductService";
@@ -21,9 +25,10 @@ const { TextArea } = Input;
 
 const AddProduct = () => {
   const [form] = Form.useForm();
-  const [details, setDetails] = useState([]);
-  const [imageList, setImageList] = useState([]);
-  const [userId, setUserId] = useState(null); // lưu user_id từ token
+  // const [details, setDetails] = useState([]);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [fileList, setFileList] = useState([]);
+  const [shopId, setShopId] = useState(null); // chính là user._id
 
   const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
@@ -47,7 +52,7 @@ const AddProduct = () => {
         decoded = jwtDecode(accessToken);
       }
 
-      setUserId(decoded?.id); // Lưu user_id
+      setShopId(decoded?.id);
     } catch (error) {
       console.error("Lỗi khi decode user_id:", error);
     }
@@ -57,18 +62,38 @@ const AddProduct = () => {
     fetchUserId();
   }, [fetchUserId]);
 
-  const handleAddDetail = () => {
-    setDetails([...details, { size: "", color: "", price: 0, quantity: 0 }]);
-  };
+  // const handleAddDetail = () => {
+  //   setDetails([...details, { size: "", color: "", price: 0, quantity: 0 }]);
+  // };
 
-  const handleDetailChange = (index, field, value) => {
-    const updated = [...details];
-    updated[index][field] = value;
-    setDetails(updated);
-  };
+  // const handleDetailChange = (index, field, value) => {
+  //   const updated = [...details];
+  //   updated[index][field] = value;
+  //   setDetails(updated);
+  // };
 
-  const handleImageUpload = ({ fileList }) => {
-    setImageList(fileList.map((file) => file.name)); // hoặc file.url nếu có backend
+  // const handleImageUpload = ({ fileList }) => {
+  //   setImageList(fileList.map((file) => file.name)); // hoặc file.url nếu có backend
+  // };
+
+  const beforeUpload = (file) => {
+      const isImage = file.type.startsWith("image/");
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isImage) {
+        message.error("Chỉ được upload file ảnh!");
+        return Upload.LIST_IGNORE;
+      }
+      if (!isLt2M) {
+        message.error("Ảnh phải nhỏ hơn 2MB!");
+        return Upload.LIST_IGNORE;
+      }
+      return true;
+    
+  }
+  
+  const handleChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+    form.setFieldsValue({ images: newFileList });
   };
 
   const onFinish = async (values) => {
@@ -83,37 +108,44 @@ const AddProduct = () => {
       localStorage.setItem("access_token", JSON.stringify(accessToken));
     }
 
-    const payload = {
-      product_name: values.product_name,
-      description: values.description || "",
-      category: values.category,
-      images: imageList,
-      details: details,
-      status: values.status || "active",
-      rating: 0,
-      user_id: userId, // đã gán trước từ token
-      sale: {
-        price: values.sale_price || 0,
-        start_date: values.sale_start
-          ? values.sale_start.toISOString()
-          : null,
-        end_date: values.sale_end ? values.sale_end.toISOString() : null,
-      },
-      banned_until: null,
-      reports: [],
-      sold_count: 0,
-    };
+    const transformedPriceOptions = values.priceOptions.map(opt => ({
+      attributes: [
+        { name: "size", value: opt.size },
+        { name: "color", value: opt.color },
+      ],
+      price: opt.price,
+      stock: opt.stock,
+    }));
 
-    const response = await ProductServices.createProduct(accessToken, payload);
+    // Kiểm tra
+    if (!transformedPriceOptions.length) {
+      message.error("Phải có ít nhất 1 biến thể sản phẩm");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("productName", values.productName);
+    formData.append("description", values.description || "");
+    formData.append("category", values.category);
+    formData.append("status", values.status || "active");
+    formData.append("shopId", shopId); // Đảm bảo đúng giá trị
+    // console.log("shopId:", shopId);
+    formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
+
+    fileList.forEach((file) => {
+      formData.append("productImages", file.originFileObj); // ảnh thực tế
+    });
+
+    const response = await ProductServices.createProduct(accessToken, formData);
     message.success("Thêm sản phẩm thành công!");
     form.resetFields();
-    setDetails([]);
-    setImageList([]);
+    setFileList([]);
   } catch (error) {
     console.error("Lỗi khi thêm sản phẩm:", error);
     message.error("Thêm sản phẩm thất bại!");
   }
 };
+
 
   return (
     <div>
@@ -121,102 +153,142 @@ const AddProduct = () => {
         <h3>Thêm sản phẩm mới</h3>
       </Row>
       <Form
-      layout="vertical"
-      onFinish={onFinish}
-      form={form}
-      style={{ maxWidth: 800, margin: "0 auto" }}
-    >
-      <Form.Item
-        label="Tên sản phẩm"
-        name="product_name"
-        rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
+        layout="vertical"
+        onFinish={onFinish}
+        form={form}
+        style={{ maxWidth: 800, margin: "0 auto" }}
       >
-        <Input />
-      </Form.Item>
+        <h4>Thông tin cơ bản</h4>
 
-      <Form.Item label="Mô tả" name="description">
-        <TextArea rows={4} />
-      </Form.Item>
-
-      <Form.Item
-        label="Danh mục"
-        name="category"
-        rules={[{ required: true, message: "Chọn danh mục" }]}
-      >
-        <Select placeholder="Chọn danh mục">
-          <Select.Option value="Thể thao">Thể thao</Select.Option>
-          <Select.Option value="Yoga">Yoga</Select.Option>
-        </Select>
-      </Form.Item>
-
-      <Form.Item
-        label="Hình ảnh"
-        name="images"
-        rules={[{ required: true, message: "Vui lòng tải ít nhất 1 ảnh" }]}
-      >
-        <Upload
-          listType="picture"
-          multiple
-          beforeUpload={() => false}
-          onChange={handleImageUpload}
+        <Form.Item
+          label="Tên sản phẩm"
+          name="productName"
+          rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
         >
-          <Button icon={<PlusOutlined />}>Chọn ảnh</Button>
+          <Input />
+        </Form.Item>
+
+        {/* thêm hình ảnh */}
+        <Form.Item
+          label="Hình ảnh sản phẩm"
+          name="images"
+          rules={[{ required: true, message: "Vui lòng thêm hình ảnh sản phẩm" }]}
+          valuePropName="fileList"
+           getValueFromEvent={(e) => e.fileList}
+        >
+        <Upload
+          listType="picture-card"
+          fileList={fileList}
+          onChange={handleChange}
+          beforeUpload={beforeUpload}
+          multiple
+          onPreview={() => false}
+        >
+          {fileList.length < 5 && (
+            <div>
+              <UploadOutlined />
+              <div style={{ marginTop: 8 }}>Thêm ảnh</div>
+            </div>
+          )}
         </Upload>
       </Form.Item>
 
-      <h4>Biến thể sản phẩm (tùy chọn)</h4>
-      {details.map((item, index) => (
-        <Space key={index} style={{ marginBottom: 8 }} align="baseline">
-          <Input
-            placeholder="Màu"
-            style={{ width: 100 }}
-            onChange={(e) =>
-              handleDetailChange(index, "color", e.target.value)
-            }
-          />
-          <Input
-            placeholder="Size"
-            style={{ width: 100 }}
-            onChange={(e) =>
-              handleDetailChange(index, "size", e.target.value)
-            }
-          />
-          <InputNumber
-            placeholder="Giá"
-            min={0}
-            onChange={(val) => handleDetailChange(index, "price", val)}
-          />
-          <InputNumber
-            placeholder="Số lượng"
-            min={0}
-            onChange={(val) => handleDetailChange(index, "quantity", val)}
-          />
-        </Space>
-      ))}
-      <Button onClick={handleAddDetail}>+ Thêm biến thể</Button>
+        <Form.Item
+          label="Loại sản phẩm"
+          name="category"
+          rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm" }]}
+        >
+          <Select placeholder="Chọn loại sản phẩm">
+            <Select.Option value="Thời trang">Thời trang</Select.Option>
+            <Select.Option value="Điện tử">Điện tử</Select.Option>
+            <Select.Option value="Sách">Sách</Select.Option>
+            <Select.Option value="Giày dép">Giày dép</Select.Option>
+            <Select.Option value="Đồ chơi">Đồ chơi</Select.Option>
+            <Select.Option value="Thể thao">Thể thao</Select.Option>
+            <Select.Option value="Sức khỏe">Sức khỏe</Select.Option>
+            <Select.Option value="Nhà cửa">Nhà cửa</Select.Option>
+            <Select.Option value="Xe máy">Xe máy</Select.Option>
+            <Select.Option value="Ô tô">Ô tô</Select.Option>
+            <Select.Option value="Điện thoại">Điện thoại</Select.Option>
+            <Select.Option value="Laptop">Laptop</Select.Option>
+            <Select.Option value="Máy tính bảng">Máy tính bảng</Select.Option>
+            <Select.Option value="Thiết bị gia dụng">Thiết bị gia dụng</Select.Option>
+            <Select.Option value="Thiết bị y tế">Thiết bị y tế</Select.Option>
+          </Select>
+        </Form.Item>
 
-      <h4>Khuyến mãi (tùy chọn)</h4>
-      <Form.Item label="Giá khuyến mãi" name="sale_price">
-        <InputNumber min={0} />
-      </Form.Item>
+        <Form.Item
+          label="Mô tả"
+          name="description"
+          rules={[{ required: true, message: "Vui lòng nhập mô tả sản phẩm" }]}
+        >
+          <TextArea rows={4} />
+        </Form.Item>
 
-      <Form.Item label="Thời gian khuyến mãi">
-        <Space>
-          <Form.Item name="sale_start" noStyle>
-            <DatePicker placeholder="Ngày bắt đầu" />
-          </Form.Item>
-          <Form.Item name="sale_end" noStyle>
-            <DatePicker placeholder="Ngày kết thúc" />
-          </Form.Item>
-        </Space>
-      </Form.Item>
+        <h4>Thông tin chi tiết</h4>
+        <Form.List name="priceOptions" rules={[
+          {
+            validator: async (_, priceOptions) => {
+              if (!priceOptions || priceOptions.length < 1) {
+                return Promise.reject(new Error('Phải có ít nhất 1 biến thể'));
+              }
+            },
+          },
+        ]}>
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...restField }) => (
+                <Space
+                  key={key}
+                  style={{ display: 'flex', marginBottom: 8 }}
+                  align="baseline"
+                >
+                  <Form.Item
+                    {...restField}
+                    name={[name, 'size']}
+                    rules={[{ required: true, message: 'Nhập size' }]}
+                  >
+                    <Input placeholder="Size" />
+                  </Form.Item>
+                  <Form.Item
+                    {...restField}
+                    name={[name, 'color']}
+                    rules={[{ required: true, message: 'Nhập màu' }]}
+                  >
+                    <Input placeholder="Màu" />
+                  </Form.Item>
+                  <Form.Item
+                    {...restField}
+                    name={[name, 'price']}
+                    rules={[{ required: true, message: 'Nhập giá' }]}
+                  >
+                    <InputNumber placeholder="Giá" min={0} />
+                  </Form.Item>
+                  <Form.Item
+                    {...restField}
+                    name={[name, 'stock']}
+                    rules={[{ required: true, message: 'Nhập tồn kho' }]}
+                  >
+                    <InputNumber placeholder="Tồn kho" min={0} />
+                  </Form.Item>
+                  <MinusCircleOutlined onClick={() => remove(name)} />
+                </Space>
+              ))}
+              <Form.Item>
+                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                  Thêm thông tin chi tiết
+                </Button>
+              </Form.Item>
+            </>
+          )}
+        </Form.List>
 
-      <Form.Item>
-        <Button type="primary" htmlType="submit">
-          Thêm sản phẩm
-        </Button>
-      </Form.Item>
-    </Form>
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            Thêm sản phẩm mới
+          </Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 };

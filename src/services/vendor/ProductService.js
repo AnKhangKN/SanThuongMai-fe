@@ -7,6 +7,7 @@ export const createProduct = async (accessToken, productData) => {
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "multipart/form-data",
       },
     }
   );
