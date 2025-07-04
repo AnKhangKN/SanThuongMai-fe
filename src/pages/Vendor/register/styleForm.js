@@ -1,3 +1,4 @@
+import { Col, Form } from "antd";
 import styled from "styled-components";
 
 export const WrapperStepsVendor = styled.div`
@@ -13,12 +14,12 @@ export const WrapperStepsVendor = styled.div`
 
 export const WrapperStepsPadding = styled.div`
   border-bottom: 1px solid #ccc;
-  padding: 20px 400px;
+  padding: 20px 5%;
 `;
 
 export const WrapperFormVendor = styled.div`
   position: relative;
-  max-width: 944px;
+  max-width: 100%;
   margin: 48px auto 40px;
   min-height: 198px;
 `;
@@ -56,4 +57,8 @@ export const WrapperVendorInfoTaxIn = styled.div`
   overflow: auto;
   background-color: #e5eefb;
   border-color: #3d72bf;
+`;
+
+export const WrapperFormItem = styled(Form.Item)`
+  max-width: 80%;
 `;
