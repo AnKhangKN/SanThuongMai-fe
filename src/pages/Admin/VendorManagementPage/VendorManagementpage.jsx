@@ -7,12 +7,6 @@ import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 
 const columns = [
-  // {
-  //   title: "ID",
-  //   dataIndex: "key",
-  //   sorter: (a, b) => a.key - b.key,
-  //   ellipsis: true,
-  // },
   { title: "Chủ sở hữu", dataIndex: "user_name", ellipsis: true },
   { title: "Email", dataIndex: "email", ellipsis: true },
   {

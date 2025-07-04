@@ -48,6 +48,8 @@ import WishListPage from "../pages/Customer/AccountPage/WishListPage/WishListPag
 import ShippingOrderPage from "../pages/Admin/ShippingOrderPage/ShippingOrderPage";
 import EmailVerifyPage from "../pages/Auth/EmailVerifyPage/EmailVerifyPage";
 import ForgetPasswordPage from "../pages/Auth/ForgetPasswordPage/ForgetPasswordPage";
+import BannerPage from "../pages/Admin/BannerPage/BannerPage";
+import DiscountPage from "../pages/Admin/DiscountPage/DiscountPage";
 
 export const routes = [
   //auth
@@ -288,11 +290,21 @@ export const routes = [
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
-
-  // Shipping order
   {
     path: "/admin/shipping",
     page: ShippingOrderPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/banner",
+    page: BannerPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/discount",
+    page: DiscountPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },

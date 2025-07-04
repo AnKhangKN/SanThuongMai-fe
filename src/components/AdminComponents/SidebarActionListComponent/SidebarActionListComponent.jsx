@@ -2,7 +2,7 @@ import { useState } from "react";
 import { IconContainer, OptionContainer, OptionSelect, Wrapper } from "./style";
 import { BiSolidDashboard } from "react-icons/bi";
 import { AiFillProduct } from "react-icons/ai";
-import { MdAccountBox } from "react-icons/md";
+import { MdAccountBox, MdDiscount } from "react-icons/md";
 import { FaChartPie, FaShippingFast } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -10,6 +10,7 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
   const navigate = useNavigate();
 
   const [isShowAccountOptions, setIsShowAccountOptions] = useState(false);
+  const [isShowPromotionOptions, setIsShowPromotionOptions] = useState(false);
 
   const handleNavigateManagementUser = () => {
     navigate("/admin/users");
@@ -109,67 +110,57 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
         </Link>
       </OptionContainer>
 
-      {/* Quản lý vi phạm */}
-      {/* <OptionContainer
-        onClick={() => setIsShowViolationOptions(!isShowViolationOptions)}
+      {/* Promotion */}
+      <OptionContainer
+        onClick={() => setIsShowPromotionOptions(!isShowPromotionOptions)}
       >
         <OptionSelect>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <IconContainer>
-              <IoWarning />
-            </IconContainer>
+          <Link
+            to="/admin/banner"
+            style={{ textDecoration: "none", color: "#333" }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <IconContainer>
+                <MdDiscount />
+              </IconContainer>
 
-            {!isCollapsed && (
-              <div style={{ paddingLeft: "10px" }}>Quản lý vi phạm</div>
-            )}
-          </div>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>Banner & Giảm giá</div>
+              )}
+            </div>
+          </Link>
         </OptionSelect>
       </OptionContainer>
 
-      {isShowViolationOptions && (
+      {isShowPromotionOptions && (
         <OptionContainer style={{ paddingLeft: "20px" }}>
           <Link
-            to="/admin/report/shops"
+            to="/admin/banner"
             style={{ textDecoration: "none", color: "#333" }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
               {!isCollapsed && (
-                <div style={{ paddingLeft: "10px" }}>Cửa hàng vi phạm</div>
+                <div style={{ paddingLeft: "10px" }}>Banner</div>
               )}
             </div>
           </Link>
         </OptionContainer>
       )}
 
-      {isShowViolationOptions && (
+      {isShowPromotionOptions && (
         <OptionContainer style={{ paddingLeft: "20px" }}>
           <Link
-            to="/admin/report/products"
+            to="/admin/discount"
             style={{ textDecoration: "none", color: "#333" }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
               {!isCollapsed && (
-                <div style={{ paddingLeft: "10px" }}>Sản phẩm vi phạm</div>
+                <div style={{ paddingLeft: "10px" }}>Discount</div>
               )}
             </div>
           </Link>
         </OptionContainer>
       )}
-
-      {isShowViolationOptions && (
-        <OptionContainer style={{ paddingLeft: "20px" }}>
-          <Link
-            to="/admin/report/orders"
-            style={{ textDecoration: "none", color: "#333" }}
-          >
-            <div style={{ display: "flex", alignItems: "center" }}>
-              {!isCollapsed && (
-                <div style={{ paddingLeft: "10px" }}>Đơn hàng vi phạm</div>
-              )}
-            </div>
-          </Link>
-        </OptionContainer>
-      )} */}
 
       {/* Thống kê */}
       <OptionContainer>
