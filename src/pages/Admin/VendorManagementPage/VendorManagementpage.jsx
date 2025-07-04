@@ -70,13 +70,12 @@ const VendorManagementPage = () => {
     return null;
   };
 
-  const fetchAllHome = useCallback(async () => {
+  const fetchAllShop = useCallback(async () => {
     try {
       const token = await handleDecoded();
       const res = await ShopServices.getAllShops(token);
 
       if (res?.shops) {
-        console.log("Dữ liệu nhận được từ API:", res.shops);
         setAllData(res.shops);
       } else {
         console.error("Không nhận được phản hồi hợp lệ từ API.");
@@ -87,8 +86,8 @@ const VendorManagementPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchAllHome();
-  }, [fetchAllHome]);
+    fetchAllShop();
+  }, [fetchAllShop]);
 
   useEffect(() => {
     const filtered =
@@ -115,7 +114,20 @@ const VendorManagementPage = () => {
 
   const handleSaveStatus = async () => {
     try {
-      message.success("Cập nhật trạng thái thành công!");
+      const token = await handleDecoded();
+
+      const res = await ShopServices.activateShop(
+        { status: newStatus, shopId: selectedUser._id },
+        token
+      );
+
+      if (res) {
+        message.success("Cập nhật trạng thái thành công!");
+        fetchAllShop();
+        handleModalCancel();
+      } else {
+        message.error("Lỗi!");
+      }
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
     }
@@ -178,16 +190,13 @@ const VendorManagementPage = () => {
         {selectedUser && (
           <div>
             <p>
-              <strong>ID:</strong> {selectedUser.key}
-            </p>
-            <p>
-              <strong>Tên:</strong>{" "}
+              <strong>Tên chủ sở hửu:</strong>{" "}
               {selectedUser.ownerId?.fullName || "Không xác định"}
             </p>
 
             <p>
               <strong>Tên cửa hàng:</strong>{" "}
-              {selectedUser.shop?.name || "Chưa có"}
+              {selectedUser.shopName || "Chưa có"}
             </p>
             <div>
               <Select
@@ -197,8 +206,6 @@ const VendorManagementPage = () => {
                 options={[
                   { value: "active", label: "Đang hoạt động" },
                   { value: "inactive", label: "Không hoạt động" },
-                  { value: "pending", label: "Đang chờ" },
-                  { value: "banned", label: "Bị cấm" },
                 ]}
               />
             </div>
