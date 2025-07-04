@@ -30,7 +30,7 @@ const breadcrumbNameMap = {
 
   const breadcrumbItems = [
     <Breadcrumb.Item key="home">
-      <Link to="/">Home</Link>
+      <Link to="/">Trang mua hàng</Link>
     </Breadcrumb.Item>,
     ...extraBreadcrumbItems,
   ];

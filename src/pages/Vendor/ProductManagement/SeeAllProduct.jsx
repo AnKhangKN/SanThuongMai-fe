@@ -400,32 +400,6 @@ const handlePriceChange = async (value) => {
                 />
               ))}
             </div>
-            {/* <Upload
-              multiple
-              beforeUpload={(file) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  setPreviewImages((prev) => [...prev, e.target.result]);
-                };
-                reader.readAsDataURL(file);
-                return false;
-              }}
-              onRemove={(file) => {
-                setPreviewImages((prev) =>
-                  prev.filter((img) => img !== file.thumbUrl)
-                );
-              }}
-              fileList={fileList}
-              onChange={({ fileList }) => setFileList(fileList)}
-              listType="picture-card"
-            >
-              {fileList.length + previewImages.length < 5 && (
-                <div>
-                  <PlusOutlined />
-                  <div style={{ marginTop: 8 }}>Thay đổi</div>
-                </div>
-              )}
-            </Upload> */}
           </Form.Item>
 
           <Form.Item

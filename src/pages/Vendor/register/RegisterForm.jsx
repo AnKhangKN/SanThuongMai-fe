@@ -1,12 +1,16 @@
-import React from "react";
-import { Form, Input, Button, message } from "antd";
+import React , { useState } from "react";
+import { Form, Input, Button, message, Col, Row, Upload } from "antd";
 import VendorSteps from "../../../components/VendorComponents/VendorSteps/VendorSteps";
 import {
+  WrapperFormItem,
   WrapperFormVendor,
   WrapperPositionButtonVendor,
   WrapperStepsPadding,
   WrapperStepsVendor,
 } from "./styleForm";
+import {
+  UploadOutlined,
+} from '@ant-design/icons';
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as UserVendorService from "../../../services/vendor/UserVendorService";
 import { isJsonString } from "../../../utils";
@@ -18,58 +22,93 @@ const RegisterForm = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
+  const [fileList, setFileList] = useState([]);
 
-  const handleDecoded = () => {
+  const handleDecoded = async () => {
     let storageData = localStorage.getItem("access_token");
-    let decoded = {};
     if (storageData && isJsonString(storageData)) {
-      const parsed = JSON.parse(storageData);
-      decoded = jwtDecode(parsed);
-      return { decoded, storageData: parsed };
-    }
-    return { decoded, storageData };
-  };
-
-  const fetchCreateVendor = async (UserVendorData) => {
-    try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
+      storageData = JSON.parse(storageData);
+      const decoded = jwtDecode(storageData);
       if (decoded?.exp < Date.now() / 1000) {
         const res = await AuthServices.refreshToken();
-        if (res?.access_token) {
-          accessToken = res.access_token;
-          localStorage.setItem("access_token", JSON.stringify(accessToken));
-        }
+        const accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        return accessToken;
       }
-
-      const res = await UserVendorService.createUserVendor(accessToken, UserVendorData);
-
-      if (res?.status === 200) {
-        message.success("Tạo người bán thành công!");
-        form.resetFields();
-        navigate("/vendor/register-success");
-      } else {
-        message.error("Tạo người bán thất bại!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi tạo người bán:", error);
-      message.error("Có lỗi xảy ra khi tạo người bán.");
+      return storageData;
     }
+    return null;
   };
+
+  const fetchCreateVendor = async (formData) => {
+  try {
+    const token = await handleDecoded();
+
+    const res = await UserVendorService.createUserVendor(
+      token,
+      formData
+    );
+
+    if (res?.status === 200) {
+      message.success("Tạo người bán thành công!");
+      form.resetFields();
+      navigate("/vendor/register-success");
+    } else {
+      message.error("Tạo người bán thất bại!");
+    }
+  } catch (error) {
+    console.error("Lỗi khi tạo người bán:", error);
+    message.error("Có lỗi xảy ra khi tạo người bán.");
+  }
+};
+
+  const beforeUpload = (file) => {
+  const isImage = file.type.startsWith("image/");
+  const isLt2M = file.size / 1024 / 1024 < 2;
+  if (!isImage) {
+    message.error("Chỉ được upload ảnh!");
+    return Upload.LIST_IGNORE;
+  }
+  if (!isLt2M) {
+    message.error("Ảnh phải nhỏ hơn 2MB!");
+    return Upload.LIST_IGNORE;
+  }
+  return true;
+};
+
+const handleChange = ({ fileList: newFileList }) => {
+  setFileList(newFileList);
+};
 
   const onFinish = async (values) => {
-    const UserVendorData = {
-      user_id: user?.id,
-      cccd: values.cccd,
-      shop: {
-        name: values.shopName,
-        phone: values.phone,
-        address: values.address,
-      },
-    };
-    await fetchCreateVendor(UserVendorData);
-  };
+  try {
+    const formData = new FormData();
+    
+
+    const shopData = {
+      shopName: values.shopName,
+      phone: values.phone,
+      address: values.address,
+      city: values.city,
+      description: values.description || "",
+      ownerId: user?.id, // Có thể không cần nếu backend lấy từ URL
+      // ⚠️ shopAvatar: giá trị sẽ được backend set từ ảnh upload, không cần thêm ở đây!
+        };
+
+    if (fileList.length > 0) {
+      formData.append("image", fileList[0].originFileObj);
+      // Có thể backend cần tự set field `shopAvatar` trong service sau khi lưu file
+    }
+    
+    formData.append("shop", JSON.stringify(shopData)); // 👈 RẤT QUAN TRỌNG
+    console.log("🔥 shopData gửi:", shopData);
+
+    // Đưa userId vào query hoặc URL tùy backend, nếu cần
+    await fetchCreateVendor(formData);
+  } catch (err) {
+    console.error("Lỗi khi xử lý form:", err);
+  }
+};
 
   return (
     <div>
@@ -82,46 +121,76 @@ const RegisterForm = () => {
       <WrapperStepsPadding>
         <WrapperFormVendor>
           <Form form={form} layout="vertical" onFinish={onFinish}>
-            {/* Tên Shop */}
-            <Form.Item
-              label="Tên Shop"
-              name="shopName"
-              rules={[{ required: true, message: "Vui lòng nhập tên Shop" }]}
-            >
-              <Input placeholder="Nhập vào" maxLength={30} />
-            </Form.Item>
 
-            {/* CCCD */}
-            <Form.Item
-              label="Căn cước công dân"
-              name="cccd"
-              rules={[
-                { required: true, message: "Vui lòng nhập số căn cước công dân" },
-                {
-                  pattern: /^[0-9]{12}$/,
-                  message: "Số căn cước công dân phải là 12 chữ số",
-                },
-              ]}
+            <Row>
+              <Col span={8}>
+                <WrapperFormItem label="Hình ảnh của cửa hàng" name="image">
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleChange}
+              beforeUpload={beforeUpload}
+              maxCount={1}
+              showUploadList={true}
+              onPreview={(file) => {
+                window.open(URL.createObjectURL(file.originFileObj));
+              }}
             >
-              <Input placeholder="Nhập căn cước công dân" maxLength={12} />
-            </Form.Item>
+              {fileList.length < 1 && (
+                <div>
+                  <UploadOutlined />
+                  <div style={{ marginTop: 8 }}>Thêm ảnh</div>
+                </div>
+              )}
+            </Upload>
+          </WrapperFormItem>
+
+                {/* Tên Shop */}
+                <WrapperFormItem
+                  label="Tên Shop"
+                  name="shopName"
+                  rules={[{ required: true, message: "Vui lòng nhập tên Shop" }]}
+                >
+                  <Input placeholder="Nhập vào" maxLength={30} />
+                </WrapperFormItem>
+              </Col>
+
+              <Col span={8}>
+                <WrapperFormItem
+                label="Mô tả"
+                name="description"
+              >
+                <Input placeholder="Nhập mô tả cửa hàng" />
+            </WrapperFormItem>
+
+                <WrapperFormItem
+                label="Thành phố"
+                name="city"
+                rules={[
+                  { required: true, message: "Vui lòng chọn thành phố" },
+                ]}
+              >
+                <Input placeholder="Nhập thành phố" />
+            </WrapperFormItem>
 
             {/* Địa chỉ lấy hàng */}
-            <Form.Item
+            <WrapperFormItem
               label="Địa chỉ lấy hàng"
               name="address"
               rules={[{ required: true, message: "Vui lòng nhập địa chỉ lấy hàng" }]}
             >
               <Input placeholder="Nhập địa chỉ lấy hàng" />
-            </Form.Item>
+            </WrapperFormItem>
+              </Col>
 
-            {/* Email */}
-            <Form.Item label="Email" name="email">
+              <Col span={8}>
+                {/* Email */}
+            <WrapperFormItem label="Email" name="email">
               <Input disabled placeholder={user?.email || "Email"} />
-            </Form.Item>
+            </WrapperFormItem>
 
             {/* Số điện thoại */}
-            <Form.Item
+            <WrapperFormItem
               label="Số điện thoại"
               name="phone"
               rules={[
@@ -133,7 +202,10 @@ const RegisterForm = () => {
               ]}
             >
               <Input addonBefore="+84" placeholder="Nhập vào" maxLength={10} />
-            </Form.Item>
+            </WrapperFormItem>
+              </Col>
+            </Row>
+          
           </Form>
         </WrapperFormVendor>
       </WrapperStepsPadding>
