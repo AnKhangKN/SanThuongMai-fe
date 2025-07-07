@@ -96,3 +96,9 @@ export const WrapperAvatarList = styled.div`
   align-items: center;
   text-align: center;
 `;
+
+export const WrapperListItem = styled.div`
+  height: 60px !important;
+  display: flex;
+  align-items: center;
+`;
