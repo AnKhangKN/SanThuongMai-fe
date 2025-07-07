@@ -123,7 +123,7 @@ const HeaderNavbarComponent = () => {
           <div>Hỗ trợ</div>
         </Link>
 
-        {user?.name ? (
+        {user?.fullName ? (
           <InformationWrapper>
             <div
               style={{
@@ -134,7 +134,7 @@ const HeaderNavbarComponent = () => {
               }}
             >
               <img
-                src={avatar?.img ? avatar.img : user?.img}
+                src={avatar?.avatar ? avatar.avatar : user?.avatar}
                 alt=""
                 style={{
                   width: "100%",
@@ -144,7 +144,7 @@ const HeaderNavbarComponent = () => {
                 }}
               />
             </div>
-            <div style={{ marginLeft: "5px" }}>{user.name}</div>
+            <div style={{ marginLeft: "5px" }}>{user.fullName}</div>
 
             {/* Check nếu là Admin */}
             {user?.isAdmin ? (

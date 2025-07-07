@@ -1,11 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  id: "",
-  name: "",
+  id: "", // <-- dùng "id" thay vì "_id" để thống nhất trong state
+  fullName: "",
   email: "",
-  access_token: "",
-  img: "",
+  img: "", // ảnh đại diện (avatar)
   phone: "",
   wallet: "",
   wishlist: [],
@@ -22,10 +21,9 @@ export const userSlice = createSlice({
     updateUser: (state, action) => {
       const {
         _id = "",
-        user_name = "",
+        fullName = "",
         email = "",
-        images = "", // Đường dẫn ảnh từ backend
-        access_token = "",
+        avatar = "", // <-- avatar field từ backend
         phone = "",
         wallet = "",
         wishlist = [],
@@ -35,39 +33,31 @@ export const userSlice = createSlice({
       } = action.payload;
 
       state.id = _id;
-      state.name = user_name || email;
+      state.fullName = fullName || email;
       state.email = email;
 
-      state.img = images.includes("/")
-        ? images
-        : `${process.env.REACT_APP_API_URL}/avatar/${images}`;
+      // Kiểm tra avatar path an toàn
+      if (typeof avatar === "string" && avatar.includes("/")) {
+        state.img = avatar;
+      } else {
+        state.img = avatar
+          ? `${process.env.REACT_APP_API_URL}/avatar/${avatar}`
+          : "";
+      }
 
-      state.access_token = access_token;
       state.phone = phone;
       state.wallet = wallet;
-      state.following = following;
       state.wishlist = wishlist;
+      state.following = following;
       state.isAdmin = isAdmin;
       state.isVendor = isVendor;
     },
 
     resetUser: (state) => {
-      state.id = "";
-      state.name = "";
-      state.email = "";
-      state.img = "";
-      state.access_token = "";
-      state.phone = "";
-      state.wallet = "";
-      state.wishlist = [];
-      state.following = "";
-      state.isAdmin = false;
-      state.isVendor = false;
+      Object.assign(state, initialState);
     },
   },
 });
 
-// Action creators are generated for each case reducer function
 export const { updateUser, resetUser } = userSlice.actions;
-
 export default userSlice.reducer;
