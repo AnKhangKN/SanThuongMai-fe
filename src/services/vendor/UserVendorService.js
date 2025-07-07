@@ -12,3 +12,15 @@ export const createUserVendor = async (accessToken, formData) => {
     }
   );
 };
+
+export const getVendorInfo = async (accessToken) => {
+  const res = await axios.get(
+    `${process.env.REACT_APP_API_URL}/vendor/get-vendor`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  return res.data;
+};
