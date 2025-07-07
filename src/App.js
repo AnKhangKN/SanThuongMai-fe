@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { routes } from "./routes/index";
 import CustomerLayout from "./components/CustomerComponents/CustomerLayout/CustomerLayout";
