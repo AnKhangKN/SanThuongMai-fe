@@ -53,7 +53,7 @@ const SuggestComponent = () => {
                           ? `${imageURL}${product.images[0]}`
                           : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                       }
-                      alt={product.product_name}
+                      alt={product.productName}
                       style={{
                         width: "100%",
                         height: "300px",
@@ -63,7 +63,7 @@ const SuggestComponent = () => {
                   </div>
                   <div style={{ padding: "10px" }}>
                     <div style={{ marginBottom: "30px", fontSize: "20px" }}>
-                      {product.product_name}
+                      {product.productName}
                     </div>
                     <div
                       style={{
@@ -83,11 +83,11 @@ const SuggestComponent = () => {
                       >
                         <div style={{ fontSize: "10px" }}>đ</div>
                         <div style={{ fontSize: "18px" }}>
-                          {product.details[0].price}
+                          {product.priceOptions[0].price}
                         </div>
                       </div>
                       <div style={{ fontSize: "13px" }}>
-                        Đã bán: {product.sold_count}
+                        Đã bán: {product.soldCount}
                       </div>
                     </div>
                   </div>
