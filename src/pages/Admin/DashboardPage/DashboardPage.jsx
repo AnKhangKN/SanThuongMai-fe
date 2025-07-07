@@ -6,13 +6,11 @@ import {
   IconContainer,
   Wrapper,
 } from "./style";
-import { Col, DatePicker, Row } from "antd";
+import { Col, Row } from "antd";
 import { BsFillPeopleFill } from "react-icons/bs";
 import { HiMiniBuildingStorefront } from "react-icons/hi2";
 import { BiSolidDollarCircle } from "react-icons/bi";
 import { MdShoppingCart } from "react-icons/md";
-import LineChartBoxComponent from "../../../components/AdminComponents/MainComponents/LineChartBoxComponent/LineChartBoxComponent";
-import WalletComponent from "../../../components/AdminComponents/MainComponents/WalletComponent/WalletComponent";
 import { Link } from "react-router-dom";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";

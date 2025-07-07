@@ -9,27 +9,6 @@ import * as ProductServices from "../../../services/admin/ProductServices";
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
 const columns = [
-  // {
-  //   title: "Mã sản phẩm",
-  //   dataIndex: "_id",
-  //   key: "id",
-  //   sorter: (a, b) => a.id - b.id,
-  //   render: (text) => (
-  //     <Tooltip title={text}>
-  //       <div
-  //         style={{
-  //           maxWidth: 100,
-  //           overflow: "hidden",
-  //           textOverflow: "ellipsis",
-  //           whiteSpace: "nowrap",
-  //         }}
-  //       >
-  //         {text?.toString().slice(0, 10)}...
-  //       </div>
-  //     </Tooltip>
-  //   ),
-  //   ellipsis: true,
-  // },
   {
     title: "Tên sản phẩm",
     dataIndex: "product_name",

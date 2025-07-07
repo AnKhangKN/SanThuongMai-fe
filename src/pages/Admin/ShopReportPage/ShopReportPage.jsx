@@ -45,44 +45,44 @@ const ShopReportPage = () => {
   const [tempStatus, setTempStatus] = useState("");
   const [dataSource, setDataSource] = useState([]); // thêm state này
 
-  const handleDecoded = () => {
-    let storageData = localStorage.getItem("access_token");
-    let decoded = {};
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
-    }
-    return { decoded, storageData };
-  };
+  // const handleDecoded = () => {
+  //   let storageData = localStorage.getItem("access_token");
+  //   let decoded = {};
+  //   if (storageData && isJsonString(storageData)) {
+  //     storageData = JSON.parse(storageData);
+  //     decoded = jwtDecode(storageData);
+  //   }
+  //   return { decoded, storageData };
+  // };
 
-  const fetchReportedShops = useCallback(async () => {
-    try {
-      let { storageData, decoded } = handleDecoded();
+  // const fetchReportedShops = useCallback(async () => {
+  //   try {
+  //     let { storageData, decoded } = handleDecoded();
 
-      let accessToken = storageData;
+  //     let accessToken = storageData;
 
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
+  //     if (decoded?.exp < Date.now() / 1000) {
+  //       const res = await AuthServices.refreshToken();
+  //       accessToken = res?.access_token;
+  //       localStorage.setItem("access_token", JSON.stringify(accessToken));
+  //     }
 
-      const res = await ShopServices.getAllReportedShops(accessToken);
+  //     // const res = await ShopServices.getAllReportedShops(accessToken);
 
-      const shopsWithKeys = res.data.map((shop) => ({
-        ...shop,
-        key: shop._id || shop.id,
-      }));
+  //     const shopsWithKeys = res.data.map((shop) => ({
+  //       ...shop,
+  //       key: shop._id || shop.id,
+  //     }));
 
-      setDataSource(shopsWithKeys); // sửa lại hàm này
-    } catch (error) {
-      console.error("Lỗi khi lấy sản phẩm:", error);
-    }
-  }, []);
+  //     setDataSource(shopsWithKeys); // sửa lại hàm này
+  //   } catch (error) {
+  //     console.error("Lỗi khi lấy sản phẩm:", error);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    fetchReportedShops();
-  }, [fetchReportedShops]);
+  // useEffect(() => {
+  //   fetchReportedShops();
+  // }, [fetchReportedShops]);
 
   const handleRowClick = (record) => {
     setSelectedProduct(record);

@@ -7,23 +7,28 @@ import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
 
 const columns = [
-  // {
-  //   title: "ID",
-  //   dataIndex: "key",
-  //   sorter: (a, b) => a.key - b.key,
-  //   ellipsis: true,
-  // },
-  { title: "Chủ sở hữu", dataIndex: "user_name", ellipsis: true },
-  { title: "Email", dataIndex: "email", ellipsis: true },
+  {
+    title: "Chủ sở hữu",
+    dataIndex: "ownerId",
+    render: (owner) => owner?.fullName || "Không xác định",
+    ellipsis: true,
+  },
+  {
+    title: "Email",
+    dataIndex: "ownerId",
+    render: (owner) => owner?.email || "Không xác định",
+    ellipsis: true,
+  },
+
   {
     title: "Tên cửa hàng",
-    render: (record) => record.shop?.name || "Chưa có",
+    dataIndex: "shopName",
     ellipsis: true,
   },
   {
     title: "Trạng thái cửa hàng",
     render: (record) => {
-      const status = record.shop?.status || "chưa xác định";
+      const status = record.status || "chưa xác định";
       let color =
         status === "active"
           ? "green"
@@ -49,57 +54,46 @@ const VendorManagementPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
 
-  // Giải mã access_token từ localStorage
-  const handleDecoded = () => {
+  const handleDecoded = async () => {
     let storageData = localStorage.getItem("access_token");
-    let decoded = {};
     if (storageData && isJsonString(storageData)) {
       storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
-    }
-    return { decoded, storageData };
-  };
-
-  // Lấy danh sách người dùng từ server
-  const fetchUsers = useCallback(async () => {
-    try {
-      let { storageData, decoded } = handleDecoded();
-
-      let accessToken = storageData;
-
-      // Nếu token hết hạn → refresh và sử dụng ngay token mới
+      const decoded = jwtDecode(storageData);
       if (decoded?.exp < Date.now() / 1000) {
         const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-
-        // Cập nhật lại token trong localStorage để dùng cho các request sau
+        const accessToken = res?.access_token;
         localStorage.setItem("access_token", JSON.stringify(accessToken));
+        return accessToken;
       }
+      return storageData;
+    }
+    return null;
+  };
 
-      // Gọi API lấy danh sách người dùng với accessToken (mới hoặc cũ)
-      const res = await ShopServices.getAllShops(accessToken);
+  const fetchAllShop = useCallback(async () => {
+    try {
+      const token = await handleDecoded();
+      const res = await ShopServices.getAllShops(token);
 
-      // Thêm key để Table hiển thị
-      const usersWithKeys = res.data.map((user) => ({
-        ...user,
-        key: user._id,
-      }));
-
-      setAllData(usersWithKeys);
+      if (res?.shops) {
+        setAllData(res.shops);
+      } else {
+        console.error("Không nhận được phản hồi hợp lệ từ API.");
+      }
     } catch (error) {
-      console.error("Lỗi khi lấy người dùng:", error);
+      console.error("Lỗi khi lấy sản phẩm:", error);
     }
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchAllShop();
+  }, [fetchAllShop]);
 
   useEffect(() => {
     const filtered =
       selectedStatus === "all"
         ? allData
-        : allData.filter((item) => item.shop?.status === selectedStatus);
+        : allData.filter((item) => item?.status === selectedStatus);
     setFilteredData(filtered);
   }, [selectedStatus, allData]);
 
@@ -109,7 +103,7 @@ const VendorManagementPage = () => {
 
   const handleRowClick = (record) => {
     setSelectedUser(record);
-    setNewStatus(record.shop?.status || null);
+    setNewStatus(record.status || null);
     setModalVisible(true);
   };
 
@@ -120,46 +114,22 @@ const VendorManagementPage = () => {
 
   const handleSaveStatus = async () => {
     try {
-      // Lấy token từ localStorage và giải mã
-      let { storageData, decoded } = handleDecoded();
+      const token = await handleDecoded();
 
-      let accessToken = storageData;
+      const res = await ShopServices.activateShop(
+        { status: newStatus, shopId: selectedUser._id },
+        token
+      );
 
-      // Kiểm tra nếu token đã hết hạn → refresh token
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-
-        // Lưu token mới vào localStorage để sử dụng lần sau
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      if (res) {
+        message.success("Cập nhật trạng thái thành công!");
+        fetchAllShop();
+        handleModalCancel();
+      } else {
+        message.error("Lỗi!");
       }
-
-      // Gọi API cập nhật trạng thái người dùng với token mới/cũ
-      await ShopServices.partialUpdateShop(
-        selectedUser.key, // ID người dùng được chọn
-        newStatus, // Trạng thái mới
-        accessToken // Token hợp lệ
-      );
-
-      // Cập nhật lại dữ liệu người dùng trong danh sách
-      const updateShopStatus = allData.map((user) =>
-        user.key === selectedUser.key
-          ? {
-              ...user,
-              shop: {
-                ...user.shop,
-                status: newStatus,
-              },
-            }
-          : user
-      );
-
-      setAllData(updateShopStatus); // Cập nhật danh sách trong state
-      setModalVisible(false); // Ẩn modal
-      message.success("Cập nhật trạng thái thành công!");
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
-      message.error("Đã có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
 
@@ -220,14 +190,13 @@ const VendorManagementPage = () => {
         {selectedUser && (
           <div>
             <p>
-              <strong>ID:</strong> {selectedUser.key}
+              <strong>Tên chủ sở hửu:</strong>{" "}
+              {selectedUser.ownerId?.fullName || "Không xác định"}
             </p>
-            <p>
-              <strong>Tên:</strong> {selectedUser.user_name}
-            </p>
+
             <p>
               <strong>Tên cửa hàng:</strong>{" "}
-              {selectedUser.shop?.name || "Chưa có"}
+              {selectedUser.shopName || "Chưa có"}
             </p>
             <div>
               <Select
@@ -237,8 +206,6 @@ const VendorManagementPage = () => {
                 options={[
                   { value: "active", label: "Đang hoạt động" },
                   { value: "inactive", label: "Không hoạt động" },
-                  { value: "pending", label: "Đang chờ" },
-                  { value: "banned", label: "Bị cấm" },
                 ]}
               />
             </div>

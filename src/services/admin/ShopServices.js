@@ -14,52 +14,10 @@ export const getAllShops = async (accessToken) => {
 };
 
 // Duyệt trạng thái shops
-export const partialUpdateShop = async (userId, dataUpdate, accessToken) => {
-  const data = { shop: 
-    { status: dataUpdate }
-   };
-
+export const activateShop = async (status, accessToken) => {
   const res = await axios.patch(
-    `${process.env.REACT_APP_API_URL}/admin/partial-update-shop/${userId}`,
-    data,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
-  return res.data;
-};
-
-// Danh sách shop bị report
-export const getAllReportedShops = async (accessToken) => {
-  const res = await axios.get(
-    `${process.env.REACT_APP_API_URL}/admin/get-all-reported-shops`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
-  return res.data;
-};
-
-// Cập nhật mới các thông tin của shop bị report
-export const partialUpdateReportedShop = async (
-  userId,
-  dataUpdate,
-  accessToken
-) => {
-  const data = {
-    shop: {
-      status: dataUpdate.status, // Đảm bảo dataUpdate chứa status
-      comment_reported: dataUpdate.comment_reported || [], // Đảm bảo comment_reported là mảng
-    },
-  };
-
-  const res = await axios.patch(
-    `${process.env.REACT_APP_API_URL}/admin/update-reported-shop/${userId}`,
-    data,
+    `${process.env.REACT_APP_API_URL}/admin/shop`,
+    status,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
