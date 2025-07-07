@@ -1,4 +1,4 @@
-import { Avatar, Col, Image  } from "antd";
+import { Avatar, Col, Image, message, Spin  } from "antd";
 import React, { useState, useRef, useEffect } from "react";
 import logo from "../../../assets/images/Logo_Trang.jpg";
 import { DownOutlined, ShopOutlined, LogoutOutlined } from "@ant-design/icons";
@@ -11,14 +11,23 @@ import {
   WrapperHeaderImageLogo,
   WrapperHeaderTextAvatar,
   WrapperHeaderTextLogo,
+  WrapperListItem,
 } from "./styleHeaderOfVendor";
 import { useNavigate } from "react-router-dom";
-import * as AuthServices from "../../../services/shared/AuthServices";
 import { resetUser } from "../../../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
 import BreadcrumbComponent from "../BreadcrumbComponent/BreadcrumbComponent";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import * as UserVendorService from "../../../services/vendor/UserVendorService";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
+import { useSelector } from "react-redux";
 
 const HeaderOfVendorComponent = (props) => {
+  const [shop, setShop] = useState(null);
+    const [loading, setLoading] = useState(true);
+  
+    const baseUrl = "http://localhost:8080"; // backend url
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
@@ -69,6 +78,52 @@ const HeaderOfVendorComponent = (props) => {
     }
   };
 
+  const handleDecoded = async () => {
+    let storageData = localStorage.getItem("access_token");
+    if (storageData && isJsonString(storageData)) {
+      storageData = JSON.parse(storageData);
+      const decoded = jwtDecode(storageData);
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        const accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        return accessToken;
+      }
+      return storageData;
+    }
+    return null;
+  };
+
+  const fetchGetVendor = async () => {
+    try {
+      const token = await handleDecoded();
+      if (!token) {
+        message.error("Không có token hợp lệ.");
+        return;
+      }
+
+      const res = await UserVendorService.getVendorInfo(token);
+      if (res?.status === "OK" && res.data) {
+        setShop(res.data);
+      } else {
+        message.error("Không thể lấy thông tin cửa hàng.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin shop:", error);
+      message.error("Có lỗi xảy ra khi lấy thông tin.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGetVendor();
+  }, []);
+
+  if (loading) return <Spin tip="Đang tải thông tin cửa hàng..." />;
+
+  if (!shop) return <p>Không tìm thấy thông tin cửa hàng.</p>;
+
   
   return (
     <WrapperHeader>
@@ -104,9 +159,11 @@ const HeaderOfVendorComponent = (props) => {
       >
         <AvatarWrapper ref={dropdownRef}>
           <WrapperHeaderImageAvatar onClick={toggleDropdown}>
-            <Avatar src={logo} size="default" gap={"10px"}></Avatar>
+            <Avatar src={shop.shopAvatar
+            ? `${baseUrl}/api/avatar/${shop.shopAvatar}`
+            : logo} size="default" gap={"10px"}></Avatar>
             {/* <WrapperHeaderImageAvatar src={avatar} alt='avatar' preview={false}></WrapperHeaderImageAvatar> */}
-            <WrapperHeaderTextAvatar>hknsports</WrapperHeaderTextAvatar>
+            <WrapperHeaderTextAvatar style={{ marginLeft: "10px", fontWeight: "500", fontSize: "16px" }}>{shop.shopName}</WrapperHeaderTextAvatar>
             <DownOutlined
               style={{ width: "16px", height: "16px", marginLeft: "10px" }}
             />
@@ -115,8 +172,10 @@ const HeaderOfVendorComponent = (props) => {
           {open && (
             <DropdownMenu>
               <WrapperAvatarList>
-                <Image
-                  src={logo}
+                <Avatar
+                  src={shop.shopAvatar
+            ? `${baseUrl}/api/avatar/${shop.shopAvatar}`
+            : logo}
                   preview={false}
                   style={{ width: "56px", height: "56px", margin: "0 0 10px" }}
                 />
@@ -128,21 +187,21 @@ const HeaderOfVendorComponent = (props) => {
                     wordBreak: "break-word",
                   }}
                 >
-                  hknsports
+                  {shop.shopName}
                 </span>
               </WrapperAvatarList>
-              <div className="menu-item" onClick={handleClickToProfileShop}>
+              <WrapperListItem className="menu-item" onClick={handleClickToProfileShop}>
                 <ShopOutlined
                   style={{ fontSize: "16px", marginRight: "10px" }}
                 />{" "}
                 Hồ sơ Shop
-              </div>
-              <div className="menu-item" onClick={handleLogout}>
+              </WrapperListItem>
+              <WrapperListItem className="menu-item" onClick={handleLogout}>
                 <LogoutOutlined
                   style={{ fontSize: "16px", marginRight: "10px" }}
                 />
                 Đăng xuất
-              </div>
+              </WrapperListItem>
             </DropdownMenu>
           )}
         </AvatarWrapper>

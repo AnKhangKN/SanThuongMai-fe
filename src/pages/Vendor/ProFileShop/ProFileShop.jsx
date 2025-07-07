@@ -110,13 +110,13 @@ const ProFileShop = () => {
         <Divider />
 
         <Row>
-          <Col span={12}>
+          <Col span={8}>
             <ShopAvatar src={ shop.shopAvatar
             ? `${baseUrl}/api/avatar/${shop.shopAvatar}`
             : shopLogo} alt="Shop Logo" />            
           </Col>
 
-          <Col span={12}>
+          <Col span={16}>
               <Descriptions column={1} size="small">
           <Descriptions.Item label="Điện thoại">{ shop.phone || "Chưa có"}</Descriptions.Item>
           <Descriptions.Item label="Địa chỉ">{ shop.address || "Chưa có"}</Descriptions.Item>
