@@ -1,3 +1,4 @@
+import { Upload } from "antd";
 import styled from "styled-components";
 
 export const ShopProfileWrapper = styled.div`
@@ -13,7 +14,6 @@ export const ShopAvatar = styled.img`
   height: 120px;
   border-radius: 12px;
   object-fit: cover;
-  margin-right: 24px;
 `;
 
 export const ShopInfo = styled.div`
@@ -42,5 +42,14 @@ export const ShopDetail = styled.div`
 
   p {
     margin: 4px 0;
+  }
+`;
+
+export const CustomUpload = styled(Upload)`
+  .ant-upload-list-item-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;

@@ -19,8 +19,6 @@ function App() {
       try {
         const token = await ValidateToken.getValidAccessToken();
         const res = await AuthServices.getDetailUser(token);
-
-        console.log("res", res);
         dispatch(updateUser(res.data));
       } catch (error) {
         console.log(error);

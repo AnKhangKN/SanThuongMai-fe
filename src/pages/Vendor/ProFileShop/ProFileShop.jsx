@@ -6,68 +6,64 @@ import {
   ShopInfo,
   ShopName,
   ShopDescription,
-  ShopDetail
+  CustomUpload,
 } from './styleOfProfile';
 // import { useSelector } from 'react-redux';
-import { Modal, Button, Form, Input, Divider, Descriptions, Spin, message, Row, Col } from 'antd';
+import { Modal, Button, Form, Input, Divider, Descriptions, Spin, message, Row, Col, Flex, Upload } from 'antd';
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as UserVendorService from "../../../services/vendor/UserVendorService";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 import { useSelector } from "react-redux";
+import ModalProfile from './ModalProfile';
+import {
+  UploadOutlined,
+} from '@ant-design/icons';
 
 const ProFileShop = () => {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fileList, setFileList] = useState([]);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [shopInfo, setShopInfo] = useState({});
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
   const baseUrl = "http://localhost:8080"; // backend url
 
-  // const [isModalVisible, setIsModalVisible] = useState(false);
-
-  // // Form instance để reset hoặc validate
-  // const [form] = Form.useForm();
-
-  // // Mở modal
-  // const showModal = () => {
-  //   // Khi mở modal, đặt giá trị form theo user hiện tại
-  //   form.setFieldsValue({
-  //     shopName: 'Shop Thể Thao HKN', // Bạn có thể lấy từ user nếu có
-  //     email: user?.email,
-  //     phone: user?.shop?.phone,
-  //     address: '123 Nguyễn Trãi, Q.5, TP.HCM', // Nên lấy từ state nếu có
-  //     description: 'Chuyên cung cấp các dụng cụ thể thao chất lượng cao, giá cả hợp lý.'
-  //   });
-  //   setIsModalVisible(true);
-  // };
-
-  // // Đóng modal
-  // const handleCancel = () => {
-  //   setIsModalVisible(false);
-  // };
-
-  // // Xử lý submit form
-  // const onFinish = (values) => {
-  //   console.log('Thông tin sửa:', values);
-  //   // Ở đây bạn có thể gọi API để lưu thông tin
-  //   // Sau khi lưu thành công thì đóng modal
-  //   setIsModalVisible(false);
-  // };
-
     const handleDecoded = async () => {
-    let storageData = localStorage.getItem("access_token");
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      const decoded = jwtDecode(storageData);
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        const accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-        return accessToken;
+      let storageToken = localStorage.getItem("access_token");
+    
+      if (!storageToken) return null;
+    
+      // Nếu token đang ở dạng JSON string → parse
+      if (isJsonString(storageToken)) {
+        storageToken = JSON.parse(storageToken);
       }
-      return storageData;
-    }
-    return null;
-  };
+    
+      try {
+        const decoded = jwtDecode(storageToken);
+        const isExpired = decoded.exp < Date.now() / 1000;
+    
+        if (isExpired) {
+          const res = await AuthServices.refreshToken();
+          const newAccessToken = res?.access_token;
+          if (newAccessToken) {
+            localStorage.setItem("access_token", newAccessToken);
+            return newAccessToken;
+          } else {
+            return null;
+          }
+        }
+    
+        return storageToken;
+      } catch (err) {
+        console.error("Lỗi khi decode token:", err);
+        return null;
+      }
+    };
 
   const fetchGetVendor = async () => {
     try {
@@ -98,6 +94,33 @@ const ProFileShop = () => {
   if (loading) return <Spin tip="Đang tải thông tin cửa hàng..." />;
 
   if (!shop) return <p>Không tìm thấy thông tin cửa hàng.</p>;
+
+  const handleUploadAvatar = async () => {
+  const token = await handleDecoded();
+  if (!token) {
+    message.error("Vui lòng đăng nhập lại.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("image", fileList[0].originFileObj);
+
+  try {
+    const res = await UserVendorService.updateVendorAvatar(token, formData);
+    if (res?.status === "OK") {
+      message.success("Cập nhật ảnh thành công!");
+      fetchGetVendor();
+      setShop(res.data); // ✅ Cập nhật lại state shop -> React tự re-render ảnh
+      setFileList([]); // Xóa file đã chọn (tùy bạn)
+    } else {
+      message.error("Thất bại khi cập nhật ảnh.");
+    }
+  } catch (error) {
+    console.error(error);
+    message.error("Có lỗi xảy ra khi cập nhật ảnh.");
+  }
+};
+
   return (
     <>
       <ShopProfileWrapper>
@@ -109,11 +132,29 @@ const ProFileShop = () => {
 
         <Divider />
 
-        <Row>
+        <Row gutter={16}>
           <Col span={8}>
-            <ShopAvatar src={ shop.shopAvatar
-            ? `${baseUrl}/api/avatar/${shop.shopAvatar}`
-            : shopLogo} alt="Shop Logo" />            
+            <ShopAvatar src={  shop.shopAvatar
+      ? `${baseUrl}/api/avatar/${shop.shopAvatar}?t=${Date.now()}`
+      : shopLogo
+  } />    
+            
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column'}}>
+              <CustomUpload
+              listType="picture"
+              fileList={fileList}
+              beforeUpload={() => false}
+              onChange={({ fileList }) => setFileList(fileList)}
+              maxCount={1}
+            >
+              <Button icon={<UploadOutlined />} >Chọn ảnh mới</Button>
+            </CustomUpload>
+                    <Divider type="vertical" />
+            <Button type="primary" onClick={handleUploadAvatar} disabled={fileList.length === 0}>
+              Cập nhật ảnh
+            </Button>
+            </div>
+            
           </Col>
 
           <Col span={16}>
@@ -122,77 +163,36 @@ const ProFileShop = () => {
           <Descriptions.Item label="Địa chỉ">{ shop.address || "Chưa có"}</Descriptions.Item>
           <Descriptions.Item label="Thành phố">{ shop.city || "Chưa có"}</Descriptions.Item>
           <Descriptions.Item label="Trạng thái tài khoản">
-            { shop.state === 'active'
-              ? 'Đang hoạt động'
-              : 0 === 'pending'
-              ? 'Chờ xét duyệt'
-              : 'Ngưng hoạt động'}
-          </Descriptions.Item>
+          {shop.state === 'active'
+            ? 'Đang hoạt động'
+            : shop.state === 'pending'
+            ? 'Chờ xét duyệt'
+            : 'Ngưng hoạt động'}
+        </Descriptions.Item>
           <Descriptions.Item label="Người theo dõi">{ shop.followers || 0}</Descriptions.Item>
           <Descriptions.Item label="Sản phẩm đã bán">{ shop.soldCount || 0}</Descriptions.Item>
         </Descriptions>
           </Col>
-        </Row>        
+        </Row>
 
-        <Button type="primary"  style={{ marginTop: 16 }}>
-          {/* onClick={showModal} */}
+        <Row style={{ display: Flex, alignItems: "center", justifyContent: "center" }}>
+          <Button type="primary" style={{ marginTop: 16, width: "40%" }} onClick={openModal}>
           Sửa thông tin cửa hàng
         </Button>
+        </Row>
+
+        <ModalProfile
+        visible={isModalOpen}
+        onClose={closeModal}
+        initialValues={shop}
+        onUpdateSuccess={(updatedShop) => {
+          setShop(updatedShop); // <- Cập nhật lại UI ngay
+          fetchGetVendor();
+          setIsModalOpen(false);
+        }}
+        />
       </ShopInfo>
     </ShopProfileWrapper>
-
-      {/* <Modal
-        title="Sửa thông tin cửa hàng"
-        visible={isModalVisible}
-        onCancel={handleCancel}
-        onOk={() => form.submit()}
-        okText="Lưu"
-        cancelText="Hủy"
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-        >
-          <Form.Item
-            label="Tên shop"
-            name="shopName"
-            rules={[{ required: true, message: 'Vui lòng nhập tên shop!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Email"
-            name="email"
-            rules={[
-              { required: true, message: 'Vui lòng nhập email!' },
-              { type: 'email', message: 'Email không hợp lệ!' }
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Điện thoại"
-            name="phone"
-            rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Địa chỉ"
-            name="address"
-            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Mô tả"
-            name="description"
-          >
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
-      </Modal> */}
     </>
   )
 }
