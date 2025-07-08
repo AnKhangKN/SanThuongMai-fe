@@ -21,7 +21,6 @@ import * as AuthServices from "../../../services/shared/AuthServices";
 import * as UserVendorService from "../../../services/vendor/UserVendorService";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
-import { useSelector } from "react-redux";
 
 const HeaderOfVendorComponent = (props) => {
   const [shop, setShop] = useState(null);
@@ -39,8 +38,6 @@ const HeaderOfVendorComponent = (props) => {
   const handleClickToMainVendor = () => {
     navigate("/vendor");
   };
-
-  const { textHeader } = props;
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -79,25 +76,42 @@ const HeaderOfVendorComponent = (props) => {
   };
 
   const handleDecoded = async () => {
-    let storageData = localStorage.getItem("access_token");
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      const decoded = jwtDecode(storageData);
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        const accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-        return accessToken;
+  let storageToken = localStorage.getItem("access_token");
+
+  if (!storageToken) return null;
+
+  // Nếu token đang ở dạng JSON string → parse
+  if (isJsonString(storageToken)) {
+    storageToken = JSON.parse(storageToken);
+  }
+
+  try {
+    const decoded = jwtDecode(storageToken);
+    const isExpired = decoded.exp < Date.now() / 1000;
+
+    if (isExpired) {
+      const res = await AuthServices.refreshToken();
+      const newAccessToken = res?.access_token;
+      if (newAccessToken) {
+        localStorage.setItem("access_token", newAccessToken);
+        return newAccessToken;
+      } else {
+        return null;
       }
-      return storageData;
     }
+
+    return storageToken;
+  } catch (err) {
+    console.error("Lỗi khi decode token:", err);
     return null;
-  };
+  }
+};
 
   const fetchGetVendor = async () => {
     try {
       const token = await handleDecoded();
       if (!token) {
+        console.log("token", token)
         message.error("Không có token hợp lệ.");
         return;
       }

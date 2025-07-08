@@ -100,8 +100,7 @@ const handleChange = ({ fileList: newFileList }) => {
       // Có thể backend cần tự set field `shopAvatar` trong service sau khi lưu file
     }
     
-    formData.append("shop", JSON.stringify(shopData)); // 👈 RẤT QUAN TRỌNG
-    console.log("🔥 shopData gửi:", shopData);
+    formData.append("shop", JSON.stringify(shopData));
 
     // Đưa userId vào query hoặc URL tùy backend, nếu cần
     await fetchCreateVendor(formData);

@@ -13,7 +13,23 @@ import useAuth from "./hook/useAuth";
 function App() {
   const user = useSelector((state) => state.user);
 
+<<<<<<< HEAD
   useAuth(); // Hook custom
+=======
+  useEffect(() => {
+    const handleGetDetailUser = async () => {
+      try {
+        const token = await ValidateToken.getValidAccessToken();
+        const res = await AuthServices.getDetailUser(token);
+        dispatch(updateUser(res.data));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    handleGetDetailUser();
+  }, []);
+>>>>>>> a9b64692e104e7330767caf20bf7c1f7e1f39a55
 
   AuthServices.axiosJWT.interceptors.request.use(
     async (config) => {

@@ -24,3 +24,31 @@ export const getVendorInfo = async (accessToken) => {
   );
   return res.data;
 };
+
+export const updateUserVendor = async (accessToken, updatedData) => {
+  const res = await axios.put(
+    `${process.env.REACT_APP_API_URL}/vendor/update-vendor`,
+    updatedData,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return res.data;
+};
+
+export const updateVendorAvatar = async (accessToken, formData) => {
+  const res = await axios.put(
+    `${process.env.REACT_APP_API_URL}/vendor/update-avatar-vendor`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return res.data;
+};
