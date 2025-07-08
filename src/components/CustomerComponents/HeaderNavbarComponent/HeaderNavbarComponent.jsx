@@ -16,16 +16,26 @@ import { SlQuestion } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { resetUser } from "../../../redux/slices/userSlice";
+import { message } from "antd";
 
 const HeaderNavbarComponent = () => {
   // redux để lưu trạng thái người dùng
   const user = useSelector((state) => state.user);
-
   const avatar = useSelector((state) => state.avatar);
-
   const dispatch = useDispatch();
-
   const navigate = useNavigate();
+
+  const handleNavigateVendor = () => {
+    if (user?.id && user?.isVendor) {
+      navigate("/vendor");
+    } else if (user?.id && !user?.isVendor) {
+      message.warning("Hãy đăng ký trở thành người bán hàng!");
+      navigate("/vendor/register");
+    } else {
+      message.warning("Hãy đăng nhập trước!");
+      navigate("/login");
+    }
+  };
 
   const handleNavigateSignUp = () => {
     navigate("/sign-up");
@@ -39,7 +49,6 @@ const HeaderNavbarComponent = () => {
     try {
       await AuthServices.logoutUser();
 
-      // Xoá access token localStorage
       localStorage.removeItem("access_token");
 
       // Reset redux user state
@@ -56,7 +65,10 @@ const HeaderNavbarComponent = () => {
     <Wrapper>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div>
-          <Link to="/vendor" style={{ color: "#fff", textDecoration: "none" }}>
+          <Link
+            onClick={handleNavigateVendor}
+            style={{ color: "#fff", textDecoration: "none" }}
+          >
             Kênh Bán Hàng
           </Link>
         </div>

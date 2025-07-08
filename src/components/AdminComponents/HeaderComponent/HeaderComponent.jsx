@@ -122,11 +122,11 @@ const HeaderComponent = ({ toggleSidebar }) => {
                 objectFit: "contain",
                 borderRadius: "50%",
               }}
-              src={avatar?.img ? avatar?.img : user?.img} // nếu được làm thêm default img admin
+              src={avatar?.avatar ? avatar?.avatar : user?.avatar} // nếu được làm thêm default img admin
               alt=""
             />
           </div>
-          <AccountText>{user?.name}</AccountText>
+          <AccountText>{user?.fullName}</AccountText>
 
           {/* modal */}
           <ModalInformation>

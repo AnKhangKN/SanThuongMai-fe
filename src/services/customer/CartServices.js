@@ -1,9 +1,9 @@
 import axios from "axios";
 
-export const addToCart = async (accessToken, payload, productId) => {
+export const addToCart = async (accessToken, payload) => {
   try {
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/customer/add-to-cart/${productId}`,
+      `${process.env.REACT_APP_API_URL}/customer/add-to-cart`,
       payload,
       {
         headers: {

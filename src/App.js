@@ -1,34 +1,19 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { routes } from "./routes/index";
 import CustomerLayout from "./components/CustomerComponents/CustomerLayout/CustomerLayout";
 import AdminLayout from "./components/AdminComponents/AdminLayout/AdminLayout";
 import VendorLayout from "./components/VendorComponents/VendorLayout/VendorLayout";
 import * as AuthServices from "./services/shared/AuthServices";
-import { useDispatch, useSelector } from "react-redux";
-import { updateUser } from "./redux/slices/userSlice";
+import { useSelector } from "react-redux";
 import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 import * as ValidateToken from "./utils/tokenUtils";
+import useAuth from "./hook/useAuth";
 
 function App() {
-  const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
 
-  useEffect(() => {
-    const handleGetDetailUser = async () => {
-      try {
-        const token = await ValidateToken.getValidAccessToken();
-        const res = await AuthServices.getDetailUser(token);
-
-        console.log("res", res);
-        dispatch(updateUser(res.data));
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    handleGetDetailUser();
-  }, []);
+  useAuth(); // Hook custom
 
   AuthServices.axiosJWT.interceptors.request.use(
     async (config) => {

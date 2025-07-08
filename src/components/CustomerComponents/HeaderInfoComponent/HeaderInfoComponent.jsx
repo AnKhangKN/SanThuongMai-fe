@@ -61,7 +61,7 @@ const HeaderInfoComponent = () => {
           {/* Hiển thị tối đa 5 sản phẩm */}
           {cartItems.slice(0, 5).map((item) => (
             <div
-              key={item.product_id}
+              key={item.productId}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -72,14 +72,14 @@ const HeaderInfoComponent = () => {
                 <div style={{ width: "40px", height: "40px" }}>
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
-                    src={`${imageURL}${item.product_img}` || anh}
+                    src={`${imageURL}${item.productImage}` || anh}
                     alt=""
                   />
                 </div>
               </div>
 
               <div style={{ flex: "0 0 60%" }}>
-                {item.product_name || "Tên sản phẩm"}
+                {item.productName || "Tên sản phẩm"}
               </div>
               <div style={{ flex: "0 0 25%", textAlign: "end" }}>
                 {(item.price || 0).toLocaleString()}đ

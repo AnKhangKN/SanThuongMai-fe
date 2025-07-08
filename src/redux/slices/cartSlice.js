@@ -1,8 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  products: [], // Giỏ hàng sẽ chứa một mảng các sản phẩm
-  total_item: 0, // Tổng số lượng sản phẩm trong giỏ hàng
+  products: [],
+  total_item: 0,
 };
 
 export const cartSlice = createSlice({
@@ -15,9 +15,15 @@ export const cartSlice = createSlice({
       state.products = products || [];
       state.total_item = total_item || 0;
     },
+
+    // hoặc dùng:
+    resetCart: (state) => {
+      state.products = [];
+      state.total_item = 0;
+    },
   },
 });
 
-export const { updateCart } = cartSlice.actions;
+export const { updateCart, resetCart } = cartSlice.actions;
 
 export default cartSlice.reducer;

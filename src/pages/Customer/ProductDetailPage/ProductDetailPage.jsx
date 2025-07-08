@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { DetailBox } from "./style";
-import { Avatar, Col, message, Row, Space } from "antd";
+import { Col, message, Row } from "antd";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import { BsCartPlus } from "react-icons/bs";
 import { FiMinus, FiPlus } from "react-icons/fi";
@@ -8,113 +8,75 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import * as ProductServices from "../../../services/shared/ProductServices";
 import * as CartServices from "../../../services/customer/CartServices";
-import * as AuthServices from "../../../services/shared/AuthServices";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
 import { updateCart } from "../../../redux/slices/cartSlice";
-import { AiOutlineShop } from "react-icons/ai";
-import { IoIosChatboxes } from "react-icons/io";
+import * as ValidToken from "../../../utils/tokenUtils";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
-const imageAvatar = `${process.env.REACT_APP_API_URL}/avatar/`;
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
   const navigate = useNavigate();
-  const id = useParams();
+  const { id } = useParams();
   const location = useLocation();
-
   const dispatch = useDispatch();
 
-  const currentCart = useSelector((state) => state.cart);
-
-  const [startIndex, setStartIndex] = useState(0);
-  const [currentImage, setCurrentImage] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [productDetail, setProductDetail] = useState({});
   const [quantity, setQuantity] = useState(0);
-  const [detailColor, setDetailColor] = useState(null);
-  const [detailSize, setDetailSize] = useState(null);
+  const [selectedAttributes, setSelectedAttributes] = useState({});
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
-  const [listImages, setListImages] = useState([]);
-  const [detailShop, setDetailShop] = useState();
-  const [countProductShop, setCountProductShop] = useState("");
-  const [shopName, setShopName] = useState();
-  const [imageShop, setImageShop] = useState();
 
+  const [productDetail, setProductDetail] = useState(null);
+  const [productImages, setProductImages] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [startIndex, setStartIndex] = useState(0);
   const maxVisible = 5;
 
+  const [shopDetail, setShopDetail] = useState(); // xử lý link sản phẩm (làm sau)
+
+  // Fetch chi tiết sản phẩm
   useEffect(() => {
     const fetchDetailProduct = async () => {
       try {
-        const res = await ProductServices.getDetailProduct(id);
-
-        const newData = res?.data?.data?.product;
-        const shopData = res?.data?.data?.shop?.shop;
-        const countProductsOwner = res?.data?.data?.countProductsOwner;
-        const imageShop = res?.data?.data?.shop?.imageShop;
-
-        setImageShop(imageShop);
-        setCountProductShop(countProductsOwner);
-        setDetailShop(shopData);
-        setProductDetail(newData);
-        setListImages(newData.images);
-        setCurrentImage(newData.images[0]); // Đảm bảo ảnh đầu tiên được chọn
-
-        const ten_shop = res?.data?.data?.shop?.name;
-
-        setShopName(ten_shop);
+        const res = await ProductServices.getDetailProduct({ id });
+        const images = res.product.images || [];
+        setProductDetail(res.product);
+        setProductImages(images);
+        setSelectedImage(images[0] || null);
+        setStartIndex(0);
+        setQuantity(0);
+        setSelectedAttributes({});
+        setSelectedProductDetail(null);
+        setShopDetail(res.shop);
       } catch (error) {
         console.error("Lỗi khi lấy sản phẩm:", error);
+        message.error("Không thể tải sản phẩm.");
       }
     };
 
     fetchDetailProduct();
   }, [id]);
 
-  const handleChooseColor = (color) => {
-    setDetailColor(color);
-    const selected = productDetail.details?.find(
-      (detail) => detail.color === color && detail.size === detailSize
+  // Xử lý chọn thuộc tính
+  const handleSelectAttribute = (attrName, attrValue) => {
+    const newSelected = { ...selectedAttributes, [attrName]: attrValue };
+    setSelectedAttributes(newSelected);
+
+    const matched = productDetail?.priceOptions?.find((option) =>
+      option.attributes.every((attr) => newSelected[attr.name] === attr.value)
     );
-    setSelectedProductDetail(selected);
+
+    setSelectedProductDetail(matched || null);
   };
 
-  const handleChooseSize = (size) => {
-    setDetailSize(size);
-    const selected = productDetail.details?.find(
-      (detail) => detail.size === size && detail.color === detailColor
-    );
-    setSelectedProductDetail(selected);
-  };
+  // Tạo map thuộc tính từ priceOptions
+  const attributeMap = {};
+  productDetail?.priceOptions?.forEach((option) => {
+    option.attributes.forEach((attr) => {
+      if (!attributeMap[attr.name]) attributeMap[attr.name] = new Set();
+      attributeMap[attr.name].add(attr.value);
+    });
+  });
 
-  const handleNext = () => {
-    if (startIndex + maxVisible < listImages.length) {
-      setStartIndex(startIndex + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (startIndex > 0) {
-      setStartIndex(startIndex - 1);
-    }
-  };
-
-  const handleImageClick = (image) => {
-    setCurrentImage(image);
-    setSelectedImage(image);
-  };
-
-  const handleDecoded = () => {
-    let storageData = localStorage.getItem("access_token");
-    let decoded = {};
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
-    }
-    return { decoded, storageData };
-  };
-
+  // Thêm vào giỏ hàng
   const handleAddToCart = async () => {
     if (!user?.id) {
       message.info("Hãy đăng nhập trước!");
@@ -122,141 +84,63 @@ const ProductDetailPage = () => {
       return;
     }
 
-    if (
-      quantity > selectedProductDetail?.quantity ||
-      !selectedProductDetail?.quantity
-    ) {
+    if (!selectedProductDetail) {
+      message.warning("Hãy chọn đầy đủ thuộc tính sản phẩm!");
+      return;
+    }
+
+    if (quantity <= 0) {
+      message.warning("Vui lòng chọn số lượng hợp lệ!");
+      return;
+    }
+
+    if (quantity > selectedProductDetail?.stock) {
       message.error("Số lượng sản phẩm trong kho không đủ!");
-      setQuantity(0);
       return;
     }
 
     try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
-      // Làm mới token nếu hết hạn
-      if (decoded?.exp * 1000 < Date.now()) {
-        const res = await AuthServices.refreshToken();
-        if (!res?.access_token) {
-          message.error("Không thể làm mới phiên đăng nhập!");
-          return;
-        }
-        accessToken = res.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
+      const accessToken = await ValidToken.getValidAccessToken();
 
       const payload = {
-        itemData: {
-          size: selectedProductDetail.size,
-          color: selectedProductDetail.color,
-          price: selectedProductDetail.price,
-        },
+        productId: id,
+        productName: productDetail.productName,
+        productImage: productImages?.[0],
+        attributes: Object.entries(selectedAttributes).map(([name, value]) => ({
+          name,
+          value,
+        })),
+        price: selectedProductDetail.price,
         quantity,
-        owner_id: productDetail.user_id, // Chủ sản phẩm
-        product_id_module: id.id, // id của sản phẩm
+        shopId: productDetail.shopId,
+        shopName: productDetail?.shopName || "Shop",
       };
 
-      if (payload.quantity <= 0) {
-        message.warning("Hãy thêm số lượng bạn cần!");
-        return;
-      }
-
-      const res = await CartServices.addToCart(
-        accessToken,
-        payload,
-        payload.product_id_module // product_id đúng
-      );
+      const res = await CartServices.addToCart(accessToken, payload);
 
       if (!res || res.status !== "OK") {
         message.error(res?.message || "Không thể thêm vào giỏ hàng!");
         return;
       }
 
-      const newItem = {
-        product_id: payload.product_id_module,
-        product_name: productDetail.product_name,
-        product_img: currentImage,
-        price: selectedProductDetail.price,
-        quantity,
-        size: selectedProductDetail.size,
-        color: selectedProductDetail.color,
-      };
+      const cartRes = await CartServices.getAllItem(accessToken);
 
-      dispatch(
-        updateCart({
-          products: [...currentCart.products, newItem],
-          total_item: currentCart.total_item + 1,
-        })
-      );
+      const userCart = cartRes.data?.[0];
 
-      message.success("Đã thêm vào giỏ hàng!");
+      if (userCart) {
+        dispatch(
+          updateCart({
+            products: userCart.productItems || [],
+            total_item: userCart.productItems?.length || 0,
+          })
+        );
+      }
+
+      message.success("Đã thêm vào giỏ hàng");
     } catch (error) {
       console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      message.error(error?.message || "Không thể thêm sản phẩm vào giỏ hàng!");
+      message.error("Lỗi hệ thống! Không thể thêm sản phẩm vào giỏ hàng.");
     }
-  };
-
-  const handleReduce = () => {
-    setQuantity((prev) => Math.max(0, prev - 1));
-  };
-
-  const handleIncrease = () => {
-    if (
-      !selectedProductDetail?.quantity ||
-      selectedProductDetail?.quantity <= 0
-    ) {
-      message.error("Sản phẩm này đã hết hàng!");
-      return;
-    }
-
-    setQuantity((prev) => {
-      if (prev >= selectedProductDetail?.quantity) {
-        return prev;
-      }
-      return prev + 1;
-    });
-  };
-
-  const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value);
-
-    if (isNaN(value) || value <= 0) {
-      setQuantity(1); // hoặc có thể cho về rỗng, tùy yêu cầu UX
-      return;
-    }
-
-    if (value > selectedProductDetail?.quantity) {
-      message.error("Vượt quá số lượng sản phẩm trong kho!");
-      setQuantity(selectedProductDetail.quantity);
-      return;
-    }
-
-    setQuantity(value);
-  };
-
-  const handleNavigateShopDetail = () => {
-    const id_owner = productDetail.user_id;
-
-    // Kiểm tra giá trị cụ thể
-    if (!id_owner) {
-      message.error("Thông tin shop không đầy đủ!");
-      return;
-    }
-
-    navigate(`/shop/${id_owner}/dashboard`);
-  };
-
-  const handleNavigateShopDetailChat = () => {
-    const id_owner = productDetail.user_id;
-
-    // Kiểm tra giá trị cụ thể
-    if (!id_owner) {
-      message.error("Thông tin shop không đầy đủ!");
-      return;
-    }
-
-    navigate(`/shop/${id_owner}/chat`);
   };
 
   return (
@@ -264,98 +148,86 @@ const ProductDetailPage = () => {
       <div style={{ width: "1200px", margin: "auto", marginTop: "120px" }}>
         <DetailBox>
           <Row>
+            {/* Ảnh chính + phụ */}
             <Col span={10}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  paddingRight: 20,
-                }}
-              >
-                <img
-                  style={{
-                    width: "100%",
-                    height: "450px",
-                    objectFit: "contain",
-                  }}
-                  src={`${imageURL}${currentImage}`}
-                  alt="Sản phẩm"
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingRight: 20,
-                  marginTop: 10,
-                }}
-              >
-                <button
+              <img
+                style={{ width: "100%", height: "450px", objectFit: "contain" }}
+                src={selectedImage ? `${imageURL}${selectedImage}` : ""}
+                alt="Ảnh sản phẩm"
+              />
+
+              {productImages.length > 1 && (
+                <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    height: "30px",
-                    width: "30px",
+                    marginTop: 10,
                   }}
-                  onClick={handlePrev}
-                  disabled={startIndex === 0}
                 >
-                  <GrFormPrevious />
-                </button>
-                {listImages
-                  .slice(startIndex, startIndex + maxVisible)
-                  .map((item, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        width: 82,
-                        margin: "0 5px",
-                        border:
-                          selectedImage === item ? "2px solid #194a7a" : "none",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <img
-                        src={`${imageURL}${item}`}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "60px",
-                          objectFit: "contain",
-                        }}
-                        onClick={() => handleImageClick(item)}
-                      />
-                    </div>
-                  ))}
-                <button
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "30px",
-                    width: "30px",
-                  }}
-                  onClick={handleNext}
-                  disabled={startIndex + maxVisible >= listImages.length}
-                >
-                  <GrFormNext />
-                </button>
-              </div>
+                  <button
+                    onClick={() =>
+                      setStartIndex((prev) => Math.max(0, prev - 1))
+                    }
+                    disabled={startIndex === 0}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <GrFormPrevious size={24} />
+                  </button>
+
+                  <div style={{ display: "flex", gap: 10 }}>
+                    {productImages
+                      .slice(startIndex, startIndex + maxVisible)
+                      .map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={`${imageURL}${img}`}
+                          alt="Ảnh phụ"
+                          onClick={() => setSelectedImage(img)}
+                          style={{
+                            width: 60,
+                            height: 60,
+                            border:
+                              selectedImage === img
+                                ? "2px solid #194a7a"
+                                : "1px solid #ccc",
+                            cursor: "pointer",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ))}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setStartIndex((prev) =>
+                        Math.min(
+                          Math.max(0, productImages.length - maxVisible),
+                          prev + 1
+                        )
+                      )
+                    }
+                    disabled={startIndex >= productImages.length - maxVisible}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <GrFormNext size={24} />
+                  </button>
+                </div>
+              )}
             </Col>
+
+            {/* Thông tin sản phẩm */}
             <Col span={14}>
-              <p style={{ fontSize: "25px" }}>{productDetail?.product_name}</p>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "20px",
-                }}
-              >
-                <div>{productDetail?.sold_count} Lượt mua</div>
-                <div style={{ cursor: "pointer" }}></div>
+              <p style={{ fontSize: "25px" }}>{productDetail?.productName}</p>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div>{productDetail?.soldCount} Lượt mua</div>
               </div>
               <div style={{ backgroundColor: "#f5f5f5", padding: "10px 20px" }}>
                 <div style={{ display: "flex" }}>
@@ -366,311 +238,75 @@ const ProductDetailPage = () => {
                 </div>
               </div>
 
-              {/* Lọc */}
-              {productDetail?.details?.some((d) => d.color) ? (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    marginTop: 25,
-                  }}
-                >
-                  <div style={{ width: 100 }}>Màu sắc</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                    {[
-                      ...new Set(productDetail?.details?.map((d) => d.color)),
-                    ].map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => handleChooseColor(color)}
-                        style={{
-                          padding: "8px 10px",
-                          marginLeft: "15px",
-                          border:
-                            detailColor === color
-                              ? "2px solid #194a7a"
-                              : "1px solid #ccc",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {color}
-                      </button>
-                    ))}
+              {/* Thuộc tính động */}
+              {Object.entries(attributeMap).map(([attrName, values]) => (
+                <div key={attrName} style={{ marginTop: 20 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
+                    <div style={{ width: 100 }}>{attrName}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                      {[...values].map((val) => (
+                        <button
+                          key={val}
+                          onClick={() => handleSelectAttribute(attrName, val)}
+                          style={{
+                            padding: "8px 10px",
+                            border:
+                              selectedAttributes[attrName] === val
+                                ? "2px solid #194a7a"
+                                : "1px solid #ccc",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {val}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div></div>
-              )}
+              ))}
 
-              {productDetail?.details?.some((d) => d.size) ? (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    marginTop: 20,
-                  }}
-                >
-                  <div style={{ width: 100 }}>Kích thước</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                    {[
-                      ...new Set(productDetail?.details?.map((d) => d.size)),
-                    ].map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => handleChooseSize(size)}
-                        style={{
-                          padding: 10,
-                          marginLeft: "15px",
-                          border:
-                            detailSize === size
-                              ? "2px solid #194a7a"
-                              : "1px solid #ccc",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+              {/* Số lượng */}
+              <div style={{ marginTop: 20 }}>
+                <div style={{ marginBottom: 10 }}>
+                  Số lượng còn lại: {selectedProductDetail?.stock || 0}
                 </div>
-              ) : (
-                <div></div>
-              )}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(0, q - 1))}
+                  >
+                    <FiMinus />
+                  </button>
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+                    style={{ width: 60, textAlign: "center" }}
+                  />
+                  <button onClick={() => setQuantity((q) => q + 1)}>
+                    <FiPlus />
+                  </button>
+                </div>
+              </div>
 
-              <div
+              {/* Thêm vào giỏ */}
+              <button
+                onClick={handleAddToCart}
                 style={{
+                  background: "#194a7a",
+                  color: "white",
+                  padding: "15px 10px",
+                  border: "none",
                   display: "flex",
-                  flexFlow: "column",
-                  gap: 20,
+                  alignItems: "center",
+                  cursor: "pointer",
+                  gap: "20px",
                   marginTop: 20,
                 }}
               >
-                <div>
-                  {selectedProductDetail ? (
-                    <>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <div>Số lượng còn lại:</div>
-                        <div style={{ marginLeft: "20px" }}>
-                          {selectedProductDetail?.quantity}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <div>Số lượng còn lại:</div>
-                        <div style={{ marginLeft: "20px" }}>0</div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <div style={{ width: "100px" }}>Số lượng</div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      marginLeft: "25px",
-                    }}
-                  >
-                    <button
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "30px",
-                        border: "0.5px solid #cfcfcf",
-                        backgroundColor: "#fff",
-                        height: "30px",
-                      }}
-                      onClick={handleReduce}
-                    >
-                      <FiMinus />
-                    </button>
-                    <input
-                      type="text"
-                      value={quantity}
-                      onChange={handleQuantityChange}
-                      style={{
-                        textAlign: "center",
-                        width: "50px",
-                        border: "0.5px solid #cfcfcf",
-                        outline: "none",
-                        height: "27px",
-                      }}
-                    />
-                    <button
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "#fff",
-                        width: "30px",
-                        border: "0.5px solid #cfcfcf",
-                        height: "30px",
-                      }}
-                      onClick={handleIncrease}
-                    >
-                      <FiPlus />
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleAddToCart}
-                  style={{
-                    background: "#194a7a",
-                    color: "white",
-                    padding: "15px 10px",
-                    border: "none",
-                    display: "flex",
-                    borderRadius: "2px",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    gap: "20px",
-                    width: "35%",
-                    justifyContent: "center",
-                  }}
-                >
-                  <BsCartPlus /> <div>Thêm vào giỏ hàng</div>
-                </button>
-              </div>
-            </Col>
-          </Row>
-        </DetailBox>
-
-        <DetailBox>
-          <Row>
-            <Col span={8} style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ width: "60px", height: "60px" }}>
-                <img
-                  style={{ width: "100%" }}
-                  src={`${imageAvatar}${imageShop}`}
-                  alt=""
-                />
-              </div>
-              <div>
-                <div style={{ margin: "0px 0px 5px 10px" }}>
-                  {detailShop?.name}
-                </div>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <button
-                    style={{
-                      height: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "3px",
-                      padding: "0px 15px",
-                      margin: "0px 10px 17px 10px",
-                      fontSize: "14px",
-                      border: "1px solid rgb(248, 74, 47)",
-                      color: "#194a7a",
-                      background: "rgba(208, 1, 27, .08)",
-                      outline: "none",
-                    }}
-                  >
-                    <div>
-                      <IoIosChatboxes />
-                    </div>
-                    <div
-                      style={{ cursor: "pointer" }}
-                      onClick={handleNavigateShopDetailChat}
-                    >
-                      Chat ngay
-                    </div>
-                  </button>
-                  <button
-                    style={{
-                      height: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "3px",
-                      padding: "0px 15px",
-                      margin: "0px 10px 17px 0px",
-                      fontSize: "14px",
-                      border: "1px solid #555555",
-                      color: "#555555",
-                      background: "#FFFFFF",
-                      outline: "none",
-                    }}
-                  >
-                    <div>
-                      <AiOutlineShop />
-                    </div>
-                    <div
-                      style={{ cursor: "pointer" }}
-                      onClick={handleNavigateShopDetail}
-                    >
-                      Xem shop
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </Col>
-            <Col
-              span={16}
-              style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  margin: "0px 0px 0px 10px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "40px",
-                    margin: "0px 0px 0px 60px",
-                  }}
-                >
-                  <div style={{ color: "#00000066", width: "100px" }}>
-                    Sản phẩm
-                  </div>
-                  <div style={{ color: "#194a7a", margin: "0px 0px 0px 20px" }}>
-                    {countProductShop}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "40px",
-                    margin: "0px 0px 0px 60px",
-                  }}
-                >
-                  <div style={{ color: "#00000066", width: "100px" }}>
-                    Tham gia{" "}
-                  </div>
-                  <div style={{ color: "#194a7a", margin: "0px 0px 0px 20px" }}>
-                    {new Date(detailShop?.created_at).toLocaleString("vi-VN", {
-                      timeZone: "Asia/Ho_Chi_Minh",
-                    })}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "40px",
-                    margin: "0px 0px 0px 60px",
-                  }}
-                >
-                  <div style={{ color: "#00000066", width: "100px" }}>
-                    Người theo dõi
-                  </div>
-                  <div style={{ color: "#194a7a", margin: "0px 0px 0px 20px" }}>
-                    {detailShop?.followers}
-                  </div>
-                </div>
-              </div>
+                <BsCartPlus /> <div>Thêm vào giỏ hàng</div>
+              </button>
             </Col>
           </Row>
         </DetailBox>
