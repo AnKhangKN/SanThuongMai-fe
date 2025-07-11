@@ -25,8 +25,12 @@ const { TextArea } = Input;
 const AddProduct = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const [shopId, setShopId] = useState(null); // chính là user._id
   const [labels, setLabels] = useState({});
+  const [applyToAll, setApplyToAll] = useState({
+  price: null,
+  salePrice: null,
+  stock: null,
+});
 
   const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
@@ -49,8 +53,6 @@ const AddProduct = () => {
         localStorage.setItem("access_token", JSON.stringify(accessToken));
         decoded = jwtDecode(accessToken);
       }
-
-      setShopId(decoded?.id);
     } catch (error) {
       console.error("Lỗi khi decode user_id:", error);
     }
@@ -98,7 +100,7 @@ const AddProduct = () => {
   form.setFieldsValue({ images: updatedList });
 };
 
-  const onFinish = async (values) => {
+const onFinish = async (values) => {
   try {
     let { storageData, decoded } = handleDecoded();
     let accessToken = storageData;
@@ -108,36 +110,40 @@ const AddProduct = () => {
       const res = await AuthServices.refreshToken();
       accessToken = res?.access_token;
       localStorage.setItem("access_token", JSON.stringify(accessToken));
+      decoded = jwtDecode(accessToken); // Cập nhật lại decoded
     }
 
-    const transformedPriceOptions = values.priceOptions.map(opt => ({
-      attributes: [
-        { name: "size", value: opt.size },
-        { name: "color", value: opt.color },
-      ],
-      price: opt.price,
-      stock: opt.stock,
-    }));
+    // ✅ Lấy dữ liệu từ form
+    const classifications = form.getFieldValue("classifications") || [];
+    const priceOptions = form.getFieldValue("priceOptions") || [];
 
-    // Kiểm tra
-    if (!transformedPriceOptions.length) {
+    // ✅ Kiểm tra biến thể
+    if (!priceOptions.length) {
       message.error("Phải có ít nhất 1 biến thể sản phẩm");
       return;
     }
+
+    // ✅ Chuyển đổi dữ liệu thành đúng format backend yêu cầu
+    const transformedPriceOptions = priceOptions.map((opt) => ({
+      attributes: opt.attributes || [],
+      price: opt.price,
+      salePrice: opt.salePrice,
+      stock: opt.stock,
+    }));
 
     const formData = new FormData();
     formData.append("productName", values.productName);
     formData.append("description", values.description || "");
     formData.append("category", values.category);
     formData.append("status", values.status || "active");
-    formData.append("shopId", shopId); // Đảm bảo đúng giá trị
-    // console.log("shopId:", shopId);
     formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
 
+    // ✅ Thêm ảnh
     fileList.forEach((file) => {
-      formData.append("productImages", file.originFileObj); // ảnh thực tế
+      formData.append("productImages", file.originFileObj);
     });
 
+    // ✅ Gọi API
     const response = await ProductServices.createProduct(accessToken, formData);
     message.success("Thêm sản phẩm thành công!");
     form.resetFields();
@@ -147,6 +153,68 @@ const AddProduct = () => {
     message.error("Thêm sản phẩm thất bại!");
   }
 };
+
+//   const onFinish = async (values) => {
+//   try {
+//     let { storageData, decoded } = handleDecoded();
+//     let accessToken = storageData;
+
+//     // Kiểm tra token hết hạn
+//     if (decoded?.exp < Date.now() / 1000) {
+//       const res = await AuthServices.refreshToken();
+//       accessToken = res?.access_token;
+//       localStorage.setItem("access_token", JSON.stringify(accessToken));
+//     }
+
+//     const transformedPriceOptions = priceOptions.map((opt) => {
+//   const attributes = [];
+
+//     // Duyệt từng classification để lấy tên phân loại
+//     classifications.forEach((cls, index) => {
+//       const attrName = cls.name || `attr${index+1}`;
+//       const attrValue = opt[attrName] || opt[index]; // Tùy theo bạn lưu giá trị ở đâu trong priceOptions
+
+//       attributes.push({
+//         name: attrName,
+//         value: attrValue,
+//       });
+//     });
+
+//     return {
+//       attributes,
+//       price: opt.price,
+//       salePrice: opt.salePrice,
+//       stock: opt.stock,
+//     };
+//   });
+
+//     // Kiểm tra
+//     if (!transformedPriceOptions.length) {
+//       message.error("Phải có ít nhất 1 biến thể sản phẩm");
+//       return;
+//     }
+
+//     const formData = new FormData();
+//     formData.append("productName", values.productName);
+//     formData.append("description", values.description || "");
+//     formData.append("category", values.category);
+//     formData.append("status", values.status || "active");
+//     // console.log("shopId:", shopId);
+//     formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
+
+//     fileList.forEach((file) => {
+//       formData.append("productImages", file.originFileObj); // ảnh thực tế
+//     });
+
+//     const response = await ProductServices.createProduct(accessToken, formData);
+//     message.success("Thêm sản phẩm thành công!");
+//     form.resetFields();
+//     setFileList([]);
+//   } catch (error) {
+//     console.error("Lỗi khi thêm sản phẩm:", error);
+//     message.error("Thêm sản phẩm thất bại!");
+//   }
+// };
 
 const handleChangeLabel = (index, value) => {
     setLabels((prev) => ({
@@ -246,7 +314,6 @@ const handleChangeLabel = (index, value) => {
         </Form.Item>
 
         <h4>Thông tin bán hàng</h4>
-        <h5 style={{textAlign: 'start'}}>Phân loại hàng</h5>
         <Form.List name="classifications">
           {(fields, { add, remove }) => (
             <>
@@ -274,17 +341,27 @@ const handleChangeLabel = (index, value) => {
                   <Form.List name={[field.name, "options"]}>
                     {(optionFields, { add: addOption, remove: removeOption }) => (
                       <>
-                        {optionFields.map((opt) => (
-                          <Form.Item
-                            key={opt.key}
-                            name={opt.name}
-                            label="Tùy chọn"
-                            rules={[{ required: true, message: "Nhập tùy chọn" }]}
-                          >
-                            <Input placeholder="VD: Đỏ, Xanh, S, M" />
-                          </Form.Item>
+                        {optionFields.map((opt, idx) => (
+                          <Space key={opt.key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
+                            <Form.Item
+                              name={opt.name}
+                              rules={[{ required: true, message: "Nhập tùy chọn" }]}
+                            >
+                              <Input placeholder="VD: Đỏ, Xanh, S, M" />
+                            </Form.Item>
+
+                            {/* Nút xóa */}
+                            <Button
+                              type="link"
+                              danger
+                              onClick={() => removeOption(opt.name)}
+                            >
+                              Xóa
+                            </Button>
+                          </Space>
                         ))}
-                        <Button type="dashed" onClick={() => addOption()} block>
+
+                        <Button type="dashed" onClick={() => addOption()} block icon={<PlusOutlined />}>
                           + Thêm tùy chọn
                         </Button>
                       </>
@@ -316,11 +393,61 @@ const handleChangeLabel = (index, value) => {
           )}
         </Form.List>
 
+        <h5 style={{ textAlign: 'start' }}>Thông tin chung cho tất cả phân loại</h5>
+        <Space style={{ display: 'flex', marginBottom: 16 }} align="start">
+          <InputNumber
+            placeholder="Giá"
+            min={0}
+            value={applyToAll.price}
+            onChange={(value) => setApplyToAll(prev => ({ ...prev, price: value }))}
+          />
+          <InputNumber
+            placeholder="Giá khuyến mãi"
+            min={0}
+            value={applyToAll.salePrice}
+            onChange={(value) => setApplyToAll(prev => ({ ...prev, salePrice: value }))}
+          />
+          <InputNumber
+            placeholder="Tồn kho"
+            min={0}
+            value={applyToAll.stock}
+            onChange={(value) => setApplyToAll(prev => ({ ...prev, stock: value }))}
+          />
+          <Button
+            onClick={() => {
+              const values = form.getFieldValue("classifications") || [];
+              const priceOptions = form.getFieldValue("priceOptions") || [];
+              const [first, second] = values;
+              const options1 = first?.options || [];
+              const options2 = second?.options || [];
+
+              const combinations = options1.flatMap((opt1) =>
+                (options2.length ? options2 : [null]).map((opt2) => {
+                  const attrs = [{ name: first?.name || "", value: opt1 }];
+                  if (opt2) attrs.push({ name: second?.name || "", value: opt2 });
+                  return { attributes: attrs };
+                })
+              );
+
+              const newValues = combinations.map(({ attributes }) => ({
+                attributes,
+                price: applyToAll.price,
+                salePrice: applyToAll.salePrice,
+                stock: applyToAll.stock,
+              }));
+
+              form.setFieldsValue({ priceOptions: newValues });
+              message.success("Đã áp dụng cho tất cả phân loại!");
+            }}
+          >
+            Áp dụng cho tất cả
+          </Button>
+        </Space>
+
         <Form.Item shouldUpdate>
           {() => {
-            const values = form.getFieldValue("classifications") || [];
-            const [first, second] = values;
-
+            const classifications = form.getFieldValue("classifications") || [];
+            const [first, second] = classifications;
             const options1 = first?.options || [];
             const options2 = second?.options || [];
 
@@ -334,53 +461,61 @@ const handleChangeLabel = (index, value) => {
 
             return combinations.length ? (
               <>
-                <h5 style={{textAlign: 'start'}}>Danh sách phân loại hàng</h5>
-                {combinations.map(({ key, attributes }, index) => (
-                  <Space
-                    key={key}
-                    style={{
-                      display: "flex",
-                      marginBottom: 8,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                    align="start"
-                  >
-                    <span>
-                      {attributes.map((attr) => `${attr.name}: ${attr.value}`).join(" | ")}
-                    </span>
-
-                    <Form.Item
-                      name={["priceOptions", index, "price"]}
-                      rules={[{ required: true, message: "Nhập giá" }]}
-                    >
-                      <InputNumber placeholder="Giá" min={0} />
-                    </Form.Item>
-
-                    <Form.Item
-                      name={["priceOptions", index, "salePrice"]}
-                      rules={[{ type: "number", min: 0 }]}
-                    >
-                      <InputNumber placeholder="Giá khuyến mãi" min={0} />
-                    </Form.Item>
-
-                    <Form.Item
-                      name={["priceOptions", index, "stock"]}
-                      rules={[{ required: true, message: "Nhập tồn kho" }]}
-                    >
-                      <InputNumber placeholder="Tồn kho" min={0} />
-                    </Form.Item>
-
-                    <Form.Item name={["priceOptions", index, "attributes"]} hidden initialValue={attributes}>
-                      <Input type="hidden" />
-                    </Form.Item>
-                  </Space>
-                ))}
+                <h5 style={{ textAlign: "start" }}>Bảng phân loại chi tiết</h5>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        {combinations[0].attributes.map((attr, i) => (
+                          <th key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.name}</th>
+                        ))}
+                        <th style={{ border: '1px solid #ccc', padding: 8 }}>Giá</th>
+                        <th style={{ border: '1px solid #ccc', padding: 8 }}>Giá khuyến mãi</th>
+                        <th style={{ border: '1px solid #ccc', padding: 8 }}>Tồn kho</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {combinations.map(({ key, attributes }, index) => (
+                        <tr key={key}>
+                          {attributes.map((attr, i) => (
+                            <td key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.value}</td>
+                          ))}
+                          <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                            <Form.Item
+                              name={["priceOptions", index, "price"]}
+                              rules={[{ required: true, message: "Nhập giá" }]}
+                            >
+                              <InputNumber placeholder="Giá" min={0} />
+                            </Form.Item>
+                          </td>
+                          <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                            <Form.Item
+                              name={["priceOptions", index, "salePrice"]}
+                              rules={[{ type: "number", min: 0 }]}
+                            >
+                              <InputNumber placeholder="Khuyến mãi" min={0} />
+                            </Form.Item>
+                          </td>
+                          <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                            <Form.Item
+                              name={["priceOptions", index, "stock"]}
+                              rules={[{ required: true, message: "Nhập tồn kho" }]}
+                            >
+                              <InputNumber placeholder="Tồn kho" min={0} />
+                            </Form.Item>
+                            <Form.Item name={["priceOptions", index, "attributes"]} hidden initialValue={attributes}>
+                              <Input type="hidden" />
+                            </Form.Item>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </>
             ) : null;
           }}
         </Form.Item>
-
 
         
 
