@@ -7,7 +7,6 @@ import {
   InputNumber,
   Select,
   Space,
-  DatePicker,
   message,
   Row,
 } from "antd";
@@ -25,10 +24,9 @@ const { TextArea } = Input;
 
 const AddProduct = () => {
   const [form] = Form.useForm();
-  // const [details, setDetails] = useState([]);
-  const [imageUrl, setImageUrl] = useState(null);
   const [fileList, setFileList] = useState([]);
   const [shopId, setShopId] = useState(null); // chính là user._id
+  const [labels, setLabels] = useState({});
 
   const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
@@ -62,20 +60,6 @@ const AddProduct = () => {
     fetchUserId();
   }, [fetchUserId]);
 
-  // const handleAddDetail = () => {
-  //   setDetails([...details, { size: "", color: "", price: 0, quantity: 0 }]);
-  // };
-
-  // const handleDetailChange = (index, field, value) => {
-  //   const updated = [...details];
-  //   updated[index][field] = value;
-  //   setDetails(updated);
-  // };
-
-  // const handleImageUpload = ({ fileList }) => {
-  //   setImageList(fileList.map((file) => file.name)); // hoặc file.url nếu có backend
-  // };
-
   const beforeUpload = (file) => {
       const isImage = file.type.startsWith("image/");
       const isLt2M = file.size / 1024 / 1024 < 2;
@@ -90,11 +74,29 @@ const AddProduct = () => {
       return true;
     
   }
+
+  const getBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
   
-  const handleChange = ({ fileList: newFileList }) => {
-    setFileList(newFileList);
-    form.setFieldsValue({ images: newFileList });
-  };
+  const handleChange = async ({ fileList: newFileList }) => {
+  // Thêm preview cho ảnh mới
+  const updatedList = await Promise.all(
+    newFileList.map(async (file) => {
+      if (!file.url && !file.preview) {
+        file.preview = await getBase64(file.originFileObj);
+      }
+      return file;
+    })
+  );
+
+  setFileList(updatedList);
+  form.setFieldsValue({ images: updatedList });
+};
 
   const onFinish = async (values) => {
   try {
@@ -146,6 +148,13 @@ const AddProduct = () => {
   }
 };
 
+const handleChangeLabel = (index, value) => {
+    setLabels((prev) => ({
+      ...prev,
+      [index]: value,
+    }));
+  };
+
 
   return (
     <div>
@@ -174,16 +183,27 @@ const AddProduct = () => {
           name="images"
           rules={[{ required: true, message: "Vui lòng thêm hình ảnh sản phẩm" }]}
           valuePropName="fileList"
-           getValueFromEvent={(e) => e.fileList}
+          getValueFromEvent={(e) => e.fileList}
         >
         <Upload
-          listType="picture-card"
-          fileList={fileList}
-          onChange={handleChange}
-          beforeUpload={beforeUpload}
-          multiple
-          onPreview={() => false}
-        >
+            listType="picture-card"
+            fileList={fileList}
+            onChange={handleChange}
+            beforeUpload={beforeUpload}
+            multiple
+            onPreview={async (file) => {
+              let src = file.url || file.preview;
+              if (!src && file.originFileObj) {
+                src = await getBase64(file.originFileObj);
+              }
+              const imgWindow = window.open(src);
+              if (imgWindow) {
+                const image = new Image();
+                image.src = src;
+                imgWindow.document.write(image.outerHTML);
+              }
+            }}
+          >
           {fileList.length < 5 && (
             <div>
               <UploadOutlined />
@@ -225,63 +245,144 @@ const AddProduct = () => {
           <TextArea rows={4} />
         </Form.Item>
 
-        <h4>Thông tin chi tiết</h4>
-        <Form.List name="priceOptions" rules={[
-          {
-            validator: async (_, priceOptions) => {
-              if (!priceOptions || priceOptions.length < 1) {
-                return Promise.reject(new Error('Phải có ít nhất 1 biến thể'));
-              }
-            },
-          },
-        ]}>
+        <h4>Thông tin bán hàng</h4>
+        <h5 style={{textAlign: 'start'}}>Phân loại hàng</h5>
+        <Form.List name="classifications">
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space
-                  key={key}
-                  style={{ display: 'flex', marginBottom: 8 }}
-                  align="baseline"
+              {fields.map((field, index) => (
+                <div
+                  key={field.key}
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: 16,
+                    marginBottom: 16,
+                  }}
                 >
                   <Form.Item
-                    {...restField}
-                    name={[name, 'size']}
-                    rules={[{ required: true, message: 'Nhập size' }]}
+                    {...field}
+                    name={[field.name, "name"]}
+                    label={`Tên phân loại ${index + 1}`}
+                    rules={[{ required: true, message: "Nhập tên phân loại" }]}
                   >
-                    <Input placeholder="Size" />
+                    <Input
+                      placeholder="VD: Màu sắc, Kích thước"
+                      onChange={(e) => handleChangeLabel(index, e.target.value)}
+                    />
                   </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'color']}
-                    rules={[{ required: true, message: 'Nhập màu' }]}
+
+                  <Form.List name={[field.name, "options"]}>
+                    {(optionFields, { add: addOption, remove: removeOption }) => (
+                      <>
+                        {optionFields.map((opt) => (
+                          <Form.Item
+                            key={opt.key}
+                            name={opt.name}
+                            label="Tùy chọn"
+                            rules={[{ required: true, message: "Nhập tùy chọn" }]}
+                          >
+                            <Input placeholder="VD: Đỏ, Xanh, S, M" />
+                          </Form.Item>
+                        ))}
+                        <Button type="dashed" onClick={() => addOption()} block>
+                          + Thêm tùy chọn
+                        </Button>
+                      </>
+                    )}
+                  </Form.List>
+
+                  <Button
+                    type="link"
+                    danger
+                    onClick={() => {
+                      remove(field.name);
+                      const updated = { ...labels };
+                      delete updated[index];
+                      setLabels(updated);
+                    }}
                   >
-                    <Input placeholder="Màu" />
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'price']}
-                    rules={[{ required: true, message: 'Nhập giá' }]}
-                  >
-                    <InputNumber placeholder="Giá" min={0} />
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'stock']}
-                    rules={[{ required: true, message: 'Nhập tồn kho' }]}
-                  >
-                    <InputNumber placeholder="Tồn kho" min={0} />
-                  </Form.Item>
-                  <MinusCircleOutlined onClick={() => remove(name)} />
-                </Space>
+                    Xóa phân loại
+                  </Button>
+                </div>
               ))}
-              <Form.Item>
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  Thêm thông tin chi tiết
-                </Button>
-              </Form.Item>
+              {fields.length < 2 && (
+                <Form.Item>
+                  <Button type="dashed" onClick={() => add()} block>
+                    + Thêm phân loại
+                  </Button>
+                </Form.Item>
+              )}
             </>
           )}
         </Form.List>
+
+        <Form.Item shouldUpdate>
+          {() => {
+            const values = form.getFieldValue("classifications") || [];
+            const [first, second] = values;
+
+            const options1 = first?.options || [];
+            const options2 = second?.options || [];
+
+            const combinations = options1.flatMap((opt1) =>
+              (options2.length ? options2 : [null]).map((opt2) => {
+                const attrs = [{ name: first?.name || "", value: opt1 }];
+                if (opt2) attrs.push({ name: second?.name || "", value: opt2 });
+                return { key: `${opt1}-${opt2 || ""}`, attributes: attrs };
+              })
+            );
+
+            return combinations.length ? (
+              <>
+                <h5 style={{textAlign: 'start'}}>Danh sách phân loại hàng</h5>
+                {combinations.map(({ key, attributes }, index) => (
+                  <Space
+                    key={key}
+                    style={{
+                      display: "flex",
+                      marginBottom: 8,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                    align="start"
+                  >
+                    <span>
+                      {attributes.map((attr) => `${attr.name}: ${attr.value}`).join(" | ")}
+                    </span>
+
+                    <Form.Item
+                      name={["priceOptions", index, "price"]}
+                      rules={[{ required: true, message: "Nhập giá" }]}
+                    >
+                      <InputNumber placeholder="Giá" min={0} />
+                    </Form.Item>
+
+                    <Form.Item
+                      name={["priceOptions", index, "salePrice"]}
+                      rules={[{ type: "number", min: 0 }]}
+                    >
+                      <InputNumber placeholder="Giá khuyến mãi" min={0} />
+                    </Form.Item>
+
+                    <Form.Item
+                      name={["priceOptions", index, "stock"]}
+                      rules={[{ required: true, message: "Nhập tồn kho" }]}
+                    >
+                      <InputNumber placeholder="Tồn kho" min={0} />
+                    </Form.Item>
+
+                    <Form.Item name={["priceOptions", index, "attributes"]} hidden initialValue={attributes}>
+                      <Input type="hidden" />
+                    </Form.Item>
+                  </Space>
+                ))}
+              </>
+            ) : null;
+          }}
+        </Form.Item>
+
+
+        
 
         <Form.Item>
           <Button type="primary" htmlType="submit">
