@@ -110,7 +110,7 @@ const onFinish = async (values) => {
       const res = await AuthServices.refreshToken();
       accessToken = res?.access_token;
       localStorage.setItem("access_token", JSON.stringify(accessToken));
-      decoded = jwtDecode(accessToken); // Cập nhật lại decoded
+      decoded = jwtDecode(accessToken);
     }
 
     // ✅ Lấy dữ liệu từ form
