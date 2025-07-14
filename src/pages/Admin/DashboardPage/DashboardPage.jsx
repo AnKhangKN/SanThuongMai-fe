@@ -12,39 +12,20 @@ import { HiMiniBuildingStorefront } from "react-icons/hi2";
 import { BiSolidDollarCircle } from "react-icons/bi";
 import { MdShoppingCart } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
 import * as HomeServices from "../../../services/admin/HomeServices";
 import { useSelector } from "react-redux";
+import * as ValidateToken from "../../../utils/tokenUtils";
 
 const DashboardPage = () => {
   const [allData, setAllData] = useState({});
   const user = useSelector((state) => state.user);
 
-  const handleDecoded = async () => {
-    let storageData = localStorage.getItem("access_token");
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      const decoded = jwtDecode(storageData);
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        const accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-        return accessToken;
-      }
-      return storageData;
-    }
-    return null;
-  };
-
   const fetchAllHome = useCallback(async () => {
     try {
-      const token = await handleDecoded();
+      const token = await ValidateToken.getValidAccessToken();
       const res = await HomeServices.getAllHome(token);
 
       if (res?.data) {
-        console.log("Dữ liệu nhận được từ API:", res.data);
         setAllData(res.data);
       } else {
         console.error("Không nhận được phản hồi hợp lệ từ API.");

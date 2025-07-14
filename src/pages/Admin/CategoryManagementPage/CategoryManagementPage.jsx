@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Select, Modal, Button, message } from "antd";
+import { Table, Select, Modal, Button, message, Input } from "antd";
 import { Wrapper } from "./style";
 import * as CategoryServices from "../../../services/admin/CategoryServices";
 import * as ValidateToken from "../../../utils/tokenUtils";
@@ -7,10 +7,17 @@ import * as ValidateToken from "../../../utils/tokenUtils";
 const CategoryManagementPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [tempStatus, setTempStatus] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const [modalAddCategories, setModalAddCategories] = useState(false);
+
+  const [newCategory, setNewCategory] = useState({
+    categoryName: "",
+    description: "",
+    vat: "",
+    platformFee: "",
+    typeFees: "",
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -20,74 +27,87 @@ const CategoryManagementPage = () => {
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
       const res = await CategoryServices.getAllCategory(accessToken);
-
-      const formatted = res.data.map((cat) => ({
-        ...cat,
-        key: cat._id,
-        vat: `${cat.vat}%`,
-        platformFee: `${cat.platformFee}%`,
-        otherFees:
-          (cat.otherFees || [])
-            .filter((fee) => fee.isActiveOtherFee)
-            .map((fee) => `${fee.feeName}: ${fee.value}đ`)
-            .join(", ") || "Không có",
-        isActive: convertStatus(cat.isActive),
-      }));
-
-      setCategories(formatted);
+      setCategories(res.data);
     } catch (error) {
       console.error("Lỗi khi lấy danh mục:", error);
       message.error("Không thể lấy danh mục");
     }
   };
 
-  const handleCreateCategories = async () => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewCategory((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateCategory = async () => {
+    const { categoryName, description, vat, platformFee, typeFees } =
+      newCategory;
+    if (!categoryName || !vat || !platformFee || !typeFees) {
+      return message.warning("Vui lòng nhập đầy đủ thông tin bắt buộc");
+    }
+
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
-
+      await CategoryServices.createCategory(accessToken, {
+        ...newCategory,
+        vat: Number(vat),
+        platformFee: Number(platformFee),
+      });
+      message.success("Thêm danh mục thành công");
+      setModalAddCategories(false);
+      setNewCategory({
+        categoryName: "",
+        description: "",
+        vat: "",
+        platformFee: "",
+        typeFees: "",
+      });
       fetchCategories();
     } catch (error) {
-      console.log(error);
+      console.error("Lỗi khi thêm danh mục:", error);
+      message.error("Không thể thêm danh mục");
     }
   };
 
-  const convertStatus = (status) => {
-    if (status === true || status === "active") return "Hoạt động";
-    if (status === false || status === "inactive") return "Không hoạt động";
-    if (status === "pending") return "Chờ duyệt";
-    return status;
-  };
+  const handleUpdateCategory = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await CategoryServices.updateCategory(accessToken, {
+        categoryId: selectedCategory._id,
+        ...selectedCategory,
+      });
 
-  const getStatusValue = (statusText) => {
-    if (statusText === "Hoạt động") return "active";
-    if (statusText === "Không hoạt động") return "inactive";
-    if (statusText === "Chờ duyệt") return "pending";
-    return "";
+      if (res.status === 200) {
+        message.success("Cập nhật danh mục thành công");
+        setModalVisible(false);
+        fetchCategories();
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật danh mục:", error);
+      message.error("Không thể cập nhật danh mục");
+    }
   };
-
-  const filteredData = categories.filter((item) => {
-    if (selectedStatus === "all") return true;
-    return item.isActive === convertStatus(selectedStatus);
-  });
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
   };
 
   const handleRowClick = (record) => {
-    setSelectedProduct(record);
-    setTempStatus(getStatusValue(record.isActive));
+    setSelectedCategory({ ...record }); // clone để sửa
     setModalVisible(true);
   };
 
   const handleModalCancel = () => {
     setModalVisible(false);
-    setSelectedProduct(null);
+    setSelectedCategory(null);
   };
 
-  const handleStatusChange = (value) => {
-    setTempStatus(value);
-  };
+  const convertStatus = (status) => (status ? "Hoạt động" : "Không hoạt động");
+
+  const filteredData = categories.filter((item) => {
+    if (selectedStatus === "all") return true;
+    return item.isActive === selectedStatus;
+  });
 
   const columns = [
     {
@@ -102,96 +122,121 @@ const CategoryManagementPage = () => {
       key: "description",
       ellipsis: true,
     },
-    {
-      title: "VAT",
-      dataIndex: "vat",
-      key: "vat",
-    },
-    {
-      title: "Phí nền tảng",
-      dataIndex: "platformFee",
-      key: "platformFee",
-    },
-    {
-      title: "Phí khác",
-      dataIndex: "otherFees",
-      key: "otherFees",
-      ellipsis: true,
-    },
+    { title: "VAT", dataIndex: "vat", key: "vat" },
+    { title: "Phí nền tảng", dataIndex: "platformFee", key: "platformFee" },
     {
       title: "Trạng thái",
       dataIndex: "isActive",
       key: "isActive",
+      render: (status) => convertStatus(status),
     },
   ];
 
   return (
     <Wrapper>
+      {/* Header */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
           justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
         <h3>Quản lý Danh mục</h3>
-        <button onClick={() => setModalAddCategories(true)}>
+        <Button type="primary" onClick={() => setModalAddCategories(true)}>
           Thêm danh mục mới
-        </button>
-
-        <Modal
-          title="Thêm danh mục mới"
-          open={modalAddCategories}
-          onCancel={() => setModalAddCategories(false)}
-          footer={[
-            <Button key="cancel" onClick={() => setModalAddCategories(false)}>
-              Đóng
-            </Button>,
-            <Button key="save" type="primary">
-              Lưu thay đổi
-            </Button>,
-          ]}
-        >
-          <input type="text" />
-          <input type="text" />
-          <input type="text" />
-          <input type="text" />
-        </Modal>
+        </Button>
       </div>
 
+      {/* Modal tạo danh mục mới */}
+      <Modal
+        title="Thêm danh mục mới"
+        open={modalAddCategories}
+        onCancel={() => setModalAddCategories(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setModalAddCategories(false)}>
+            Đóng
+          </Button>,
+          <Button key="save" type="primary" onClick={handleCreateCategory}>
+            Lưu thay đổi
+          </Button>,
+        ]}
+      >
+        <Input
+          name="categoryName"
+          placeholder="Tên danh mục"
+          value={newCategory.categoryName}
+          onChange={handleInputChange}
+          style={{ marginBottom: 10 }}
+        />
+        <Input
+          name="description"
+          placeholder="Mô tả"
+          value={newCategory.description}
+          onChange={handleInputChange}
+          style={{ marginBottom: 10 }}
+        />
+        <Input
+          name="vat"
+          type="number"
+          placeholder="VAT (%)"
+          value={newCategory.vat}
+          onChange={handleInputChange}
+          style={{ marginBottom: 10 }}
+        />
+        <Input
+          name="platformFee"
+          type="number"
+          placeholder="Phí nền tảng (%)"
+          value={newCategory.platformFee}
+          onChange={handleInputChange}
+          style={{ marginBottom: 10 }}
+        />
+        <Select
+          placeholder="Loại phí"
+          value={newCategory.typeFees}
+          onChange={(value) =>
+            setNewCategory((prev) => ({ ...prev, typeFees: value }))
+          }
+          style={{ width: "100%" }}
+        >
+          <Select.Option value="percent">Phần trăm</Select.Option>
+          <Select.Option value="fixed">Cố định</Select.Option>
+        </Select>
+      </Modal>
+
+      {/* Bộ lọc và bảng */}
       <div
         style={{
+          marginTop: 20,
           backgroundColor: "#fff",
-          padding: "20px",
-          borderRadius: "5px",
-          boxShadow: "1px 1px 10px #e9e9e9",
+          padding: 20,
+          borderRadius: 5,
         }}
       >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
+            marginBottom: 20,
           }}
         >
           <h5>Danh sách danh mục</h5>
           <Select
             value={selectedStatus}
             style={{ width: 200 }}
+            onChange={handleFilterChange}
             options={[
               { value: "all", label: "Tất cả" },
-              { value: "active", label: "Hoạt động" },
-              { value: "inactive", label: "Không hoạt động" },
-              { value: "pending", label: "Chờ duyệt" },
+              { value: true, label: "Hoạt động" },
+              { value: false, label: "Không hoạt động" },
             ]}
-            onChange={handleFilterChange}
           />
         </div>
 
         <Table
+          rowKey={(record) => record._id}
           bordered
-          rowKey="key"
           columns={columns}
           dataSource={filteredData}
           pagination={{ pageSize: 5 }}
@@ -201,37 +246,89 @@ const CategoryManagementPage = () => {
         />
       </div>
 
+      {/* Modal cập nhật danh mục */}
       <Modal
-        title="Thông tin danh mục"
+        title="Chỉnh sửa danh mục"
         open={modalVisible}
         onCancel={handleModalCancel}
         footer={[
           <Button key="cancel" onClick={handleModalCancel}>
             Đóng
           </Button>,
-          <Button key="save" type="primary">
+          <Button key="save" type="primary" onClick={handleUpdateCategory}>
             Lưu thay đổi
           </Button>,
         ]}
       >
-        {selectedProduct && (
-          <div>
-            <p>
-              <strong>Tên danh mục:</strong> {selectedProduct.categoryName}
-            </p>
-            <p>
-              <strong>Trạng thái hiện tại:</strong> {selectedProduct.isActive}
-            </p>
+        {selectedCategory && (
+          <>
+            <Input
+              name="categoryName"
+              value={selectedCategory.categoryName}
+              onChange={(e) =>
+                setSelectedCategory({
+                  ...selectedCategory,
+                  categoryName: e.target.value,
+                })
+              }
+              style={{ marginBottom: 10 }}
+            />
+            <Input
+              name="description"
+              value={selectedCategory.description}
+              onChange={(e) =>
+                setSelectedCategory({
+                  ...selectedCategory,
+                  description: e.target.value,
+                })
+              }
+              style={{ marginBottom: 10 }}
+            />
+            <Input
+              name="vat"
+              type="number"
+              value={selectedCategory.vat}
+              onChange={(e) =>
+                setSelectedCategory({
+                  ...selectedCategory,
+                  vat: e.target.value,
+                })
+              }
+              style={{ marginBottom: 10 }}
+            />
+            <Input
+              name="platformFee"
+              type="number"
+              value={selectedCategory.platformFee}
+              onChange={(e) =>
+                setSelectedCategory({
+                  ...selectedCategory,
+                  platformFee: e.target.value,
+                })
+              }
+              style={{ marginBottom: 10 }}
+            />
             <Select
-              value={tempStatus}
-              onChange={handleStatusChange}
+              value={selectedCategory.typeFees}
+              onChange={(value) =>
+                setSelectedCategory({ ...selectedCategory, typeFees: value })
+              }
+              style={{ width: "100%", marginBottom: 10 }}
+            >
+              <Select.Option value="percent">Phần trăm</Select.Option>
+              <Select.Option value="fixed">Cố định</Select.Option>
+            </Select>
+            <Select
+              value={selectedCategory.isActive}
+              onChange={(value) =>
+                setSelectedCategory({ ...selectedCategory, isActive: value })
+              }
               style={{ width: "100%" }}
             >
-              <Select.Option value="active">Hoạt động</Select.Option>
-              <Select.Option value="inactive">Không hoạt động</Select.Option>
-              <Select.Option value="pending">Chờ duyệt</Select.Option>
+              <Select.Option value={true}>Hoạt động</Select.Option>
+              <Select.Option value={false}>Không hoạt động</Select.Option>
             </Select>
-          </div>
+          </>
         )}
       </Modal>
     </Wrapper>
