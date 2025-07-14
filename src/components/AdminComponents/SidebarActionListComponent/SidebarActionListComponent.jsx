@@ -11,10 +11,7 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
 
   const [isShowAccountOptions, setIsShowAccountOptions] = useState(false);
   const [isShowPromotionOptions, setIsShowPromotionOptions] = useState(false);
-
-  const handleNavigateManagementUser = () => {
-    navigate("/admin/users");
-  };
+  const [isShowProductCategory, setIsShowProductCategory] = useState(false);
 
   return (
     <Wrapper>
@@ -66,7 +63,7 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
 
       {isShowAccountOptions && (
         <OptionContainer style={{ paddingLeft: "20px" }}>
-          <div onClick={handleNavigateManagementUser}>
+          <div onClick={() => navigate("/admin/users")}>
             <div style={{ display: "flex", alignItems: "center" }}>
               {!isCollapsed && (
                 <div style={{ paddingLeft: "10px" }}>Người dùng</div>
@@ -77,21 +74,48 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
       )}
 
       {/* Quản lý sản phẩm */}
-      <OptionContainer>
-        <Link
-          to="/admin/products"
-          style={{ textDecoration: "none", color: "#333" }}
-        >
+      <OptionContainer
+        onClick={() => setIsShowProductCategory(!isShowProductCategory)}
+      >
+        <OptionSelect>
           <div style={{ display: "flex", alignItems: "center" }}>
             <IconContainer>
               <AiFillProduct />
             </IconContainer>
+
             {!isCollapsed && (
-              <div style={{ paddingLeft: "10px" }}>Quản lý sản phẩm</div>
+              <div style={{ paddingLeft: "10px" }}>Sản phẩm danh mục</div>
             )}
           </div>
-        </Link>
+        </OptionSelect>
       </OptionContainer>
+
+      {isShowProductCategory && (
+        <OptionContainer style={{ paddingLeft: "20px" }}>
+          <Link
+            to="/admin/products"
+            style={{ textDecoration: "none", color: "#333" }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>Sản phẩm</div>
+              )}
+            </div>
+          </Link>
+        </OptionContainer>
+      )}
+
+      {isShowProductCategory && (
+        <OptionContainer style={{ paddingLeft: "20px" }}>
+          <div onClick={() => navigate("/admin/categories")}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>Danh mục</div>
+              )}
+            </div>
+          </div>
+        </OptionContainer>
+      )}
 
       {/* Quản lý ship hàng */}
       <OptionContainer>

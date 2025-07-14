@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { DetailBox } from "./style";
 import { Col, message, Row } from "antd";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
@@ -23,16 +23,12 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(0);
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
-
   const [productDetail, setProductDetail] = useState(null);
   const [productImages, setProductImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [startIndex, setStartIndex] = useState(0);
   const maxVisible = 5;
 
-  const [shopDetail, setShopDetail] = useState(); // xử lý link sản phẩm (làm sau)
-
-  // Fetch chi tiết sản phẩm
   useEffect(() => {
     const fetchDetailProduct = async () => {
       try {
@@ -45,7 +41,6 @@ const ProductDetailPage = () => {
         setQuantity(0);
         setSelectedAttributes({});
         setSelectedProductDetail(null);
-        setShopDetail(res.shop);
       } catch (error) {
         console.error("Lỗi khi lấy sản phẩm:", error);
         message.error("Không thể tải sản phẩm.");
@@ -55,28 +50,53 @@ const ProductDetailPage = () => {
     fetchDetailProduct();
   }, [id]);
 
-  // Xử lý chọn thuộc tính
+  const allAttributeNames = useMemo(() => {
+    return [
+      ...new Set(
+        productDetail?.priceOptions?.flatMap((opt) =>
+          opt.attributes.map((a) => a.name)
+        ) || []
+      ),
+    ];
+  }, [productDetail]);
+
+  const getValidOptions = (attributes, exceptAttrName = null) => {
+    if (!productDetail?.priceOptions) return [];
+    return productDetail.priceOptions.filter((option) => {
+      return Object.entries(attributes).every(([name, value]) => {
+        if (name === exceptAttrName) return true;
+        return (
+          option.attributes.find((attr) => attr.name === name)?.value === value
+        );
+      });
+    });
+  };
+
   const handleSelectAttribute = (attrName, attrValue) => {
-    const newSelected = { ...selectedAttributes, [attrName]: attrValue };
-    setSelectedAttributes(newSelected);
-
+    const updated = { ...selectedAttributes, [attrName]: attrValue };
+    const attrIndex = allAttributeNames.indexOf(attrName);
+    // Reset các thuộc tính sau attrName
+    allAttributeNames.slice(attrIndex + 1).forEach((name) => {
+      delete updated[name];
+    });
+    setSelectedAttributes(updated);
     const matched = productDetail?.priceOptions?.find((option) =>
-      option.attributes.every((attr) => newSelected[attr.name] === attr.value)
+      option.attributes.every((attr) => updated[attr.name] === attr.value)
     );
-
     setSelectedProductDetail(matched || null);
   };
 
-  // Tạo map thuộc tính từ priceOptions
-  const attributeMap = {};
-  productDetail?.priceOptions?.forEach((option) => {
-    option.attributes.forEach((attr) => {
-      if (!attributeMap[attr.name]) attributeMap[attr.name] = new Set();
-      attributeMap[attr.name].add(attr.value);
+  const getValuesForAttribute = (attrName) => {
+    const validOptions = getValidOptions(selectedAttributes, attrName);
+    const values = new Set();
+    validOptions.forEach((opt) => {
+      opt.attributes.forEach((attr) => {
+        if (attr.name === attrName) values.add(attr.value);
+      });
     });
-  });
+    return Array.from(values);
+  };
 
-  // Thêm vào giỏ hàng
   const handleAddToCart = async () => {
     if (!user?.id) {
       message.info("Hãy đăng nhập trước!");
@@ -124,7 +144,6 @@ const ProductDetailPage = () => {
       }
 
       const cartRes = await CartServices.getAllItem(accessToken);
-
       const userCart = cartRes.data?.[0];
 
       if (userCart) {
@@ -148,14 +167,12 @@ const ProductDetailPage = () => {
       <div style={{ width: "1200px", margin: "auto", marginTop: "120px" }}>
         <DetailBox>
           <Row>
-            {/* Ảnh chính + phụ */}
             <Col span={10}>
               <img
                 style={{ width: "100%", height: "450px", objectFit: "contain" }}
                 src={selectedImage ? `${imageURL}${selectedImage}` : ""}
                 alt="Ảnh sản phẩm"
               />
-
               {productImages.length > 1 && (
                 <div
                   style={{
@@ -177,7 +194,6 @@ const ProductDetailPage = () => {
                   >
                     <GrFormPrevious size={24} />
                   </button>
-
                   <div style={{ display: "flex", gap: 10 }}>
                     {productImages
                       .slice(startIndex, startIndex + maxVisible)
@@ -200,7 +216,6 @@ const ProductDetailPage = () => {
                         />
                       ))}
                   </div>
-
                   <button
                     onClick={() =>
                       setStartIndex((prev) =>
@@ -223,7 +238,6 @@ const ProductDetailPage = () => {
               )}
             </Col>
 
-            {/* Thông tin sản phẩm */}
             <Col span={14}>
               <p style={{ fontSize: "25px" }}>{productDetail?.productName}</p>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -238,36 +252,56 @@ const ProductDetailPage = () => {
                 </div>
               </div>
 
-              {/* Thuộc tính động */}
-              {Object.entries(attributeMap).map(([attrName, values]) => (
-                <div key={attrName} style={{ marginTop: 20 }}>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    <div style={{ width: 100 }}>{attrName}</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                      {[...values].map((val) => (
-                        <button
-                          key={val}
-                          onClick={() => handleSelectAttribute(attrName, val)}
-                          style={{
-                            padding: "8px 10px",
-                            border:
-                              selectedAttributes[attrName] === val
-                                ? "2px solid #194a7a"
-                                : "1px solid #ccc",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {val}
-                        </button>
-                      ))}
+              {allAttributeNames.map((attrName, index) => {
+                const allValues = Array.from(
+                  new Set(
+                    productDetail?.priceOptions?.flatMap((opt) =>
+                      opt.attributes
+                        .filter((a) => a.name === attrName)
+                        .map((a) => a.value)
+                    )
+                  )
+                );
+                const validValues = getValuesForAttribute(attrName);
+                return (
+                  <div key={attrName} style={{ marginTop: 20 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    >
+                      <div style={{ width: 100 }}>{attrName}</div>
+                      <div
+                        style={{ display: "flex", flexWrap: "wrap", gap: 10 }}
+                      >
+                        {allValues.map((val) => {
+                          const isActive = selectedAttributes[attrName] === val;
+                          const isAvailable =
+                            index === 0 || validValues.includes(val);
+                          return (
+                            <button
+                              key={val}
+                              onClick={() =>
+                                handleSelectAttribute(attrName, val)
+                              }
+                              disabled={!isAvailable}
+                              style={{
+                                padding: "8px 10px",
+                                border: isActive
+                                  ? "2px solid #194a7a"
+                                  : "1px solid #ccc",
+                                cursor: isAvailable ? "pointer" : "not-allowed",
+                                opacity: isAvailable ? 1 : 0.4,
+                              }}
+                            >
+                              {val}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
-              {/* Số lượng */}
               <div style={{ marginTop: 20 }}>
                 <div style={{ marginBottom: 10 }}>
                   Số lượng còn lại: {selectedProductDetail?.stock || 0}
@@ -290,7 +324,6 @@ const ProductDetailPage = () => {
                 </div>
               </div>
 
-              {/* Thêm vào giỏ */}
               <button
                 onClick={handleAddToCart}
                 style={{
