@@ -24,13 +24,13 @@ export const getAllProducts = async (accessToken) => {
   );
 };
 
-export const updatedProduct = async (accessToken, productData) => {
+export const updateProduct = async (id, data, token) => {
   return await axios.put(
     `${process.env.REACT_APP_API_URL}/vendor/update-product`,
-    productData,
+    { ...data, id }, // 👈 THÊM id vào body
     {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );

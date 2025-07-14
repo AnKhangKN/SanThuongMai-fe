@@ -26,7 +26,7 @@ const HeaderOfVendorComponent = (props) => {
   const [shop, setShop] = useState(null);
     const [loading, setLoading] = useState(true);
   
-    const baseUrl = "http://localhost:8080"; // backend url
+    const baseUrl = process.env.REACT_APP_API_URL; // backend url
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
@@ -174,7 +174,7 @@ const HeaderOfVendorComponent = (props) => {
         <AvatarWrapper ref={dropdownRef}>
           <WrapperHeaderImageAvatar onClick={toggleDropdown}>
             <Avatar src={shop.shopAvatar
-            ? `${baseUrl}/api/avatar/${shop.shopAvatar}`
+            ? `${baseUrl}/avatar/${shop.shopAvatar}`
             : logo} size="default" gap={"10px"}></Avatar>
             {/* <WrapperHeaderImageAvatar src={avatar} alt='avatar' preview={false}></WrapperHeaderImageAvatar> */}
             <WrapperHeaderTextAvatar style={{ marginLeft: "10px", fontWeight: "500", fontSize: "16px" }}>{shop.shopName}</WrapperHeaderTextAvatar>
@@ -188,7 +188,7 @@ const HeaderOfVendorComponent = (props) => {
               <WrapperAvatarList>
                 <Avatar
                   src={shop.shopAvatar
-            ? `${baseUrl}/api/avatar/${shop.shopAvatar}`
+            ? `${baseUrl}/avatar/${shop.shopAvatar}`
             : logo}
                   preview={false}
                   style={{ width: "56px", height: "56px", margin: "0 0 10px" }}

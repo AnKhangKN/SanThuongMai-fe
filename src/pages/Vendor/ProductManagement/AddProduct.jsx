@@ -33,17 +33,19 @@ const AddProduct = () => {
 });
 
   const handleDecoded = () => {
-    const token = localStorage.getItem("access_token");
-    let storageData = token;
-    let decoded = {};
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
+  const token = localStorage.getItem("access_token");
+
+  let decoded = {};
+  try {
+    if (token) {
+      decoded = jwtDecode(token); // ✅ decode trực tiếp
     }
-    console.log("storageData:", storageData)
-    console.log("decoded:", decoded)
-    return { decoded, storageData };
-  };
+  } catch (err) {
+    console.error("❌ Lỗi khi decode token:", err.message || err);
+  }
+
+  return { decoded, storageData: token };
+};
 
   const fetchUserId = useCallback(async () => {
     try {

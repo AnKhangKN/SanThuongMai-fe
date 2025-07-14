@@ -31,7 +31,7 @@ const ProFileShop = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const baseUrl = "http://localhost:8080"; // backend url
+  const baseUrl = process.env.REACT_APP_API_URL; // backend url
 
     const handleDecoded = async () => {
       let storageToken = localStorage.getItem("access_token");
@@ -135,7 +135,7 @@ const ProFileShop = () => {
         <Row gutter={16}>
           <Col span={8}>
             <ShopAvatar src={  shop.shopAvatar
-      ? `${baseUrl}/api/avatar/${shop.shopAvatar}?t=${Date.now()}`
+      ? `${baseUrl}/avatar/${shop.shopAvatar}?t=${Date.now()}`
       : shopLogo
   } />    
             

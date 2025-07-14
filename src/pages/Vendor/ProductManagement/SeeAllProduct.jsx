@@ -27,6 +27,7 @@ import {
 import * as ProductService from "../../../services/vendor/ProductService";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { isJsonString } from "../../../utils";
+import ProductDetailModal from "./ProductDetailModal";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -34,6 +35,8 @@ const SeeAllProduct = () => {
   const navigate = useNavigate();
   const { TabPane } = Tabs;
   const [productList, setProductList] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleClickToAddProduct = () => {
     navigate("/vendor/add-product");
@@ -70,8 +73,7 @@ const SeeAllProduct = () => {
   }
 };
 
- useEffect(() => {
-  const fetchProducts = async () => {
+const fetchProducts = async () => {
     try {
       const tokenHandle = await handleDecoded();
 
@@ -89,6 +91,7 @@ const SeeAllProduct = () => {
     }
   };
 
+ useEffect(() => {
   fetchProducts();
 }, []);
 
@@ -155,6 +158,10 @@ const columns = [
   return productList.filter((product) => product.status === status);
 };
 
+const countByStatus = (status) => {
+  return productList.filter((product) => product.status === status).length;
+};
+
   return (
     <div>
       <WrapperHeaderSeeAllProduct>
@@ -192,110 +199,78 @@ const columns = [
       <WrapperUnderHeaderSeeAllProduct>
         <WrapperTabs defaultActiveKey="1">
         <TabPane tab="Tất cả" key="all">
-          <Table columns={columns} dataSource={filterProductsByStatus("all")} rowKey={"_id"} pagination={{ pageSize: 5 }} />
+          <Table 
+            columns={columns} 
+            dataSource={filterProductsByStatus("all")} 
+            rowKey={"_id"} 
+            pagination={{ pageSize: 5 }}
+            onRow={(record) => {
+            return {
+              onClick: () => {
+                setSelectedProduct(record);
+                setIsModalVisible(true);
+              },
+            };
+          }}
+            />
         </TabPane>
-        <TabPane tab="Đang hoạt động" key="active">
-          <Table columns={columns} dataSource={filterProductsByStatus("active")} rowKey={"_id"} pagination={{ pageSize: 5 }} />
+        <TabPane tab={`Đang hoạt động (${countByStatus("active")})`} key="active">
+          <Table 
+            columns={columns} 
+            dataSource={filterProductsByStatus("active")} 
+            rowKey={"_id"} 
+            pagination={{ pageSize: 5 }}
+            onRow={(record) => {
+            return {
+              onClick: () => {
+                setSelectedProduct(record);
+                setIsModalVisible(true);
+              },
+            };
+          }}
+            />
         </TabPane>
-        <TabPane tab="Không hoạt động" key="inactive">
-          <Table columns={columns} dataSource={filterProductsByStatus("inactive")} rowKey={"_id"} pagination={{ pageSize: 5 }}/>
+        <TabPane tab={`Không hoạt động (${countByStatus("inactive")})`} key="inactive">
+          <Table 
+            columns={columns} 
+            dataSource={filterProductsByStatus("inactive")} 
+            rowKey={"_id"} 
+            pagination={{ pageSize: 5 }}
+            onRow={(record) => {
+            return {
+              onClick: () => {
+                setSelectedProduct(record);
+                setIsModalVisible(true);
+              },
+            };
+          }}
+            />
         </TabPane>
-        <TabPane tab="Bị cấm" key="banned">
-          <Table columns={columns} dataSource={filterProductsByStatus("banned")} rowKey={"_id"} pagination={{ pageSize: 5 }}/>
+        <TabPane tab={`Bị cấm (${countByStatus("banned")})`} key="banned">
+          <Table 
+            columns={columns} 
+            dataSource={filterProductsByStatus("banned")} 
+            rowKey={"_id"} 
+            pagination={{ pageSize: 5 }}
+            onRow={(record) => {
+            return {
+              onClick: () => {
+                setSelectedProduct(record);
+                setIsModalVisible(true);
+              },
+            };
+          }}
+            />
         </TabPane>
       </WrapperTabs>
       </WrapperUnderHeaderSeeAllProduct>
 
-      {/* <Table
-        columns={columns}
-        dataSource={allData}
-        rowKey="_id"
-        pagination={{ pageSize: 5 }}
-      /> */}
-
-      {/* <Modal
-        title="Chỉnh sửa sản phẩm"
-        open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        <Form
-          name="editProductForm"
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-        >
-          <Form.Item
-            name="product_name"
-            label="Tên sản phẩm"
-            rules={[{ required: true, message: "Vui lòng nhập tên" }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item label="Hình ảnh sản phẩm">
-            <div style={{ marginBottom: 8 }}>
-              {previewImages.map((img, index) => (
-                <img
-                  key={index}
-                  src={img.startsWith("data:")
-                    ? img
-                    : `${imageURL}${img}`
-                  }
-                  alt="preview"
-                  style={{
-                    width: 60,
-                    height: 60,
-                    objectFit: "cover",
-                    marginRight: 8,
-                  }}
-                />
-              ))}
-            </div>
-          </Form.Item>
-
-          <Form.Item
-            name="category"
-            label="Danh mục sản phẩm"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item name="description" label="Mô tả sản phẩm">
-            <Input.TextArea rows={4} />
-          </Form.Item>
-          <Form.Item
-            name="price"
-            label="Giá bán"
-            rules={[{ required: true, message: "Vui lòng nhập giá" }]}
-          >
-            <InputNumber style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item name="color" label="Màu sắc">
-            <Input />
-          </Form.Item>
-          <Form.Item name="size" label="Kích thước">
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="quantity"
-            label="Số lượng"
-            rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
-          >
-            <InputNumber min={0} style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item
-            name="status"
-            label="Trạng thái sản phẩm"
-            rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
-          >
-            <Select>
-              <Select.Option value="active">Hoạt động</Select.Option>
-              <Select.Option value="inactive">Không hoạt động</Select.Option>
-              <Select.Option value="banned">Bị cấm</Select.Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal> */}
+      <ProductDetailModal
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        product={selectedProduct}
+         onUpdateSuccess={fetchProducts}
+      />
     </div>
   );
 };
