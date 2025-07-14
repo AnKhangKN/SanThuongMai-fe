@@ -19,7 +19,7 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
   if (product) {
     form.setFieldsValue({
       productName: product.productName,
-      category: product.category,
+      categoryId: product.category,
       description: product.description,
       status: product.status,
       priceOptions: product.priceOptions,
@@ -102,7 +102,7 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
             <TabPane tab="Chi tiết sản phẩm" key="1">
             <div>
                 <h3>{product.productName}</h3>
-                <p><strong>Danh mục:</strong> {product.category}</p>
+                <p><strong>Danh mục:</strong> {product.categoryId}</p>
                 <p><strong>Mô tả:</strong> {product.description || "Không có"}</p>
                 <p><strong>Đã bán:</strong> {product.soldCount}</p>
                 <p><strong>Trạng thái:</strong> {renderStatusTag(product.status)}</p>
@@ -155,7 +155,7 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
             <Form.Item name="productName" label="Tên sản phẩm" rules={[{ required: true }]}>
             <Input />
             </Form.Item>
-            <Form.Item name="category" label="Danh mục" rules={[{ required: true }]}>
+            <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true }]}>
             <Input />
             </Form.Item>
             <Form.Item name="description" label="Mô tả">

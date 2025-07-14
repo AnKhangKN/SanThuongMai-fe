@@ -17,6 +17,7 @@ import {
 import { PlusOutlined } from "@ant-design/icons";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ProductServices from "../../../services/vendor/ProductService";
+import * as CategoryServices from "../../../services/vendor/CategoryService";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 
@@ -31,6 +32,7 @@ const AddProduct = () => {
   salePrice: null,
   stock: null,
 });
+const [categories, setCategories] = useState([]);
 
   const handleDecoded = () => {
   const token = localStorage.getItem("access_token");
@@ -107,6 +109,33 @@ const AddProduct = () => {
   form.setFieldsValue({ images: updatedList });
 };
 
+  const fetchCategories = async () => {
+    try {
+      const {decoded, storageData} = handleDecoded();
+      const accessToken = storageData;
+
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        decoded = jwtDecode(accessToken);
+      }
+      const categories = await CategoryServices.getAllCategory(accessToken);
+       if (categories.data.data.status === "OK") {
+        setCategories(categories.data.data.data);
+      } else {
+        message.error("Không thể tải loại sản phẩm");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy category:", error);
+      message.error("Không thể tải loại sản phẩm");
+    }
+  };
+
+useEffect(() => {
+  fetchCategories();
+}, []);
+
 const onFinish = async (values) => {
   try {
     let { storageData, decoded } = handleDecoded();
@@ -141,7 +170,7 @@ const onFinish = async (values) => {
     const formData = new FormData();
     formData.append("productName", values.productName);
     formData.append("description", values.description || "");
-    formData.append("category", values.category);
+    formData.append("categoryId", values.category);
     formData.append("status", values.status || "active");
     formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
 
@@ -160,69 +189,6 @@ const onFinish = async (values) => {
     message.error("Thêm sản phẩm thất bại!");
   }
 };
-
-//   const onFinish = async (values) => {
-//   try {
-//     let { storageData, decoded } = handleDecoded();
-//     let accessToken = storageData;
-
-//     // Kiểm tra token hết hạn
-//     if (decoded?.exp < Date.now() / 1000) {
-//       const res = await AuthServices.refreshToken();
-//       accessToken = res?.access_token;
-//       localStorage.setItem("access_token", JSON.stringify(accessToken));
-//     }
-
-//     const transformedPriceOptions = priceOptions.map((opt) => {
-//   const attributes = [];
-
-//     // Duyệt từng classification để lấy tên phân loại
-//     classifications.forEach((cls, index) => {
-//       const attrName = cls.name || `attr${index+1}`;
-//       const attrValue = opt[attrName] || opt[index]; // Tùy theo bạn lưu giá trị ở đâu trong priceOptions
-
-//       attributes.push({
-//         name: attrName,
-//         value: attrValue,
-//       });
-//     });
-
-//     return {
-//       attributes,
-//       price: opt.price,
-//       salePrice: opt.salePrice,
-//       stock: opt.stock,
-//     };
-//   });
-
-//     // Kiểm tra
-//     if (!transformedPriceOptions.length) {
-//       message.error("Phải có ít nhất 1 biến thể sản phẩm");
-//       return;
-//     }
-
-//     const formData = new FormData();
-//     formData.append("productName", values.productName);
-//     formData.append("description", values.description || "");
-//     formData.append("category", values.category);
-//     formData.append("status", values.status || "active");
-//     // console.log("shopId:", shopId);
-//     formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
-
-//     fileList.forEach((file) => {
-//       formData.append("productImages", file.originFileObj); // ảnh thực tế
-//     });
-
-//     const response = await ProductServices.createProduct(accessToken, formData);
-//     message.success("Thêm sản phẩm thành công!");
-//     form.resetFields();
-//     setFileList([]);
-//   } catch (error) {
-//     console.error("Lỗi khi thêm sản phẩm:", error);
-//     message.error("Thêm sản phẩm thất bại!");
-//   }
-// };
-
 const handleChangeLabel = (index, value) => {
     setLabels((prev) => ({
       ...prev,
@@ -294,21 +260,11 @@ const handleChangeLabel = (index, value) => {
           rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm" }]}
         >
           <Select placeholder="Chọn loại sản phẩm">
-            <Select.Option value="Thời trang">Thời trang</Select.Option>
-            <Select.Option value="Điện tử">Điện tử</Select.Option>
-            <Select.Option value="Sách">Sách</Select.Option>
-            <Select.Option value="Giày dép">Giày dép</Select.Option>
-            <Select.Option value="Đồ chơi">Đồ chơi</Select.Option>
-            <Select.Option value="Thể thao">Thể thao</Select.Option>
-            <Select.Option value="Sức khỏe">Sức khỏe</Select.Option>
-            <Select.Option value="Nhà cửa">Nhà cửa</Select.Option>
-            <Select.Option value="Xe máy">Xe máy</Select.Option>
-            <Select.Option value="Ô tô">Ô tô</Select.Option>
-            <Select.Option value="Điện thoại">Điện thoại</Select.Option>
-            <Select.Option value="Laptop">Laptop</Select.Option>
-            <Select.Option value="Máy tính bảng">Máy tính bảng</Select.Option>
-            <Select.Option value="Thiết bị gia dụng">Thiết bị gia dụng</Select.Option>
-            <Select.Option value="Thiết bị y tế">Thiết bị y tế</Select.Option>
+            {categories.map((cat) => (
+              <Select.Option key={cat._id} value={cat._id}>
+                {cat.categoryName}
+              </Select.Option>
+            ))}
           </Select>
         </Form.Item>
 
