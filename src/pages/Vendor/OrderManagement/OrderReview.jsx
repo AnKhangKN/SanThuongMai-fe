@@ -1,137 +1,96 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Table, Tag, Space, Button, message } from "antd";
+import { Table, Tag, Space, Button, message, Row, Tabs,  Select, Image } from "antd";
 import OrderFilter from "../../../components/VendorComponents/OrderFilter/OrderFilter";
 import * as OrderProductService from "../../../services/vendor/OrderProductService";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 
+const mockOrders = [
+  {
+    key: "1",
+    productName: "Áo thể thao nam",
+    image: "https://via.placeholder.com/80",
+    attributes: [
+      { name: "Size", value: "M" },
+      { name: "Color", value: "Đen" },
+    ],
+    quantity: 2,
+    price: 250000,
+    status: "pending",
+  },
+  {
+    key: "2",
+    productName: "Quần thể thao nữ",
+    image: "https://via.placeholder.com/80",
+    attributes: [
+      { name: "Size", value: "L" },
+      { name: "Color", value: "Xanh" },
+    ],
+    quantity: 1,
+    price: 190000,
+    status: "shipped",
+  },
+  {
+    key: "3",
+    productName: "Giày chạy bộ",
+    image: "https://via.placeholder.com/80",
+    attributes: [
+      { name: "Size", value: "42" },
+      { name: "Color", value: "Trắng" },
+    ],
+    quantity: 1,
+    price: 590000,
+    status: "delivered",
+  },
+];
+
+const statusLabels = {
+  all: "Tất cả",
+  pending: "Chờ xác nhận",
+  processing: "Đang xử lý",
+  shipped: "Đang giao",
+  delivered: "Đã giao",
+  returned: "Đã trả hàng",
+  cancelled: "Đã hủy",
+};
+
+const statusColors = {
+  pending: "orange",
+  processing: "blue",
+  shipped: "cyan",
+  delivered: "green",
+  returned: "red",
+  cancelled: "default",
+};
+
+
 const OrderReview = () => {
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState(null);
-  const [dateRange, setDateRange] = useState([]);
-  const [allData, setAllData] = useState([]);
+    const { TabPane } = Tabs;
+    const { Option } = Select;
+    const [activeTab, setActiveTab] = useState("all");
 
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
-  const handleStatusChange = (value) => {
-    setStatusFilter(value);
-  };
-
-  const handleDateRangeChange = (dates) => {
-    setDateRange(dates);
-  };
-
-  const handleDecoded = () => {
-    const storageData = localStorage.getItem("access_token");
-    let decoded = {};
-
-    if (storageData && isJsonString(storageData)) {
-      const parsed = JSON.parse(storageData);
-      decoded = jwtDecode(parsed);
-      return { decoded, storageData: parsed };
-    }
-
-    return { decoded, storageData };
-  };
-
-  const fetchOrders = useCallback(async () => {
-    try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-        decoded = jwtDecode(accessToken); // Cập nhật decoded sau khi refresh
-      }
-
-      const res = await OrderProductService.getAllOrders(accessToken);
-      const currentVendorId = decoded?.id;
-
-      const pendingItems = [];
-
-      res.data.data.forEach((order) => {
-        order.items.forEach((item) => {
-          if (
-            item.status === "pending" &&
-            item.owner_id === currentVendorId // Lọc đúng shop
-          ) {
-            pendingItems.push({
-              key: item._id || order._id,
-              order_id: order._id,
-              owner_id: item.owner_id,
-              user_id: order.user_id?.user_name || "Ẩn danh",
-              status: "Chờ duyệt",
-              raw_status: item.status,
-              product_name: item.product_name,
-              product_image: item.product_image,
-              price: item.price,
-              quantity: item.quantity,
-              size: item.size,
-              item_id: item._id,
-            });
-          }
-        });
-      });
-
-      setAllData(pendingItems);
-    } catch (error) {
-      console.error("Lỗi khi lấy đơn hàng:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
-
-  const handleApprove = async (item) => {
-    try {
-      let accessToken = localStorage.getItem("access_token");
-      if (!accessToken) {
-        message.error("Bạn chưa đăng nhập");
-        return;
-      }
-      // Nếu token là JSON string, parse nó
-      if (isJsonString(accessToken)) {
-        accessToken = JSON.parse(accessToken);
-      }
-
-      await OrderProductService.changeStatusOrder(accessToken, item.item_id);
-
-      message.success("Đã duyệt đơn hàng");
-
-      fetchOrders(); // load lại dữ liệu
-    } catch (error) {
-      message.error("Duyệt đơn hàng thất bại");
-      console.error(error);
-    }
-  };
+    const filteredOrders =
+    activeTab === "all"
+      ? mockOrders
+      : mockOrders.filter((order) => order.status === activeTab);
 
   const columns = [
     {
-      title: "Mã đơn hàng",
-      dataIndex: "order_id",
-      key: "order_id",
-    },
-    {
-      title: "Khách hàng",
-      dataIndex: "user_id",
-      key: "user_id",
-    },
-    {
       title: "Sản phẩm",
-      dataIndex: "product_name",
-      key: "product_name",
-    },
-    {
-      title: "Size",
-      dataIndex: "size",
-      key: "size",
-      render: (size) => size || "Không có",
+      dataIndex: "productName",
+      key: "productName",
+      render: (text, record) => (
+        <Space>
+          <Image src={record.image} width={60} />
+          <div>
+            <div><strong>{record.productName}</strong></div>
+            <div style={{ fontSize: 12, color: "#888" }}>
+              {record.attributes.map((attr) => `${attr.name}: ${attr.value}`).join(", ")}
+            </div>
+          </div>
+        </Space>
+      ),
     },
     {
       title: "Số lượng",
@@ -139,22 +98,27 @@ const OrderReview = () => {
       key: "quantity",
     },
     {
+      title: "Giá",
+      dataIndex: "price",
+      key: "price",
+      render: (price) => `${price.toLocaleString()}₫`,
+    },
+    {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status) => {
-        const color = status === "Chờ duyệt" ? "orange" : "default";
-        return <Tag color={color}>{status}</Tag>;
-      },
+      render: (status) => (
+        <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>
+      ),
     },
     {
-      title: "Thao tác",
-      key: "action",
+      title: "Hành động",
+      key: "actions",
       render: (_, record) => (
-        <Space size="middle">
-          <Button type="primary" onClick={() => handleApprove(record)}>
-            Duyệt
-          </Button>
+        <Space>
+          <Button type="link">Chi tiết</Button>
+          {record.status === "pending" && <Button type="primary">Xác nhận</Button>}
+          {record.status === "shipped" && <Button>Đã giao</Button>}
         </Space>
       ),
     },
@@ -162,14 +126,21 @@ const OrderReview = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 20 }}>Duyệt đơn hàng</h2>
-      {/*<OrderFilter
-        onSearch={handleSearch}
-        onStatusChange={handleStatusChange}
-        onDateRangeChange={handleDateRangeChange}
+      <Row>
+        <h2 style={{ marginBottom: 20 }}>Duyệt đơn hàng</h2>
+      </Row>
+
+      <Tabs
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key)}
+        items={Object.keys(statusLabels).map((status) => ({
+          label: statusLabels[status],
+          key: status,
+        }))}
+        style={{ marginBottom: 24 }}
       />
-      */}
-      <Table columns={columns} dataSource={allData} />
+
+      <Table columns={columns} dataSource={filteredOrders} />
     </div>
   );
 };

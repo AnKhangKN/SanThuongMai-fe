@@ -38,7 +38,7 @@ const AddProduct = () => {
   let decoded = {};
   try {
     if (token) {
-      decoded = jwtDecode(token); // ✅ decode trực tiếp
+      decoded = jwtDecode(token);
     }
   } catch (err) {
     console.error("❌ Lỗi khi decode token:", err.message || err);

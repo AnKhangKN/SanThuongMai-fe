@@ -36,13 +36,12 @@ export const updateProduct = async (id, data, token) => {
   );
 };
 
-export const searchProducts = async (accessToken, searchText) => {
-  const encodedSearch = encodeURIComponent(searchText || "");
+export const searchProductByName = async (token, keyword) => {
   return await axios.get(
-    `${process.env.REACT_APP_API_URL}/vendor/search-products?search=${encodedSearch}`,
+    `${process.env.REACT_APP_API_URL}/product/search-product?keyword=${keyword}`,
     {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );

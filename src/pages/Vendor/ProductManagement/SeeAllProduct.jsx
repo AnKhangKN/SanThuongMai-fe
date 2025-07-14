@@ -38,6 +38,14 @@ const SeeAllProduct = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
+  const [searchText, setSearchText] = useState("");
+  const [searchKeywords, setSearchKeywords] = useState({
+    all: "",
+    active: "",
+    inactive: "",
+    banned: "",
+  });
+
   const handleClickToAddProduct = () => {
     navigate("/vendor/add-product");
   };
@@ -53,7 +61,6 @@ const SeeAllProduct = () => {
     const decoded = jwtDecode(token);
 
     if (decoded?.exp < Date.now() / 1000) {
-      console.log("⚠️ Token hết hạn → gọi refreshToken");
       const res = await AuthServices.refreshToken();
       const newToken = res?.access_token;
 
@@ -106,60 +113,90 @@ const fetchProducts = async () => {
   ];
 
   // Cột
-const columns = [
-  {
-    title: "Tên sản phẩm",
-    dataIndex: "productName",
-    key: "productName",
-  },
-  {
-    title: "Danh mục",
-    dataIndex: "category",
-    key: "category",
-  },
-  {
-    title: "Đã bán",
-    dataIndex: "soldCount",
-    key: "soldCount",
-  },
-  {
-    title: "Trạng thái",
-    dataIndex: "status",
-    key: "status",
-    render: (status) => {
-      let color = "green";
-      if (status === "inactive") color = "orange";
-      if (status === "banned") color = "red";
-      return <Tag color={color}>{status.toUpperCase()}</Tag>;
+  const columns = [
+    {
+      title: "Tên sản phẩm",
+      dataIndex: "productName",
+      key: "productName",
     },
-  },
-  {
-    title: "Biến thể",
-    dataIndex: "priceOptions",
-    key: "priceOptions",
-    render: (priceOptions) => priceOptions?.length ?? 0,
-  },
-  // {
-  //   title: "Thao tác",
-  //   render: (_, record) => (
-  //     <Tooltip title="Chỉnh sửa">
-  //       <EditOutlined
-  //         style={{ color: "blue", cursor: "pointer" }}
-  //         onClick={() => navigate(`/vendor/edit-product/${record._id}`)}
-  //       />
-  //     </Tooltip>
-  //   ),
-  // },
-];
-  const filterProductsByStatus = (status) => {
-  if (status === "all") {
-    return productList;
-  }
-  return productList.filter((product) => product.status === status);
-};
+    {
+      title: "Danh mục",
+      dataIndex: "category",
+      key: "category",
+    },
+    {
+      title: "Đã bán",
+      dataIndex: "soldCount",
+      key: "soldCount",
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => {
+        let color = "green";
+        if (status === "inactive") color = "orange";
+        if (status === "banned") color = "red";
+        return <Tag color={color}>{status.toUpperCase()}</Tag>;
+      },
+    },
+    {
+      title: "Biến thể",
+      dataIndex: "priceOptions",
+      key: "priceOptions",
+      render: (priceOptions) => priceOptions?.length ?? 0,
+    },
+    // {
+    //   title: "Thao tác",
+    //   render: (_, record) => (
+    //     <Tooltip title="Chỉnh sửa">
+    //       <EditOutlined
+    //         style={{ color: "blue", cursor: "pointer" }}
+    //         onClick={() => navigate(`/vendor/edit-product/${record._id}`)}
+    //       />
+    //     </Tooltip>
+    //   ),
+    // },
+  ];
+    const filterProductsByStatus = (status) => {
+    if (status === "all") {
+      return productList;
+    }
+    return productList.filter((product) => product.status === status);
+  };
 
-const countByStatus = (status) => {
-  return productList.filter((product) => product.status === status).length;
+  const countByStatus = (status) => {
+    return productList.filter((product) => product.status === status).length;
+  };
+
+  const handleSearchProduct = async () => {
+    try {
+      const token = await handleDecoded();
+      if (!token) {
+        message.error("Không có token hợp lệ");
+        return;
+      }
+
+      const res = await ProductService.searchProductByName(token, searchText);
+      setProductList(res); // Cập nhật danh sách sau khi tìm
+    } catch (err) {
+      message.error("Lỗi khi tìm kiếm sản phẩm");
+    }
+  };
+
+  useEffect(() => {
+  if (searchText.trim() === "") {
+      fetchProducts();
+    }
+  }, [searchText]);
+
+  const filterProductsByStatusAndKeyword = (status) => {
+  const keyword = searchKeywords[status]?.toLowerCase() || "";
+  const filteredByStatus = status === "all" ? productList : productList.filter((p) => p.status === status);
+
+  return filteredByStatus.filter((product) =>
+    product.productName.toLowerCase().includes(keyword)
+  );
 };
 
   return (
@@ -173,18 +210,17 @@ const countByStatus = (status) => {
         />
       </WrapperHeaderSeeAllProduct>
 
-      <WrapperUnderHeaderSeeAllProduct>
+      {/* <WrapperUnderHeaderSeeAllProduct>
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
         <div style={{ flex: 1 }}>
           <InputComponent
             name="searchProduct"
             placeholder="Nhập tên sản phẩm"
             icon={<SearchOutlined />}
-            // onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => setSearchText(e.target.value)} // ✅ Thêm dòng này
           />
         </div>
-        <ButtonComponents icon={<SearchOutlined />} textButton="Tìm kiếm"  />
-        {/* onClick={handleSearchProduct} */}
+        <ButtonComponents icon={<SearchOutlined />} textButton="Tìm kiếm" onClick={handleSearchProduct}  />
       </div>
 
         <ComboboxComponent
@@ -194,14 +230,26 @@ const countByStatus = (status) => {
           options={PriceProduct}
           // onChange={handlePriceChange}
         />
-      </WrapperUnderHeaderSeeAllProduct>
+      </WrapperUnderHeaderSeeAllProduct> */}
 
       <WrapperUnderHeaderSeeAllProduct>
         <WrapperTabs defaultActiveKey="1">
         <TabPane tab="Tất cả" key="all">
+          <div style={{ marginBottom: "12px", display: "flex", gap: 8 }}>
+            <Input
+              placeholder="Tìm theo tên sản phẩm"
+              value={searchKeywords.all}
+              onChange={(e) =>
+                setSearchKeywords((prev) => ({ ...prev, all: e.target.value }))
+              }
+              style={{ width: 300 }}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </div>
           <Table 
             columns={columns} 
-            dataSource={filterProductsByStatus("all")} 
+            dataSource={filterProductsByStatusAndKeyword("all")}
             rowKey={"_id"} 
             pagination={{ pageSize: 5 }}
             onRow={(record) => {
@@ -215,9 +263,21 @@ const countByStatus = (status) => {
             />
         </TabPane>
         <TabPane tab={`Đang hoạt động (${countByStatus("active")})`} key="active">
+          <div style={{ marginBottom: "12px", display: "flex", gap: 8 }}>
+            <Input
+              placeholder="Tìm theo tên sản phẩm"
+              value={searchKeywords.active}
+              onChange={(e) =>
+                setSearchKeywords((prev) => ({ ...prev, active: e.target.value }))
+              }
+              style={{ width: 300 }}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </div>
           <Table 
             columns={columns} 
-            dataSource={filterProductsByStatus("active")} 
+            dataSource={filterProductsByStatusAndKeyword("active")}
             rowKey={"_id"} 
             pagination={{ pageSize: 5 }}
             onRow={(record) => {
@@ -231,9 +291,21 @@ const countByStatus = (status) => {
             />
         </TabPane>
         <TabPane tab={`Không hoạt động (${countByStatus("inactive")})`} key="inactive">
+          <div style={{ marginBottom: "12px", display: "flex", gap: 8 }}>
+            <Input
+              placeholder="Tìm theo tên sản phẩm"
+              value={searchKeywords.inactive}
+              onChange={(e) =>
+                setSearchKeywords((prev) => ({ ...prev, inactive: e.target.value }))
+              }
+              style={{ width: 300 }}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </div>
           <Table 
             columns={columns} 
-            dataSource={filterProductsByStatus("inactive")} 
+            dataSource={filterProductsByStatusAndKeyword("inactive")}
             rowKey={"_id"} 
             pagination={{ pageSize: 5 }}
             onRow={(record) => {
@@ -247,9 +319,21 @@ const countByStatus = (status) => {
             />
         </TabPane>
         <TabPane tab={`Bị cấm (${countByStatus("banned")})`} key="banned">
+          <div style={{ marginBottom: "12px", display: "flex", gap: 8 }}>
+            <Input
+              placeholder="Tìm theo tên sản phẩm"
+              value={searchKeywords.banned}
+              onChange={(e) =>
+                setSearchKeywords((prev) => ({ ...prev, banned: e.target.value }))
+              }
+              style={{ width: 300 }}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </div>
           <Table 
             columns={columns} 
-            dataSource={filterProductsByStatus("banned")} 
+            dataSource={filterProductsByStatusAndKeyword("banned")} 
             rowKey={"_id"} 
             pagination={{ pageSize: 5 }}
             onRow={(record) => {
