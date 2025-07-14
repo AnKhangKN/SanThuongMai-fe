@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag, Modal, Button, message } from "antd";
+import { Select, Table, Tag, Modal, Button } from "antd";
 import * as ShopServices from "../../../services/admin/ShopServices";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ValidateToken from "../../../utils/tokenUtils";
 
 const columns = [
@@ -83,6 +80,13 @@ const VendorManagementPage = () => {
         : allData.filter((item) => item?.status === selectedStatus);
     setFilteredData(filtered);
   }, [selectedStatus, allData]);
+
+  // const handleChangeStatus = async () => {
+  //   try {
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
