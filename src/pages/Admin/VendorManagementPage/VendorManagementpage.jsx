@@ -5,6 +5,7 @@ import * as ShopServices from "../../../services/admin/ShopServices";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
 import * as AuthServices from "../../../services/shared/AuthServices";
+import * as ValidateToken from "../../../utils/tokenUtils";
 
 const columns = [
   {
@@ -54,26 +55,12 @@ const VendorManagementPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
 
-  const handleDecoded = async () => {
-    let storageData = localStorage.getItem("access_token");
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      const decoded = jwtDecode(storageData);
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        const accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-        return accessToken;
-      }
-      return storageData;
-    }
-    return null;
-  };
-
   const fetchAllShop = useCallback(async () => {
     try {
-      const token = await handleDecoded();
+      const token = await ValidateToken.getValidAccessToken();
       const res = await ShopServices.getAllShops(token);
+
+      console.log("res", res);
 
       if (res?.shops) {
         setAllData(res.shops);
@@ -110,27 +97,6 @@ const VendorManagementPage = () => {
   const handleModalCancel = () => {
     setModalVisible(false);
     setSelectedUser(null);
-  };
-
-  const handleSaveStatus = async () => {
-    try {
-      const token = await handleDecoded();
-
-      const res = await ShopServices.activateShop(
-        { status: newStatus, shopId: selectedUser._id },
-        token
-      );
-
-      if (res) {
-        message.success("Cập nhật trạng thái thành công!");
-        fetchAllShop();
-        handleModalCancel();
-      } else {
-        message.error("Lỗi!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
-    }
   };
 
   return (
@@ -182,7 +148,7 @@ const VendorManagementPage = () => {
           <Button key="cancel" onClick={handleModalCancel}>
             Đóng
           </Button>,
-          <Button key="save" type="primary" onClick={handleSaveStatus}>
+          <Button key="save" type="primary">
             Lưu
           </Button>,
         ]}

@@ -50,6 +50,7 @@ import EmailVerifyPage from "../pages/Auth/EmailVerifyPage/EmailVerifyPage";
 import ForgetPasswordPage from "../pages/Auth/ForgetPasswordPage/ForgetPasswordPage";
 import BannerPage from "../pages/Admin/BannerPage/BannerPage";
 import DiscountPage from "../pages/Admin/DiscountPage/DiscountPage";
+import CategoryPageAdmin from "../pages/Admin/CategoryManagementPage/CategoryManagementPage";
 
 export const routes = [
   //auth
@@ -305,6 +306,12 @@ export const routes = [
   {
     path: "/admin/discount",
     page: DiscountPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/categories",
+    page: CategoryPageAdmin,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,
   },
