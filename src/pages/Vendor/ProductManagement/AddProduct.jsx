@@ -33,12 +33,15 @@ const AddProduct = () => {
 });
 
   const handleDecoded = () => {
-    let storageData = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
+    let storageData = token;
     let decoded = {};
     if (storageData && isJsonString(storageData)) {
       storageData = JSON.parse(storageData);
       decoded = jwtDecode(storageData);
     }
+    console.log("storageData:", storageData)
+    console.log("decoded:", decoded)
     return { decoded, storageData };
   };
 
@@ -52,6 +55,8 @@ const AddProduct = () => {
         accessToken = res?.access_token;
         localStorage.setItem("access_token", JSON.stringify(accessToken));
         decoded = jwtDecode(accessToken);
+
+        
       }
     } catch (error) {
       console.error("Lỗi khi decode user_id:", error);

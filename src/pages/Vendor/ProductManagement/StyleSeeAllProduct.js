@@ -1,3 +1,4 @@
+import { Tabs } from "antd";
 import styled from "styled-components";
 
 export const WrapperHeaderSeeAllProduct = styled.div`
@@ -52,4 +53,9 @@ export const EditButton = styled.button`
   &:hover {
     background-color: #40a9ff;
   }
+`;
+
+export const WrapperTabs = styled(Tabs)`
+  width: 100%;
+  margin-top: 20px;
 `;

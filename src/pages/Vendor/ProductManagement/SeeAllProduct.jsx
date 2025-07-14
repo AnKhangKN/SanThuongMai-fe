@@ -10,6 +10,7 @@ import {
   Tag,
   Tooltip,
   Select,
+  Tabs,
 } from "antd";
 import { PlusOutlined, SearchOutlined, EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ import InputComponent from "../../../components/VendorComponents/InputComponent/
 import ComboboxComponent from "../../../components/VendorComponents/ComboboxComponent/ComboboxComponent";
 import {
   WrapperHeaderSeeAllProduct,
+  WrapperTabs,
   WrapperUnderHeaderSeeAllProduct,
 } from "./StyleSeeAllProduct";
 import * as ProductService from "../../../services/vendor/ProductService";
@@ -30,220 +32,65 @@ const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
 const SeeAllProduct = () => {
   const navigate = useNavigate();
-  const [form] = Form.useForm();
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [fileList, setFileList] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
-  const [allData, setAllData] = useState([]);
-  const [searchText, setSearchText] = useState("");
-  const [minPrice, setMinPrice] = useState(null);
-const [maxPrice, setMaxPrice] = useState(null);
+  const { TabPane } = Tabs;
+  const [productList, setProductList] = useState([]);
 
   const handleClickToAddProduct = () => {
     navigate("/vendor/add-product");
   };
 
-  const handleDecoded = () => {
-    const storageData = localStorage.getItem("access_token");
-    let decoded = {};
+  const handleDecoded = async () => {
+  const token = localStorage.getItem("access_token");
 
-    if (storageData && isJsonString(storageData)) {
-      const parsed = JSON.parse(storageData);
-      decoded = jwtDecode(parsed);
-      return { decoded, storageData: parsed };
-    }
+  if (!token) {
+    return null;
+  }
 
-    return { decoded, storageData };
-  };
-
-  const handleSearchProduct = async () => {
   try {
-    let { storageData, decoded } = handleDecoded();
-    let accessToken = storageData;
+    const decoded = jwtDecode(token);
 
     if (decoded?.exp < Date.now() / 1000) {
+      console.log("⚠️ Token hết hạn → gọi refreshToken");
       const res = await AuthServices.refreshToken();
-      if (res?.access_token) {
-        accessToken = res.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      const newToken = res?.access_token;
+
+      if (!newToken) {
+        console.error("❌ Refresh thất bại");
+        return null;
       }
+
+      localStorage.setItem("access_token", newToken); // không cần stringify
+      return newToken;
     }
 
-    const res = await ProductService.searchProducts(accessToken, searchText);
-    const searchedData = res.data.data.map((product) => ({
-       ...product,
-    key: product._id,
-    product_name: product.product_name,
-    description: product.description,
-    category: product.category,
-    status: product.status,
-    }));
-
-    setAllData(searchedData);
-  } catch (error) {
-    console.error("Lỗi khi tìm kiếm sản phẩm:", error);
-    message.error("Không tìm thấy sản phẩm phù hợp.");
+    return token;
+  } catch (err) {
+    console.error("❌ Token decode lỗi:", err);
+    return null;
   }
 };
 
-const handlePriceChange = async (value) => {
-  try {
-    let min = null, max = null;
-    if (value && value !== "all") {
-      [min, max] = value.split("-").map(Number);
-    }
-
-    setMinPrice(min);
-    setMaxPrice(max);
-
-    let { storageData, decoded } = handleDecoded();
-    let accessToken = storageData;
-
-    if (decoded?.exp < Date.now() / 1000) {
-      const res = await AuthServices.refreshToken();
-      if (res?.access_token) {
-        accessToken = res.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
-    }
-
-    const res = await ProductService.filterProductsPrice(accessToken, min, max);
-    console.log("res", res);
-    const filteredData = res.data.data.map((product) => ({
-      ...product,
-      key: product._id,
-      product_name: product.product_name,
-      description: product.description,
-      category: product.category,
-      status: product.status,
-    }));
-
-    setAllData(filteredData);
-  } catch (error) {
-    console.error("Lỗi khi lọc sản phẩm theo giá:", error);
-    message.error("Lọc sản phẩm theo giá thất bại.");
-  }
-};
-
-  const fetchProducts = useCallback(async () => {
+ useEffect(() => {
+  const fetchProducts = async () => {
     try {
-      let { storageData, decoded } = handleDecoded();
+      const tokenHandle = await handleDecoded();
 
-      let accessToken = storageData;
-
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
+      if (!tokenHandle) {
+        message.error("Không có token hợp lệ");
+        return;
       }
 
-      const res = await ProductService.getAllProducts(accessToken);
-
-      // Kiểm tra kiểu dữ liệu của res.data trước khi map
-      const productsWithKeys = res.data.data.map((product) => ({
-        ...product,
-        key: product._id,
-        product_name: product.product_name,
-        description: product.description,
-        category: product.category,
-        status: product.status,
-      }));
-
-      setAllData(productsWithKeys);
+      const response = await ProductService.getAllProducts(tokenHandle);
+      console.log("📦 Product data:", response.data);
+      setProductList(response.data.data);
     } catch (error) {
-      console.error("Lỗi khi lấy sản phẩm:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const fetchUpdateProduct = async (productData) => {
-    try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        if (res?.access_token) {
-          accessToken = res.access_token;
-          localStorage.setItem("access_token", JSON.stringify(accessToken));
-        }
-      }
-
-      const res = await ProductService.updatedProduct(accessToken, productData);
-
-      if (res?.status === 200) {
-        message.success("Sửa sản phẩm thành công!");
-        form.resetFields();
-        setIsModalOpen(false);
-        fetchProducts();
-      } else {
-        message.error("Sửa sản phẩm thất bại!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi sửa sản phẩm:", error);
-      message.error("Có lỗi xảy ra khi sửa sản phẩm.");
+      message.error("❌ Không lấy được sản phẩm");
+      console.error("Lỗi khi fetch:", error);
     }
   };
 
-  const handleEdit = (record) => {
-    setEditingProduct(record);
-    form.setFieldsValue({
-      product_name: record.product_name,
-      price: record.details?.[0]?.price,
-      import_price: record.details?.[0]?.import_price,
-      color: record.details?.[0]?.color,
-      size: record.details?.[0]?.size,
-      quantity: record.details?.[0]?.quantity,
-      description: record.description,
-      category: record.category,
-      status: record.status || "active",
-    });
-    setPreviewImages(record.images || []);
-    setFileList([]);
-    setIsModalOpen(true);
-  };
-
-  const handleOk = () => {
-    form
-      .validateFields()
-      .then(() => form.submit())
-      .catch((errorInfo) => {
-        console.log("Lỗi form:", errorInfo);
-      });
-  };
-
-  const handleCancel = () => {
-  form.resetFields();
-  setPreviewImages([]);
-  setIsModalOpen(false);
-};
-
-  const onFinish = async (values) => {
-    const updatedData = {
-      _id: editingProduct?._id,
-      user_id: editingProduct?.user_id,
-      product_name: values.product_name,
-      description: values.description,
-      category: values.category,
-      status: values.status || "active",
-      images: previewImages.length > 0 ? previewImages : editingProduct.images,
-      details: [
-        {
-          price: values.price,
-          import_price: values.import_price || 0,
-          color: values.color,
-          size: values.size,
-          quantity: values.quantity,
-        },
-      ],
-    };
-
-    await fetchUpdateProduct(updatedData);
-  };
+  fetchProducts();
+}, []);
 
   const PriceProduct = [
     { label: "Tất cả", value: "all" },
@@ -255,66 +102,58 @@ const handlePriceChange = async (value) => {
     { label: "500.000 -> 600.000", value: "500000-600000" },
   ];
 
-  const columns = [
-    {
-      title: "Tên sản phẩm",
-      dataIndex: "product_name",
-      key: "product_name",
+  // Cột
+const columns = [
+  {
+    title: "Tên sản phẩm",
+    dataIndex: "productName",
+    key: "productName",
+  },
+  {
+    title: "Danh mục",
+    dataIndex: "category",
+    key: "category",
+  },
+  {
+    title: "Đã bán",
+    dataIndex: "soldCount",
+    key: "soldCount",
+  },
+  {
+    title: "Trạng thái",
+    dataIndex: "status",
+    key: "status",
+    render: (status) => {
+      let color = "green";
+      if (status === "inactive") color = "orange";
+      if (status === "banned") color = "red";
+      return <Tag color={color}>{status.toUpperCase()}</Tag>;
     },
-    {
-      title: "Hình ảnh",
-      dataIndex: "images",
-      key: "images",
-      render: (images) => (
-        <img
-          src={
-            images?.[0]
-              ? `${imageURL}${images[0]}`
-              : "https://via.placeholder.com/100"
-          }
-          alt="product"
-          style={{ width: 60, height: 60, objectFit: "cover" }}
-        />
-      ),
-    },
-    {
-      title: "Giá bán",
-      dataIndex: "details",
-      key: "price",
-      render: (details) => {
-        const price = details?.[0]?.price;
-        return price ? `${price.toLocaleString()}₫` : "Chưa có giá";
-      },
-    },
-    {
-      title: "Số lượng",
-      dataIndex: "details",
-      key: "quantity",
-      render: (details) => details?.[0]?.quantity ?? 0,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "active" ? "green" : "volcano"}>
-          {status === "active" ? "Đang bán" : "Ngừng bán"}
-        </Tag>
-      ),
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      render: (_, record) => (
-        <Tooltip title="Chỉnh sửa">
-          <EditOutlined
-            style={{ color: "#1890ff", cursor: "pointer" }}
-            onClick={() => handleEdit(record)}
-          />
-        </Tooltip>
-      ),
-    },
-  ];
+  },
+  {
+    title: "Biến thể",
+    dataIndex: "priceOptions",
+    key: "priceOptions",
+    render: (priceOptions) => priceOptions?.length ?? 0,
+  },
+  // {
+  //   title: "Thao tác",
+  //   render: (_, record) => (
+  //     <Tooltip title="Chỉnh sửa">
+  //       <EditOutlined
+  //         style={{ color: "blue", cursor: "pointer" }}
+  //         onClick={() => navigate(`/vendor/edit-product/${record._id}`)}
+  //       />
+  //     </Tooltip>
+  //   ),
+  // },
+];
+  const filterProductsByStatus = (status) => {
+  if (status === "all") {
+    return productList;
+  }
+  return productList.filter((product) => product.status === status);
+};
 
   return (
     <div>
@@ -334,11 +173,11 @@ const handlePriceChange = async (value) => {
             name="searchProduct"
             placeholder="Nhập tên sản phẩm"
             icon={<SearchOutlined />}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={handleSearchProduct}
+            // onChange={(e) => setSearchText(e.target.value)}
           />
         </div>
-        <ButtonComponents icon={<SearchOutlined />} textButton="Tìm kiếm" onClick={handleSearchProduct} />
+        <ButtonComponents icon={<SearchOutlined />} textButton="Tìm kiếm"  />
+        {/* onClick={handleSearchProduct} */}
       </div>
 
         <ComboboxComponent
@@ -346,23 +185,35 @@ const handlePriceChange = async (value) => {
           label="Giá sản phẩm"
           placeholder="Chọn giá sản phẩm"
           options={PriceProduct}
-          onChange={handlePriceChange}
+          // onChange={handlePriceChange}
         />
       </WrapperUnderHeaderSeeAllProduct>
 
       <WrapperUnderHeaderSeeAllProduct>
-        <h4>Danh sách sản phẩm</h4>
-        <div>{allData?.length} sản phẩm</div>
+        <WrapperTabs defaultActiveKey="1">
+        <TabPane tab="Tất cả" key="all">
+          <Table columns={columns} dataSource={filterProductsByStatus("all")} rowKey={"_id"} pagination={{ pageSize: 5 }} />
+        </TabPane>
+        <TabPane tab="Đang hoạt động" key="active">
+          <Table columns={columns} dataSource={filterProductsByStatus("active")} rowKey={"_id"} pagination={{ pageSize: 5 }} />
+        </TabPane>
+        <TabPane tab="Không hoạt động" key="inactive">
+          <Table columns={columns} dataSource={filterProductsByStatus("inactive")} rowKey={"_id"} pagination={{ pageSize: 5 }}/>
+        </TabPane>
+        <TabPane tab="Bị cấm" key="banned">
+          <Table columns={columns} dataSource={filterProductsByStatus("banned")} rowKey={"_id"} pagination={{ pageSize: 5 }}/>
+        </TabPane>
+      </WrapperTabs>
       </WrapperUnderHeaderSeeAllProduct>
 
-      <Table
+      {/* <Table
         columns={columns}
         dataSource={allData}
         rowKey="_id"
         pagination={{ pageSize: 5 }}
-      />
+      /> */}
 
-      <Modal
+      {/* <Modal
         title="Chỉnh sửa sản phẩm"
         open={isModalOpen}
         onOk={handleOk}
@@ -444,7 +295,7 @@ const handlePriceChange = async (value) => {
             </Select>
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal> */}
     </div>
   );
 };
