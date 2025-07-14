@@ -9,7 +9,7 @@ import { PlusOutlined} from "@ant-design/icons";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
-const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
+const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess, category }) => {
     // if (!product) return null;
     const [form] = Form.useForm();
     const [fileList, setFileList] = useState([]);
@@ -19,7 +19,7 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
   if (product) {
     form.setFieldsValue({
       productName: product.productName,
-      categoryId: product.category,
+      categoryId: product.categoryId,
       description: product.description,
       status: product.status,
       priceOptions: product.priceOptions,
@@ -87,6 +87,12 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
   }
 };
 
+// Hàm tìm tên danh mục từ ID
+const getCategoryName = (id) => {
+  const found = category.find((c) => c._id === id);
+  return found?.categoryName || "Không rõ";
+};
+
   return (
     <Modal
       title="Chi tiết sản phẩm và sửa sản phẩm"
@@ -102,7 +108,7 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
             <TabPane tab="Chi tiết sản phẩm" key="1">
             <div>
                 <h3>{product.productName}</h3>
-                <p><strong>Danh mục:</strong> {product.categoryId}</p>
+                <p><strong>Danh mục:</strong> {getCategoryName(product.categoryId)}</p>
                 <p><strong>Mô tả:</strong> {product.description || "Không có"}</p>
                 <p><strong>Đã bán:</strong> {product.soldCount}</p>
                 <p><strong>Trạng thái:</strong> {renderStatusTag(product.status)}</p>
@@ -156,7 +162,13 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess }) => {
             <Input />
             </Form.Item>
             <Form.Item name="categoryId" label="Danh mục" rules={[{ required: true }]}>
-            <Input />
+              <Select>
+                {category.map((cat) => (
+                  <Select.Option key={cat._id} value={cat._id}>
+                    {cat.categoryName}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
             <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} />

@@ -28,6 +28,7 @@ import * as ProductService from "../../../services/vendor/ProductService";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { isJsonString } from "../../../utils";
 import ProductDetailModal from "./ProductDetailModal";
+import * as CategoryServices from "../../../services/vendor/CategoryService";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -45,6 +46,8 @@ const SeeAllProduct = () => {
     inactive: "",
     banned: "",
   });
+
+  const [categories, setCategories] = useState([]);
 
   const handleClickToAddProduct = () => {
     navigate("/vendor/add-product");
@@ -80,6 +83,27 @@ const SeeAllProduct = () => {
   }
 };
 
+  const fetchCategories = async () => {
+      try {
+        const tokenHandle = await handleDecoded();
+
+        const categories = await CategoryServices.getAllCategory(tokenHandle);
+         if (categories.data.data.status === "OK") {
+          console.log("Category: ",categories.data.data.data);
+          setCategories(categories.data.data.data);
+        } else {
+          message.error("Không thể tải loại sản phẩm");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy category:", error);
+        message.error("Không thể tải loại sản phẩm");
+      }
+    };
+  
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
 const fetchProducts = async () => {
     try {
       const tokenHandle = await handleDecoded();
@@ -90,7 +114,6 @@ const fetchProducts = async () => {
       }
 
       const response = await ProductService.getAllProducts(tokenHandle);
-      console.log("📦 Product data:", response.data);
       setProductList(response.data.data);
     } catch (error) {
       message.error("❌ Không lấy được sản phẩm");
@@ -121,8 +144,13 @@ const fetchProducts = async () => {
     },
     {
       title: "Danh mục",
-      dataIndex: "category",
-      key: "category",
+      key: "categoryId",
+       render: (record) => {
+        const matchedCategory = categories.find(
+          (cat) => cat._id === record.categoryId
+        );
+        return matchedCategory ? matchedCategory.categoryName : "Không rõ";
+      },
     },
     {
       title: "Đã bán",
@@ -169,21 +197,6 @@ const fetchProducts = async () => {
     return productList.filter((product) => product.status === status).length;
   };
 
-  const handleSearchProduct = async () => {
-    try {
-      const token = await handleDecoded();
-      if (!token) {
-        message.error("Không có token hợp lệ");
-        return;
-      }
-
-      const res = await ProductService.searchProductByName(token, searchText);
-      setProductList(res); // Cập nhật danh sách sau khi tìm
-    } catch (err) {
-      message.error("Lỗi khi tìm kiếm sản phẩm");
-    }
-  };
-
   useEffect(() => {
   if (searchText.trim() === "") {
       fetchProducts();
@@ -209,28 +222,6 @@ const fetchProducts = async () => {
           textButton="Thêm sản phẩm"
         />
       </WrapperHeaderSeeAllProduct>
-
-      {/* <WrapperUnderHeaderSeeAllProduct>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-        <div style={{ flex: 1 }}>
-          <InputComponent
-            name="searchProduct"
-            placeholder="Nhập tên sản phẩm"
-            icon={<SearchOutlined />}
-            onChange={(e) => setSearchText(e.target.value)} // ✅ Thêm dòng này
-          />
-        </div>
-        <ButtonComponents icon={<SearchOutlined />} textButton="Tìm kiếm" onClick={handleSearchProduct}  />
-      </div>
-
-        <ComboboxComponent
-          name="searchPriceProduct"
-          label="Giá sản phẩm"
-          placeholder="Chọn giá sản phẩm"
-          options={PriceProduct}
-          // onChange={handlePriceChange}
-        />
-      </WrapperUnderHeaderSeeAllProduct> */}
 
       <WrapperUnderHeaderSeeAllProduct>
         <WrapperTabs defaultActiveKey="1">
@@ -353,7 +344,8 @@ const fetchProducts = async () => {
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         product={selectedProduct}
-         onUpdateSuccess={fetchProducts}
+        category={categories}
+        onUpdateSuccess={fetchProducts}
       />
     </div>
   );

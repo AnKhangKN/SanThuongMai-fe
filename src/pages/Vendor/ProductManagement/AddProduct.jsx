@@ -111,7 +111,7 @@ const [categories, setCategories] = useState([]);
 
   const fetchCategories = async () => {
     try {
-      const {decoded, storageData} = handleDecoded();
+      const {decoded, storageData} = await handleDecoded();
       const accessToken = storageData;
 
       if (decoded?.exp < Date.now() / 1000) {
