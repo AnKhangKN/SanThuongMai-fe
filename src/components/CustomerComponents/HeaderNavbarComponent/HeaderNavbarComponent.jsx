@@ -26,7 +26,7 @@ const HeaderNavbarComponent = () => {
   const navigate = useNavigate();
 
   const handleNavigateVendor = () => {
-    if (user?.id && user?.isVendor) {
+    if (user?.id && user?.isVendor === true) {
       navigate("/vendor");
     } else if (user?.id && !user?.isVendor) {
       message.warning("Hãy đăng ký trở thành người bán hàng!");
@@ -65,12 +65,12 @@ const HeaderNavbarComponent = () => {
     <Wrapper>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div>
-          <Link
+          <div
             onClick={handleNavigateVendor}
             style={{ color: "#fff", textDecoration: "none" }}
           >
             Kênh Bán Hàng
-          </Link>
+          </div>
         </div>
 
         {user?.isVendor ? (

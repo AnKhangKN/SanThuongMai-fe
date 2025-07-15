@@ -27,14 +27,17 @@ const ProductDetailPage = () => {
   const [productImages, setProductImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [startIndex, setStartIndex] = useState(0);
+  const [shopDetail, setShopDetail] = useState({});
   const maxVisible = 5;
 
   useEffect(() => {
     const fetchDetailProduct = async () => {
       try {
         const res = await ProductServices.getDetailProduct({ id });
+
         const images = res.product.images || [];
         setProductDetail(res.product);
+        setShopDetail(res.shop);
         setProductImages(images);
         setSelectedImage(images[0] || null);
         setStartIndex(0);
@@ -131,9 +134,11 @@ const ProductDetailPage = () => {
           value,
         })),
         price: selectedProductDetail.price,
+        finalPrice: selectedProductDetail.finalPrice,
+        categoryId: productDetail.categoryId,
         quantity,
         shopId: productDetail.shopId,
-        shopName: productDetail?.shopName || "Shop",
+        shopName: shopDetail?.shopName,
       };
 
       const res = await CartServices.addToCart(accessToken, payload);

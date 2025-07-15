@@ -1,6 +1,5 @@
-import { Col, Row, Tooltip, Pagination, message, Checkbox } from "antd";
+import { Col, Row, Pagination, message, Checkbox } from "antd";
 import React, { useCallback, useEffect, useState } from "react";
-import { FaMinus, FaPlus } from "react-icons/fa";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { BsTicketPerforated } from "react-icons/bs";
 import SuggestComponent from "../../../components/CustomerComponents/CartPageComponent/SuggestComponent/SuggestComponent";
@@ -14,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { setCheckoutInfo } from "../../../redux/slices/checkoutSlice";
 import { LuPlus } from "react-icons/lu";
 import { LuMinus } from "react-icons/lu";
+import * as ValidateToken from "../../../utils/tokenUtils";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -22,51 +22,39 @@ const CartPage = () => {
   const navigate = useNavigate();
 
   const [cartItems, setCartItems] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]); // Track selected items
+  const [selectedItems, setSelectedItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
-  const decodeToken = () => {
-    let storageToken = localStorage.getItem("access_token");
-    if (storageToken && isJsonString(storageToken)) {
-      const token = JSON.parse(storageToken);
-      const decoded = jwtDecode(token);
-      return { decoded, token };
-    }
-    return { decoded: null, token: null };
-  };
-
   const fetchCartItems = useCallback(async () => {
     try {
-      let { decoded, token } = decodeToken();
-
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
+      const token = await ValidateToken.getValidAccessToken();
 
       const response = await CartServices.getAllItem(token);
+      const data = response?.data[0]?.productItems || [];
 
-      const data = response?.data[0]?.items || [];
-
-      const items = data.map((item) => ({
-        ...item,
-        key: item._id || item.id,
-        quantity: item.quantity || 1,
-      }));
+      const items = data.map((item) => {
+        const attrKey =
+          item.attributes
+            ?.map((attr) => `${attr.name}-${attr.value}`)
+            .join("_") || "no-attr";
+        return {
+          ...item,
+          key: `${item.productId}-${attrKey}`,
+          quantity: item.quantity || 1,
+        };
+      });
 
       setCartItems(items);
 
       const cartData = {
         products: items.map((item) => ({
-          product_id: item.product_id,
-          product_name: item.product_name,
-          product_img: item.product_img || "",
+          product_id: item.productId,
+          product_name: item.productName,
+          product_img: item.productImage || "",
           price: item.price,
           quantity: item.quantity,
-          size: item.size,
-          color: item.color,
+          attributes: item.attributes || [],
         })),
         total_item: items.length,
       };
@@ -75,118 +63,17 @@ const CartPage = () => {
     } catch (err) {
       console.error("Lỗi khi lấy giỏ hàng:", err);
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     fetchCartItems();
   }, [fetchCartItems]);
 
-  const handleMoreItem = async (itemKey) => {
-    try {
-      let { decoded, token } = decodeToken();
-
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
-
-      const itemToUpdate = cartItems.find((item) => item.key === itemKey);
-      if (!itemToUpdate) return;
-
-      const newQuantity = itemToUpdate.quantity + 1;
-
-      const response = await CartServices.updateQuantity(token, {
-        detailCartId: itemToUpdate._id,
-        product_id: itemToUpdate.product_id,
-        size: itemToUpdate.size,
-        color: itemToUpdate.color,
-        quantity: newQuantity,
-      });
-
-      if (response?.status === "ERROR") {
-        return message.warning(
-          response.message || "Cập nhật số lượng thất bại."
-        );
-      }
-
-      if (!response || typeof response !== "object") {
-        return message.error("Phản hồi từ máy chủ không hợp lệ.");
-      }
-
-      const updatedItems = cartItems.map((item) =>
-        item.key === itemKey ? { ...item, quantity: newQuantity } : item
-      );
-
-      setCartItems(updatedItems);
-    } catch (err) {
-      console.error("Lỗi khi tăng số lượng:", err);
-      message.error(err?.message || "Đã xảy ra lỗi trong quá trình cập nhật.");
-    }
-  };
-
-  const handleReduceItem = async (itemKey) => {
-    try {
-      let { decoded, token } = decodeToken();
-
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
-
-      const itemToUpdate = cartItems.find((item) => item.key === itemKey);
-      if (!itemToUpdate || itemToUpdate.quantity <= 1) return;
-
-      const newQuantity = itemToUpdate.quantity - 1;
-
-      await CartServices.updateQuantity(token, {
-        detailCartId: itemToUpdate._id,
-        product_id: itemToUpdate.product_id,
-        size: itemToUpdate.size,
-        color: itemToUpdate.color,
-        quantity: newQuantity,
-      });
-
-      const updatedItems = cartItems.map((item) =>
-        item.key === itemKey ? { ...item, quantity: newQuantity } : item
-      );
-
-      setCartItems(updatedItems);
-    } catch (err) {
-      console.error("Lỗi khi giảm số lượng:", err);
-    }
-  };
-
-  const handleDeleteItem = async (itemKey) => {
-    try {
-      let { decoded, token } = decodeToken();
-
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
-
-      const itemToDelete = cartItems.find((item) => item.key === itemKey);
-      if (!itemToDelete) return;
-
-      await CartServices.deleteCartItem(token, {
-        detailCartId: itemToDelete._id,
-      });
-
-      const updatedItems = cartItems.filter((item) => item.key !== itemKey);
-      setCartItems(updatedItems);
-    } catch (err) {
-      console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", err);
-    }
-  };
-
   const handleItemSelection = (itemKey) => {
-    setSelectedItems((prevSelectedItems) =>
-      prevSelectedItems.includes(itemKey)
-        ? prevSelectedItems.filter((key) => key !== itemKey)
-        : [...prevSelectedItems, itemKey]
+    setSelectedItems((prev) =>
+      prev.includes(itemKey)
+        ? prev.filter((key) => key !== itemKey)
+        : [...prev, itemKey]
     );
   };
 
@@ -200,8 +87,6 @@ const CartPage = () => {
       : acc;
   }, 0);
 
-  const totalItems = selectedItems.length;
-
   const handleCheckout = () => {
     const selectedProducts = cartItems.filter((item) =>
       selectedItems.includes(item.key)
@@ -214,15 +99,14 @@ const CartPage = () => {
 
     const checkoutData = {
       products: selectedProducts.map((item) => ({
-        product_id: item.product_id,
-        product_name: item.product_name,
-        product_img: item.product_img || "",
+        product_id: item.productId,
+        product_name: item.productName,
+        product_img: item.productImage || "",
         price: item.price,
+        finalPrice: item.finalPrice || item.price,
         quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-
-        owner_id: item.owner_id,
+        attributes: item.attributes || [],
+        owner_id: item.shopId,
         cartItem_id: item._id,
       })),
     };
@@ -236,7 +120,7 @@ const CartPage = () => {
       <div style={{ width: 1200, margin: "auto" }}>
         <div style={{ height: 20 }} />
 
-        {/* Header row */}
+        {/* Header */}
         <div
           style={{ padding: "10px 30px", marginBottom: 10, background: "#fff" }}
         >
@@ -244,13 +128,13 @@ const CartPage = () => {
             <Col span={2}>
               <Checkbox
                 checked={selectedItems.length === cartItems.length}
-                onChange={() => {
-                  if (selectedItems.length === cartItems.length) {
-                    setSelectedItems([]);
-                  } else {
-                    setSelectedItems(cartItems.map((item) => item.key));
-                  }
-                }}
+                onChange={() =>
+                  setSelectedItems(
+                    selectedItems.length === cartItems.length
+                      ? []
+                      : cartItems.map((item) => item.key)
+                  )
+                }
               />
             </Col>
             <Col span={10}>Sản phẩm</Col>
@@ -261,7 +145,7 @@ const CartPage = () => {
           </Row>
         </div>
 
-        {/* Item list */}
+        {/* Danh sách sản phẩm */}
         {displayedItems.map((item) => (
           <div
             key={item.key}
@@ -282,82 +166,56 @@ const CartPage = () => {
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <div style={{ width: 80 }}>
                     <img
-                      src={`${imageURL}${item.product_img}`}
+                      src={`${imageURL}${item.productImage}`}
                       alt=""
                       style={{ width: "100%" }}
                     />
                   </div>
-
                   <div>
-                    <div style={{ fontSize: 12, color: "gray" }}>
-                      <div style={{ fontSize: "15px", color: "#333" }}>
-                        {item.product_name}
-                      </div>
-                      <div style={{ display: "flex", gap: "20px" }}>
-                        <div>{item.color} </div>
-                        <div>{item.size}</div>
-                      </div>
-
-                      <div>{item.shop_name}</div>
+                    <div style={{ fontSize: 15, fontWeight: 500 }}>
+                      {item.productName}
                     </div>
+                    <div style={{ fontSize: 12, color: "gray" }}>
+                      {(item.attributes || []).map((attr) => (
+                        <span key={attr.name} style={{ marginRight: 10 }}>
+                          {attr.name}: {attr.value}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 12 }}>{item.shopName}</div>
                   </div>
                 </div>
               </Col>
-              <Col span={4}>₫{item.price}</Col>
+              <Col span={4}>
+                <div>
+                  <div style={{ textDecoration: "line-through", gap: 5 }}>
+                    ₫ {item.price.toLocaleString()}
+                  </div>
+                  <div
+                    style={{
+                      gap: 5,
+                    }}
+                  >
+                    đ {item.finalPrice.toLocaleString()}
+                  </div>
+                </div>
+              </Col>
               <Col span={3}>
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <button
-                    style={{
-                      border: "1px solid #ddd",
-                      height: 30,
-                      width: 30,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                    onClick={() => handleReduceItem(item.key)}
-                  >
+                  <button style={buttonStyle}>
                     <LuMinus />
                   </button>
-
-                  <input
-                    style={{
-                      width: 30,
-                      textAlign: "center",
-                      outline: "none",
-                      border: "none",
-                      height: 30,
-                    }}
-                    type="text"
-                    value={item.quantity}
-                    readOnly
-                  />
-
-                  <button
-                    style={{
-                      border: "1px solid #ddd",
-                      height: 30,
-                      width: 30,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                    onClick={() => handleMoreItem(item.key)}
-                  >
+                  <input style={inputStyle} value={item.quantity} readOnly />
+                  <button style={buttonStyle}>
                     <LuPlus />
                   </button>
                 </div>
               </Col>
               <Col span={3}>
-                ₫{(item.price * item.quantity).toLocaleString()}
+                ₫{(item.finalPrice * item.quantity).toLocaleString()}
               </Col>
               <Col span={2}>
-                <div
-                  onClick={() => handleDeleteItem(item.key)}
-                  style={{ color: "red", cursor: "pointer" }}
-                >
-                  Xóa
-                </div>
+                <div style={{ color: "red", cursor: "pointer" }}>Xóa</div>
               </Col>
             </Row>
           </div>
@@ -423,7 +281,7 @@ const CartPage = () => {
         >
           <div style={{ display: "flex", gap: 10 }}>
             <div style={{ fontSize: 20 }}>
-              Tổng cộng ({totalItems} sản phẩm):
+              Tổng cộng ({selectedItems.length} sản phẩm):
             </div>
             <div style={{ fontSize: 18, color: "red" }}>
               ₫{totalPrice.toLocaleString()}
@@ -449,6 +307,24 @@ const CartPage = () => {
       </div>
     </div>
   );
+};
+
+// Style riêng
+const buttonStyle = {
+  border: "1px solid #ddd",
+  height: 30,
+  width: 30,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const inputStyle = {
+  width: 30,
+  textAlign: "center",
+  outline: "none",
+  border: "none",
+  height: 30,
 };
 
 export default CartPage;
