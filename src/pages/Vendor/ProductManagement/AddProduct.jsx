@@ -480,8 +480,6 @@ const handleChangeLabel = (index, value) => {
           }}
         </Form.Item>
 
-        
-
         <Form.Item>
           <Button type="primary" htmlType="submit">
             Thêm sản phẩm mới
