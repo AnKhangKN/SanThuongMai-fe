@@ -3,12 +3,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { BsTicketPerforated } from "react-icons/bs";
 import SuggestComponent from "../../../components/CustomerComponents/CartPageComponent/SuggestComponent/SuggestComponent";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
 import * as CartServices from "../../../services/customer/CartServices";
 import { useDispatch } from "react-redux";
-import { updateCart } from "../../../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { setCheckoutInfo } from "../../../redux/slices/checkoutSlice";
 import { LuPlus } from "react-icons/lu";
@@ -25,6 +21,8 @@ const CartPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+  const [cart, setCart] = useState({});
+  const [quantityEdits, setQuantityEdits] = useState({});
 
   const fetchCartItems = useCallback(async () => {
     try {
@@ -32,6 +30,7 @@ const CartPage = () => {
 
       const response = await CartServices.getAllItem(token);
       const data = response?.data[0]?.productItems || [];
+      setCart(response?.data[0]);
 
       const items = data.map((item) => {
         const attrKey =
@@ -46,20 +45,6 @@ const CartPage = () => {
       });
 
       setCartItems(items);
-
-      const cartData = {
-        products: items.map((item) => ({
-          product_id: item.productId,
-          product_name: item.productName,
-          product_img: item.productImage || "",
-          price: item.price,
-          quantity: item.quantity,
-          attributes: item.attributes || [],
-        })),
-        total_item: items.length,
-      };
-
-      dispatch(updateCart(cartData));
     } catch (err) {
       console.error("Lỗi khi lấy giỏ hàng:", err);
     }
@@ -68,6 +53,71 @@ const CartPage = () => {
   useEffect(() => {
     fetchCartItems();
   }, [fetchCartItems]);
+
+  const handleChangeQuantity = async (productItemId, direction) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const targetItem = cartItems.find((item) => item._id === productItemId);
+      if (!targetItem) return;
+
+      const newQuantity =
+        direction === "increase"
+          ? targetItem.quantity + 1
+          : targetItem.quantity > 1
+          ? targetItem.quantity - 1
+          : 1;
+
+      const payload = {
+        cartId: cart._id, // hoặc lấy từ response getAllItem nếu có
+        productItemId: targetItem._id,
+        attributes: targetItem.attributes,
+        productId: targetItem.productId,
+        quantity: newQuantity,
+      };
+
+      await CartServices.updateQuantity(accessToken, payload);
+      fetchCartItems(); // cập nhật lại giỏ hàng sau khi update
+    } catch (error) {
+      console.log("Lỗi cập nhật số lượng:", error);
+      message.error(error.message || "Không thể cập nhật số lượng");
+    }
+  };
+
+  const handleUpdateQuantity = async (productItemId, quantity) => {
+    try {
+      if (quantity <= 0) {
+        return message.warning("Số lượng phải lớn hơn 0");
+      }
+
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const targetItem = cartItems.find((item) => item._id === productItemId);
+      if (!targetItem) {
+        return message.error("Không tìm thấy sản phẩm trong giỏ hàng");
+      }
+
+      const payload = {
+        cartId: cart._id,
+        productId: targetItem.productId,
+        attributes: targetItem.attributes,
+        productItemId,
+        quantity,
+      };
+
+      await CartServices.updateQuantity(accessToken, payload);
+      message.success("Cập nhật số lượng thành công");
+
+      fetchCartItems(); // làm mới lại UI
+    } catch (error) {
+      console.error("Lỗi cập nhật số lượng:", error);
+      message.error(
+        error.message ||
+          error?.response?.data?.message ||
+          "Không thể cập nhật số lượng"
+      );
+    }
+  };
 
   const handleItemSelection = (itemKey) => {
     setSelectedItems((prev) =>
@@ -80,12 +130,19 @@ const CartPage = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const displayedItems = cartItems.slice(startIndex, startIndex + pageSize);
 
-  const totalPrice = selectedItems.reduce((acc, itemKey) => {
-    const selectedItem = cartItems.find((item) => item.key === itemKey);
-    return selectedItem
-      ? acc + selectedItem.price * selectedItem.quantity
-      : acc;
-  }, 0);
+  const selectedProducts = cartItems.filter((item) =>
+    selectedItems.includes(item.key)
+  );
+
+  const totalSelectedQuantity = selectedProducts.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
+  const totalSelectedAmount = selectedProducts.reduce(
+    (sum, item) => sum + item.finalPrice * item.quantity,
+    0
+  );
 
   const handleCheckout = () => {
     const selectedProducts = cartItems.filter((item) =>
@@ -97,21 +154,20 @@ const CartPage = () => {
       return;
     }
 
-    const checkoutData = {
+    const productItems = {
       products: selectedProducts.map((item) => ({
-        product_id: item.productId,
-        product_name: item.productName,
-        product_img: item.productImage || "",
+        productId: item.productId,
+        productName: item.productName,
+        productImage: item.productImage,
+        attributes: item.attributes,
         price: item.price,
-        finalPrice: item.finalPrice || item.price,
+        finalPrice: item.finalPrice,
         quantity: item.quantity,
-        attributes: item.attributes || [],
-        owner_id: item.shopId,
-        cartItem_id: item._id,
+        shopId: item.shopId,
       })),
     };
 
-    dispatch(setCheckoutInfo(checkoutData));
+    dispatch(setCheckoutInfo(productItems));
     navigate("/checkout");
   };
 
@@ -202,11 +258,54 @@ const CartPage = () => {
               </Col>
               <Col span={3}>
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <button style={buttonStyle}>
+                  <button
+                    style={buttonStyle}
+                    onClick={() => handleChangeQuantity(item._id, "decrease")}
+                  >
                     <LuMinus />
                   </button>
-                  <input style={inputStyle} value={item.quantity} readOnly />
-                  <button style={buttonStyle}>
+
+                  <input
+                    style={inputStyle}
+                    value={
+                      quantityEdits[item._id] !== undefined
+                        ? quantityEdits[item._id]
+                        : item.quantity
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d{0,3}$/.test(value)) {
+                        setQuantityEdits((prev) => ({
+                          ...prev,
+                          [item._id]: value,
+                        }));
+                      }
+                    }}
+                    onBlur={() => {
+                      const edited = parseInt(quantityEdits[item._id]);
+                      if (
+                        !isNaN(edited) &&
+                        edited > 0 &&
+                        edited !== item.quantity
+                      ) {
+                        handleUpdateQuantity(item._id, edited);
+                      } else if (edited <= 0) {
+                        message.warning(
+                          "Số lượng không thể bằng hoặc nhỏ hơn 0"
+                        );
+                      }
+                      setQuantityEdits((prev) => {
+                        const newEdits = { ...prev };
+                        delete newEdits[item._id];
+                        return newEdits;
+                      });
+                    }}
+                  />
+
+                  <button
+                    style={buttonStyle}
+                    onClick={() => handleChangeQuantity(item._id, "increase")}
+                  >
                     <LuPlus />
                   </button>
                 </div>
@@ -281,10 +380,10 @@ const CartPage = () => {
         >
           <div style={{ display: "flex", gap: 10 }}>
             <div style={{ fontSize: 20 }}>
-              Tổng cộng ({selectedItems.length} sản phẩm):
+              Tổng cộng ({totalSelectedQuantity || 0} sản phẩm):
             </div>
             <div style={{ fontSize: 18, color: "red" }}>
-              ₫{totalPrice.toLocaleString()}
+              ₫ {totalSelectedAmount.toLocaleString()}
             </div>
           </div>
           <div style={{ width: 160 }}>

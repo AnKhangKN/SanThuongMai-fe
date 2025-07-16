@@ -31,9 +31,9 @@ const PaymentPage = () => {
   });
 
   const navigate = useNavigate();
-
   const products = useSelector((state) => state.checkout.products);
 
+  console.log(products);
   const user = useSelector((state) => state.user);
 
   const dispatch = useDispatch();
@@ -231,7 +231,7 @@ const PaymentPage = () => {
   };
 
   const totalAmount = products.reduce(
-    (sum, product) => sum + product.price * product.quantity,
+    (sum, product) => sum + product.finalPrice * product.quantity,
     0
   );
 
@@ -268,7 +268,6 @@ const PaymentPage = () => {
       }
 
       await OrderServices.removeShippingAddress(token, shippingInfo);
-
       message.success("Địa chỉ đã xóa!");
 
       handleCancel();
@@ -277,6 +276,8 @@ const PaymentPage = () => {
       message.warning("Xóa địa chỉ không thành công!");
     }
   };
+
+  console.log(products);
 
   return (
     <Wrapper>
@@ -490,27 +491,33 @@ const PaymentPage = () => {
                 <div style={{ width: "40px", height: "40px" }}>
                   <img
                     style={{ width: "100%", objectFit: "cover" }}
-                    src={`${imageURL}${product.product_img}` || imgTest} // dùng product.image nếu có
-                    alt={product.product_name}
+                    src={`${imageURL}${product.productImage}` || imgTest} // dùng product.image nếu có
+                    alt={product.productName}
                   />
                 </div>
 
                 <div>
-                  <div>{product.product_name}</div>
+                  <div>{product.productName}</div>
                   <div style={{ display: "flex", gap: "20px" }}>
-                    <div>{product.size}</div>
-                    <div>{product.color}</div>
+                    {(product.attributes || []).map((attribute, idx) => (
+                      <div key={idx}>
+                        {attribute.name}: {attribute.value}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </Col>
               <Col span={4} style={{ textAlign: "end" }}>
-                <div>{product.price.toLocaleString()}</div>
+                <del>{product.price.toLocaleString()}</del>
+                <div>{product.finalPrice.toLocaleString()}</div>
               </Col>
               <Col span={3} style={{ textAlign: "end" }}>
                 <div>{product.quantity}</div>
               </Col>
               <Col span={5} style={{ textAlign: "end" }}>
-                <div>{(product.price * product.quantity).toLocaleString()}</div>
+                <div>
+                  {(product.finalPrice * product.quantity).toLocaleString()}
+                </div>
               </Col>
             </Row>
           ))}
