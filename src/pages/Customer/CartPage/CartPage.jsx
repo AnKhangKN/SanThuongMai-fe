@@ -1,4 +1,4 @@
-import { Col, Row, Pagination, message, Checkbox } from "antd";
+import { Col, Row, Pagination, message, Checkbox, Modal, Button } from "antd";
 import React, { useCallback, useEffect, useState } from "react";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { BsTicketPerforated } from "react-icons/bs";
@@ -10,6 +10,7 @@ import { setCheckoutInfo } from "../../../redux/slices/checkoutSlice";
 import { LuPlus } from "react-icons/lu";
 import { LuMinus } from "react-icons/lu";
 import * as ValidateToken from "../../../utils/tokenUtils";
+import * as VoucherServices from "../../../services/customer/VoucherServices";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -23,6 +24,9 @@ const CartPage = () => {
   const pageSize = 5;
   const [cart, setCart] = useState({});
   const [quantityEdits, setQuantityEdits] = useState({});
+  const [modalVoucher, setModalVoucher] = useState(false);
+  const [vouchers, setVouchers] = useState([]);
+  const [selectedVouchers, setSelectedVouchers] = useState({});
 
   const fetchCartItems = useCallback(async () => {
     try {
@@ -144,6 +148,112 @@ const CartPage = () => {
     0
   );
 
+  const groupVouchersByCategory = (vouchers) => {
+    return vouchers.reduce((acc, voucher) => {
+      const category = voucher.category || "khac";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(voucher);
+      return acc;
+    }, {});
+  };
+
+  const handleOpenModalVoucher = async () => {
+    setModalVoucher(true);
+
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await VoucherServices.getVouchers(accessToken);
+
+      setVouchers(res.vouchers);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleCloseModalVoucher = () => {
+    setModalVoucher(false);
+  };
+
+  const checkVoucherUsability = (voucher) => {
+    const reasons = [];
+    const now = new Date();
+    const start = new Date(voucher.startDate);
+    const end = new Date(voucher.endDate);
+
+    if (now < start) reasons.push("Chưa đến thời gian áp dụng");
+
+    if (now > end) reasons.push("Voucher đã hết hạn");
+
+    if (voucher.usageLimit <= 0) reasons.push("Voucher đã hết lượt sử dụng");
+
+    if (totalSelectedAmount < voucher.minOrderValue)
+      reasons.push(
+        `Đơn hàng tối thiểu ₫${voucher.minOrderValue.toLocaleString()}`
+      );
+
+    return {
+      usable: reasons.length === 0,
+      reasons,
+    };
+  };
+
+  const handleSelectVoucher = (voucher) => {
+    const category = voucher.category || "khac";
+    const newSelected = { ...selectedVouchers };
+
+    // Đếm loại
+    const isTransport = (v) => v.category === "van-chuyen";
+    const isOther = (v) => v.category !== "van-chuyen";
+
+    const selectedValues = Object.values(newSelected);
+    const hasTransport = selectedValues.some(isTransport);
+    const hasOther = selectedValues.some(isOther);
+
+    if (newSelected[category]?.voucherId === voucher._id) {
+      // Bỏ chọn nếu nhấn lại
+      delete newSelected[category];
+    } else {
+      if (category === "van-chuyen") {
+        if (hasTransport) {
+          message.warning("Chỉ được chọn 1 voucher vận chuyển");
+          return;
+        }
+      } else {
+        if (hasOther && category !== "van-chuyen") {
+          message.warning("Chỉ được chọn 1 voucher cho danh mục khác");
+          return;
+        }
+      }
+      newSelected[category] = voucher;
+    }
+
+    setSelectedVouchers(newSelected);
+  };
+
+  const calculateVoucherDiscount = () => {
+    let discount = 0;
+
+    Object.values(selectedVouchers).forEach((voucher) => {
+      const { type, value, maxDiscount, category, minOrderValue } = voucher;
+
+      if (totalSelectedAmount < minOrderValue) return;
+
+      if (type === "percentage") {
+        const rawDiscount = (totalSelectedAmount * value) / 100;
+        discount += maxDiscount
+          ? Math.min(rawDiscount, maxDiscount)
+          : rawDiscount;
+      } else if (type === "fixed") {
+        discount += value;
+      }
+    });
+
+    return discount;
+  };
+
+  const finalPriceTotal = totalSelectedAmount - calculateVoucherDiscount();
+
   const handleCheckout = () => {
     const selectedProducts = cartItems.filter((item) =>
       selectedItems.includes(item.key)
@@ -165,6 +275,7 @@ const CartPage = () => {
         quantity: item.quantity,
         shopId: item.shopId,
       })),
+      vouchers: Object.values(selectedVouchers), // gửi các voucher đã chọn
     };
 
     dispatch(setCheckoutInfo(productItems));
@@ -245,7 +356,11 @@ const CartPage = () => {
               <Col span={4}>
                 <div>
                   <div style={{ textDecoration: "line-through", gap: 5 }}>
-                    ₫ {item.price.toLocaleString()}
+                    {item.price > item.finalPrice ? (
+                      <>₫ {item.price.toLocaleString()}</>
+                    ) : (
+                      <></>
+                    )}
                   </div>
                   <div
                     style={{
@@ -360,12 +475,161 @@ const CartPage = () => {
             <span>Voucher</span>
           </div>
           <div
-            onClick={() => message.warning("Bạn chưa có mã giảm giá nào!")}
+            onClick={handleOpenModalVoucher}
             style={{ fontSize: 14, cursor: "pointer" }}
           >
             Chọn hoặc nhập mã
           </div>
         </div>
+
+        {/* Tổng giảm */}
+        {Object.values(selectedVouchers).length > 0 && (
+          <div
+            style={{
+              textAlign: "right",
+              backgroundColor: "#fff",
+              padding: "0px 20px 20px 20px",
+              borderTop: "1px solid #eee",
+            }}
+          >
+            <div style={{ fontSize: 14, color: "#52c41a", marginTop: 10 }}>
+              Đã áp dụng voucher:
+              <ul style={{ paddingLeft: 20, marginTop: 5 }}>
+                {Object.values(selectedVouchers).map((voucher) => (
+                  <li style={{ listStyleType: "none" }} key={voucher._id}>
+                    {voucher.voucherName} – Giảm{" "}
+                    {voucher.type === "percentage"
+                      ? `${voucher.value}%` +
+                        (voucher.maxDiscount
+                          ? ` (tối đa ₫${voucher.maxDiscount.toLocaleString()})`
+                          : "")
+                      : `₫${voucher.value.toLocaleString()}`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ fontSize: 14, color: "#f5222d" }}>
+              Tổng giảm: ₫{calculateVoucherDiscount().toLocaleString()}
+            </div>
+          </div>
+        )}
+
+        {/* modal voucher */}
+
+        <Modal
+          zIndex={3000}
+          open={modalVoucher}
+          onCancel={handleCloseModalVoucher}
+          footer={[
+            <Button key="cancel" onClick={handleCloseModalVoucher}>
+              Đóng
+            </Button>,
+          ]}
+          width={700}
+        >
+          <div>
+            <h3 style={{ marginBottom: 20 }}>Danh sách Voucher</h3>
+
+            <div
+              style={{
+                maxHeight: "400px", // Giới hạn chiều cao
+                overflowY: "auto", // Cho phép scroll dọc
+                paddingRight: 10,
+                paddingLeft: 5,
+              }}
+            >
+              {Object.entries(groupVouchersByCategory(vouchers)).map(
+                ([category, list]) => (
+                  <div key={category} style={{ marginBottom: 30 }}>
+                    <h4
+                      style={{ color: "#1890ff", textTransform: "capitalize" }}
+                    >
+                      {category === "van-chuyen"
+                        ? "Vận chuyển"
+                        : category === "san-pham"
+                        ? "Sản phẩm"
+                        : category === "don-hang"
+                        ? "Đơn hàng"
+                        : "Khác"}
+                    </h4>
+
+                    {list.map((voucher) => {
+                      const { usable, reasons } =
+                        checkVoucherUsability(voucher);
+
+                      return (
+                        <div
+                          key={voucher._id}
+                          style={{
+                            padding: 10,
+                            border: "1px solid #e0e0e0",
+                            marginBottom: 10,
+                            borderRadius: 4,
+                            opacity: usable ? 1 : 0.5,
+                            pointerEvents: usable ? "auto" : "none",
+                            backgroundColor: usable ? "#fff" : "#fafafa",
+                          }}
+                        >
+                          <div style={{ fontWeight: 600 }}>
+                            {voucher.voucherName}
+                          </div>
+                          <div style={{ fontSize: 14 }}>
+                            {voucher.description}
+                          </div>
+                          <div style={{ fontSize: 13, color: "#666" }}>
+                            Áp dụng từ{" "}
+                            <b>
+                              {new Date(voucher.startDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </b>{" "}
+                            đến{" "}
+                            <b>
+                              {new Date(voucher.endDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </b>
+                          </div>
+
+                          {!usable && reasons.length > 0 && (
+                            <div
+                              style={{
+                                color: "red",
+                                fontSize: 12,
+                                marginTop: 8,
+                              }}
+                            >
+                              ⚠ Không thể áp dụng vì:
+                              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                {reasons.map((reason, idx) => (
+                                  <li key={idx}>{reason}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <Checkbox
+                            disabled={!usable}
+                            checked={
+                              selectedVouchers[category]?.voucherId ===
+                              voucher._id
+                            }
+                            onChange={() =>
+                              handleSelectVoucher({
+                                ...voucher,
+                                voucherId: voucher._id,
+                              })
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </Modal>
 
         {/* Tổng cộng */}
         <div
@@ -382,8 +646,28 @@ const CartPage = () => {
             <div style={{ fontSize: 20 }}>
               Tổng cộng ({totalSelectedQuantity || 0} sản phẩm):
             </div>
-            <div style={{ fontSize: 18, color: "red" }}>
-              ₫ {totalSelectedAmount.toLocaleString()}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+              }}
+            >
+              {calculateVoucherDiscount() ? (
+                <>
+                  <del>₫ {totalSelectedAmount.toLocaleString()}</del>
+
+                  <div style={{ fontSize: 20, color: "red" }}>
+                    ₫ {finalPriceTotal.toLocaleString()}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 20, color: "red" }}>
+                    ₫ {totalSelectedAmount.toLocaleString()}
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div style={{ width: 160 }}>

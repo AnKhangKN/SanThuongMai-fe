@@ -139,10 +139,7 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
         onClick={() => setIsShowPromotionOptions(!isShowPromotionOptions)}
       >
         <OptionSelect>
-          <Link
-            to="/admin/banner"
-            style={{ textDecoration: "none", color: "#333" }}
-          >
+          <div>
             <div style={{ display: "flex", alignItems: "center" }}>
               <IconContainer>
                 <MdDiscount />
@@ -152,7 +149,7 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
                 <div style={{ paddingLeft: "10px" }}>Banner & Giảm giá</div>
               )}
             </div>
-          </Link>
+          </div>
         </OptionSelect>
       </OptionContainer>
 
@@ -174,12 +171,27 @@ const SidebarActionListComponent = ({ isCollapsed }) => {
       {isShowPromotionOptions && (
         <OptionContainer style={{ paddingLeft: "20px" }}>
           <Link
-            to="/admin/discount"
+            to="/admin/voucher"
             style={{ textDecoration: "none", color: "#333" }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
               {!isCollapsed && (
-                <div style={{ paddingLeft: "10px" }}>Discount</div>
+                <div style={{ paddingLeft: "10px" }}>Voucher</div>
+              )}
+            </div>
+          </Link>
+        </OptionContainer>
+      )}
+
+      {isShowPromotionOptions && (
+        <OptionContainer style={{ paddingLeft: "20px" }}>
+          <Link
+            to="/admin/discount-program"
+            style={{ textDecoration: "none", color: "#333" }}
+          >
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {!isCollapsed && (
+                <div style={{ paddingLeft: "10px" }}>DiscountProgram</div>
               )}
             </div>
           </Link>

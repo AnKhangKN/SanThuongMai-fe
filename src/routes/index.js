@@ -51,6 +51,7 @@ import ForgetPasswordPage from "../pages/Auth/ForgetPasswordPage/ForgetPasswordP
 import BannerPage from "../pages/Admin/BannerPage/BannerPage";
 import DiscountPage from "../pages/Admin/DiscountPage/DiscountPage";
 import CategoryPageAdmin from "../pages/Admin/CategoryManagementPage/CategoryManagementPage";
+import VoucherPage from "../pages/Admin/VoucherPage/VoucherPage";
 
 export const routes = [
   //auth
@@ -304,7 +305,13 @@ export const routes = [
     isShowSidebarAdmin: true,
   },
   {
-    path: "/admin/discount",
+    path: "/admin/voucher",
+    page: VoucherPage,
+    isShowHeaderAdmin: true,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/discount-program",
     page: DiscountPage,
     isShowHeaderAdmin: true,
     isShowSidebarAdmin: true,

@@ -32,8 +32,9 @@ const PaymentPage = () => {
 
   const navigate = useNavigate();
   const products = useSelector((state) => state.checkout.products);
+  const vouchers = useSelector((state) => state.checkout.vouchers);
 
-  console.log(products);
+  console.log(vouchers);
   const user = useSelector((state) => state.user);
 
   const dispatch = useDispatch();
@@ -276,8 +277,6 @@ const PaymentPage = () => {
       message.warning("Xóa địa chỉ không thành công!");
     }
   };
-
-  console.log(products);
 
   return (
     <Wrapper>

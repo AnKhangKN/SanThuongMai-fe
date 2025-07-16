@@ -9,6 +9,8 @@ import * as MessageComponent from "../../../components/CustomerComponents/Messag
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import { updateUser } from "../../../redux/slices/userSlice";
+import { updateCart } from "../../../redux/slices/cartSlice";
+import * as CartServices from "../../../services/customer/CartServices";
 
 const { Title, Text, Link: AntLink } = Typography;
 
@@ -38,32 +40,55 @@ const LoginPage = () => {
 
   // useEffect 2: xử lý navigate và gọi API
   useEffect(() => {
-    if (isSuccess && data?.access_token) {
-      const decoded = jwtDecode(data.access_token);
-
-      if (location.state) {
-        navigate(location.state);
-      } else if (decoded?.id) {
-        handleGetDetailUser(
-          decoded.id,
+    const fetchUserAndNavigate = async () => {
+      if (isSuccess && data?.access_token) {
+        const decoded = jwtDecode(data.access_token);
+        await handleGetDetailUser(
           data.access_token,
           decoded.isAdmin,
           decoded.isVendor
         );
+
+        // Sau khi set user xong mới điều hướng
+        if (location.state) {
+          navigate(location.state);
+        }
       }
-    }
+    };
+
+    fetchUserAndNavigate();
   }, [isSuccess, data, location]);
 
-  const handleGetDetailUser = async (id, accessToken, isAdmin, isVendor) => {
-    const res = await AuthServices.getDetailUser(id, accessToken);
-    dispatch(updateUser({ ...res?.data, access_token: accessToken }));
+  const handleGetDetailUser = async (accessToken, isAdmin, isVendor) => {
+    try {
+      const res = await AuthServices.getDetailUser(accessToken);
+      const userData = res.data;
+      dispatch(updateUser(userData));
 
-    if (isAdmin) {
-      handleNavigateAdminPage();
-    } else if (isVendor) {
-      handleNavigateVendorPage();
-    } else {
-      handleNavigateHome();
+      if (!userData.isAdmin && !userData.isVendor) {
+        const cartRes = await CartServices.getAllItem(accessToken);
+        const userCart = cartRes.data?.[0];
+
+        if (userCart) {
+          dispatch(
+            updateCart({
+              products: userCart.productItems || [],
+              total_item: userCart.productItems?.length || 0,
+            })
+          );
+        }
+      }
+
+      if (isAdmin) {
+        handleNavigateAdminPage();
+      } else if (isVendor) {
+        handleNavigateVendorPage();
+      } else {
+        handleNavigateHome();
+      }
+    } catch (err) {
+      console.error("Lỗi lấy thông tin người dùng:", err);
+      message.error("Không thể lấy thông tin người dùng.");
     }
   };
 

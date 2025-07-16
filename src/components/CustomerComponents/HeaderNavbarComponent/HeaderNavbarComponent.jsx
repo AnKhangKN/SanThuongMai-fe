@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { resetUser } from "../../../redux/slices/userSlice";
 import { message } from "antd";
+import { resetCart } from "../../../redux/slices/cartSlice";
 
 const HeaderNavbarComponent = () => {
   // redux để lưu trạng thái người dùng
@@ -53,6 +54,7 @@ const HeaderNavbarComponent = () => {
 
       // Reset redux user state
       dispatch(resetUser());
+      dispatch(resetCart());
 
       // Điều hướng về trang login
       navigate("/");
