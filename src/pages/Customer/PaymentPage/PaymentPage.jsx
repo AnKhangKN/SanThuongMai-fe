@@ -142,9 +142,19 @@ const PaymentPage = () => {
     const totalPrice = totalAmount;
     const note = orderNote;
 
-    const discountShip = calculateVoucherDiscountAndShip() || 0;
-    const discountNormal = calculateVoucherDiscountNoShip() || 0;
-    const discountAmount = discountShip + discountNormal;
+    let discountAmount = 0;
+
+    const shipDiscount = calculateVoucherDiscountAndShip();
+    const noShipDiscount = calculateVoucherDiscountNoShip();
+
+    if (shipDiscount) {
+      discountAmount = shipDiscount;
+    } else if (noShipDiscount) {
+      discountAmount = noShipDiscount;
+    } else {
+      discountAmount = 0;
+    }
+
     const finalAmount = totalAmount - discountAmount;
 
     try {
@@ -757,7 +767,7 @@ const PaymentPage = () => {
                 margin: "20px 0px",
               }}
             >
-              {selectedMethod === "credit_card" ? (
+              {selectedMethod === "Online" ? (
                 <PayPalScriptProvider
                   options={{
                     "client-id": process.env.REACT_APP_CLIENT_ID,
@@ -770,9 +780,23 @@ const PaymentPage = () => {
                         return;
                       }
 
+                      let discountAmount = 0;
+
+                      const shipDiscount = calculateVoucherDiscountAndShip();
+                      const noShipDiscount = calculateVoucherDiscountNoShip();
+
+                      if (shipDiscount) {
+                        discountAmount = shipDiscount;
+                      } else if (noShipDiscount) {
+                        discountAmount = noShipDiscount;
+                      } else {
+                        discountAmount = 0;
+                      }
+
                       // Giả lập số dư trong PayPal Sandbox (5,000 USD)
                       const simulatedBalance = 100000000000;
-                      const totalPayment = totalAmount + 30000;
+                      const finalAmount = totalAmount - discountAmount;
+                      const totalPayment = finalAmount;
 
                       // Kiểm tra nếu số dư giả lập nhỏ hơn số tiền cần thanh toán
                       if (totalPayment > simulatedBalance) {
@@ -789,45 +813,95 @@ const PaymentPage = () => {
                         purchase_units: [
                           {
                             amount: {
-                              value: (totalAmount + 30000).toString(),
+                              value: finalAmount.toString(),
                             },
                           },
                         ],
                       });
                     }}
                     onApprove={async (data, actions) => {
-                      const details = await actions.order.capture();
+                      await actions.order.capture();
+
+                      if (!selectedAddressId) {
+                        message.warning("Hãy thêm địa chỉ!");
+                        return;
+                      }
 
                       const selectedAddress = addresses.find(
                         (addr) => addr._id === selectedAddressId
                       );
 
-                      const shippingInfo = {
+                      if (!selectedAddress) {
+                        message.error("Địa chỉ không hợp lệ!");
+                        return;
+                      }
+
+                      if (!selectedMethod) {
+                        message.info("Hãy chọn phương thức thanh toán!");
+                        return;
+                      }
+
+                      if (!products || products.length === 0) {
+                        message.warning("Hãy thêm sản phẩm để thanh toán!");
+                        navigate("/cart");
+                        return;
+                      }
+
+                      const shippingAddress = {
                         phone: selectedAddress.phone,
                         address: selectedAddress.address,
                         city: selectedAddress.city,
                       };
 
+                      const productItems = products;
                       const paymentMethod = selectedMethod;
+                      const totalPrice = totalAmount;
+                      const note = orderNote;
+
+                      let discountAmount = 0;
+
+                      const shipDiscount = calculateVoucherDiscountAndShip();
+                      const noShipDiscount = calculateVoucherDiscountNoShip();
+
+                      if (shipDiscount) {
+                        discountAmount = shipDiscount;
+                      } else if (noShipDiscount) {
+                        discountAmount = noShipDiscount;
+                      } else {
+                        discountAmount = 0;
+                      }
+
+                      const finalAmount = totalAmount - discountAmount;
 
                       try {
-                        const token = await ValidateToken.getValidAccessToken();
+                        const accessToken =
+                          await ValidateToken.getValidAccessToken();
 
-                        const totalBill = totalAmount + 30000;
+                        const payload = {
+                          productItems,
+                          shippingAddress,
+                          paymentMethod,
+                          totalPrice,
+                          vouchers,
+                          discountAmount,
+                          finalAmount,
+                          note,
+                        };
 
-                        await OrderServices.addPayment(
-                          token,
-                          shippingInfo,
-                          products,
-                          totalBill,
-                          paymentMethod
+                        const res = await OrderServices.addPayment(
+                          accessToken,
+                          payload
                         );
 
-                        message.success("Đặt hàng thành công!");
+                        if (res) {
+                          dispatch(resetCheckout());
+                          setOrderNote("");
+                          message.success("Đặt hàng thành công!");
+                          navigate("/cart");
+                        }
                       } catch (err) {
-                        console.error("Lỗi xác nhận đơn hàng:", err);
-                        message.error("Xác nhận đơn hàng thất bại!");
-                        return;
+                        console.error("Error confirming order:", err);
+                        message.warning("Có lỗi xảy ra khi đặt hàng.");
                       }
 
                       message.success("Thanh toán thành công qua PayPal!");
