@@ -32,7 +32,8 @@ const AddProduct = () => {
   salePrice: null,
   stock: null,
 });
-const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [activeCombinations, setActiveCombinations] = useState({});
 
   const handleDecoded = () => {
   const token = localStorage.getItem("access_token");
@@ -132,9 +133,30 @@ const [categories, setCategories] = useState([]);
     }
   };
 
-useEffect(() => {
-  fetchCategories();
-}, []);
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+  const classifications = form.getFieldValue("classifications") || [];
+  const [first, second] = classifications;
+  const options1 = first?.options || [];
+  const options2 = second?.options || [];
+
+  const combinations = options1.flatMap((opt1) =>
+    (options2.length ? options2 : [null]).map((opt2) => {
+      const key = `${opt1}-${opt2 || ""}`;
+      return key;
+    })
+  );
+
+  const defaultState = {};
+  combinations.forEach((key) => {
+    defaultState[key] = true;
+  });
+
+  setActiveCombinations(defaultState);
+}, [form.getFieldValue("classifications")]);
 
 const onFinish = async (values) => {
   try {
@@ -160,12 +182,15 @@ const onFinish = async (values) => {
     }
 
     // ✅ Chuyển đổi dữ liệu thành đúng format backend yêu cầu
-    const transformedPriceOptions = priceOptions.map((opt) => ({
-      attributes: opt.attributes || [],
-      price: opt.price,
-      salePrice: opt.salePrice,
-      stock: opt.stock,
-    }));
+    const transformedPriceOptions = priceOptions.filter((opt) => {
+    const key = opt.attributes.map(a => a.value).join("-");
+    return activeCombinations[key];
+  }).map((opt) => ({
+    attributes: opt.attributes || [],
+    price: opt.price,
+    salePrice: opt.salePrice,
+    stock: opt.stock,
+  }));
 
     const formData = new FormData();
     formData.append("productName", values.productName);
@@ -388,7 +413,7 @@ const handleChangeLabel = (index, value) => {
                 (options2.length ? options2 : [null]).map((opt2) => {
                   const attrs = [{ name: first?.name || "", value: opt1 }];
                   if (opt2) attrs.push({ name: second?.name || "", value: opt2 });
-                  return { attributes: attrs };
+                  return { key: `${opt1}-${opt2 || ""}`, attributes: attrs };
                 })
               );
 
@@ -429,9 +454,10 @@ const handleChangeLabel = (index, value) => {
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        {combinations[0].attributes.map((attr, i) => (
-                          <th key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.name}</th>
-                        ))}
+                        <th>Chọn</th>
+                          {combinations[0].attributes.map((attr, i) => (
+                            <th key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.name}</th>
+                          ))}
                         <th style={{ border: '1px solid #ccc', padding: 8 }}>Giá</th>
                         <th style={{ border: '1px solid #ccc', padding: 8 }}>Giá khuyến mãi</th>
                         <th style={{ border: '1px solid #ccc', padding: 8 }}>Tồn kho</th>
@@ -439,9 +465,21 @@ const handleChangeLabel = (index, value) => {
                     </thead>
                     <tbody>
                       {combinations.map(({ key, attributes }, index) => (
-                        <tr key={key}>
-                          {attributes.map((attr, i) => (
-                            <td key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.value}</td>
+                          <tr key={key} style={{ opacity: activeCombinations[key] ? 1 : 0.5 }}>
+                            <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                              <input
+                                type="checkbox"
+                                checked={activeCombinations[key]}
+                                onChange={(e) =>
+                                  setActiveCombinations(prev => ({
+                                    ...prev,
+                                    [key]: e.target.checked
+                                  }))
+                                }
+                              />
+                            </td>
+                            {attributes.map((attr, i) => (
+                              <td key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.value}</td>
                           ))}
                           <td style={{ border: '1px solid #ccc', padding: 8 }}>
                             <Form.Item
