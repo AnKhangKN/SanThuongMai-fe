@@ -54,7 +54,7 @@ const PaymentPage = () => {
     0
   );
 
-  const calculateVoucherDiscountNoship = () => {
+  const calculateVoucherDiscountNoShip = () => {
     let discount = 0;
 
     Object.values(selectedVouchers).forEach((voucher) => {
@@ -102,13 +102,12 @@ const PaymentPage = () => {
   };
 
   const shippingVoucher = vouchers.find((v) => v.category === "van-chuyen");
-  console.log(shippingVoucher);
   const shippingDiscount = shippingVoucher?.value;
   const shippingFee = 30000;
 
   const handleConfirmOrder = async () => {
     if (!selectedAddressId) {
-      message.warning("Hãy thêm địa chỉ!.");
+      message.warning("Hãy thêm địa chỉ!");
       return;
     }
 
@@ -117,51 +116,62 @@ const PaymentPage = () => {
     );
 
     if (!selectedAddress) {
-      message.error("Selected address not found!");
+      message.error("Địa chỉ không hợp lệ!");
       return;
     }
 
-    const shippingInfo = {
-      phone: selectedAddress.phone,
-      address: selectedAddress.address,
-      city: selectedAddress.city,
-    };
-
-    const paymentMethod = selectedMethod;
-
-    if (!paymentMethod) {
+    if (!selectedMethod) {
       message.info("Hãy chọn phương thức thanh toán!");
       return;
     }
 
-    if (!products) {
+    if (!products || products.length === 0) {
       message.warning("Hãy thêm sản phẩm để thanh toán!");
       navigate("/cart");
       return;
     }
 
+    const shippingAddress = {
+      phone: selectedAddress.phone,
+      address: selectedAddress.address,
+      city: selectedAddress.city,
+    };
+
+    const productItems = products;
+    const paymentMethod = selectedMethod;
+    const totalPrice = totalAmount;
+    const note = orderNote;
+
+    const discountShip = calculateVoucherDiscountAndShip() || 0;
+    const discountNormal = calculateVoucherDiscountNoShip() || 0;
+    const discountAmount = discountShip + discountNormal;
+    const finalAmount = totalAmount - discountAmount;
+
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
-      const totalBill = totalAmount + 30000;
 
-      await OrderServices.addPayment(
-        accessToken,
-        shippingInfo,
-        products,
-        totalBill,
+      const payload = {
+        productItems,
+        shippingAddress,
         paymentMethod,
-        orderNote,
-        user.email
-      );
+        totalPrice,
+        vouchers,
+        discountAmount,
+        finalAmount,
+        note,
+      };
 
-      dispatch(resetCheckout());
+      const res = await OrderServices.addPayment(accessToken, payload);
 
-      message.success("Đặt hàng thành công!");
-
-      setOrderNote("");
+      if (res) {
+        dispatch(resetCheckout());
+        setOrderNote("");
+        message.success("Đặt hàng thành công!");
+        navigate("/cart");
+      }
     } catch (err) {
       console.error("Error confirming order:", err);
-      message.warning("Hãy thêm sản phẩm để tạo đơn hàng!");
+      message.warning("Có lỗi xảy ra khi đặt hàng.");
     }
   };
 
@@ -222,11 +232,10 @@ const PaymentPage = () => {
 
   const handleSaveAddress = async () => {
     if (!newAddress.phone || !newAddress.address || !newAddress.city) {
-      message.error("Hãy chọn đủ thông tin!.");
+      message.error("Hãy chọn đủ thông tin!");
       return;
     }
 
-    // Kiểm tra định dạng số điện thoại (10-11 chữ số)
     const phoneRegex = /^[0-9]{10,11}$/;
     if (!phoneRegex.test(newAddress.phone)) {
       message.warning("Hãy kiểm tra lại số điện thoại của bạn!");
@@ -235,29 +244,37 @@ const PaymentPage = () => {
 
     try {
       const payload = {
-        shipping_address: {
-          phone: newAddress.phone,
-          address: newAddress.address,
-          city: newAddress.city,
-        },
+        phone: newAddress.phone,
+        city: newAddress.city,
+        address: newAddress.address,
       };
 
       const accessToken = await ValidateToken.getValidAccessToken();
-
       const res = await OrderServices.addAddress(accessToken, payload);
+
       if (!res || res.status !== "SUCCESS") {
-        message.error(res?.message || "Failed to add address!");
+        message.error(res?.message || "Thêm địa chỉ thất bại!");
         return;
       }
 
+      const data = res?.data?.shippingAddress || [];
+
+      const newItems = data.map((item) => ({
+        ...item,
+        key: item._id || item.id,
+        quantity: item.quantity || 1,
+      }));
+
+      setAddresses(newItems);
+
+      const lastItem = newItems[newItems.length - 1];
+      setSelectedAddressId(lastItem._id || lastItem.id);
+
       message.success("Thêm địa chỉ giao hàng thành công!");
-
-      await fetchAllAddress();
-
       handleCancel();
     } catch (error) {
-      console.error("Error saving address:", error);
-      message.error("Something went wrong while saving the address.");
+      console.error("Lỗi khi thêm địa chỉ:", error);
+      message.error("Có lỗi xảy ra khi thêm địa chỉ.");
     }
   };
 
@@ -566,7 +583,7 @@ const PaymentPage = () => {
                 Tổng giảm: ₫
                 {(shippingVoucher
                   ? calculateVoucherDiscountAndShip()
-                  : calculateVoucherDiscountNoship()
+                  : calculateVoucherDiscountNoShip()
                 ).toLocaleString()}
               </div>
             </div>
@@ -599,10 +616,10 @@ const PaymentPage = () => {
               }}
             >
               Tổng số tiền ({totalQuantity} sản phẩm): ₫
-              {calculateVoucherDiscountNoship() ? (
+              {calculateVoucherDiscountNoShip() ? (
                 <>
                   {(
-                    totalAmount - calculateVoucherDiscountNoship()
+                    totalAmount - calculateVoucherDiscountNoShip()
                   ).toLocaleString()}
                 </>
               ) : (
@@ -630,28 +647,28 @@ const PaymentPage = () => {
           >
             <div>Phương thức thanh toán</div>
             <div
-              onClick={() => handleChooseMethod("cod")}
+              onClick={() => handleChooseMethod("COD")}
               style={{
                 padding: "10px",
                 border:
-                  selectedMethod === "cod"
+                  selectedMethod === "COD"
                     ? "1px solid #194a7a"
                     : "1px solid #ddd",
-                color: selectedMethod === "cod" ? "#194a7a" : "#333",
+                color: selectedMethod === "COD" ? "#194a7a" : "#333",
                 cursor: "pointer",
               }}
             >
               Thanh toán khi nhận hàng
             </div>
             <div
-              onClick={() => handleChooseMethod("credit_card")}
+              onClick={() => handleChooseMethod("Online")}
               style={{
                 padding: "10px",
                 border:
-                  selectedMethod === "credit_card"
+                  selectedMethod === "Online"
                     ? "1px solid #194a7a"
                     : "1px solid #ddd",
-                color: selectedMethod === "credit_card" ? "#194a7a" : "#333",
+                color: selectedMethod === "Online" ? "#194a7a" : "#333",
                 cursor: "pointer",
               }}
             >
@@ -667,10 +684,10 @@ const PaymentPage = () => {
                   Tổng tiền hàng:
                 </div>
                 <div style={{ width: "200px", textAlign: "end" }}>
-                  {calculateVoucherDiscountNoship() ? (
+                  {calculateVoucherDiscountNoShip() ? (
                     <>
                       {(
-                        totalAmount - calculateVoucherDiscountNoship()
+                        totalAmount - calculateVoucherDiscountNoShip()
                       ).toLocaleString()}
                     </>
                   ) : (
@@ -696,7 +713,7 @@ const PaymentPage = () => {
 
                 {shippingVoucher ? (
                   <>
-                    <div>
+                    <div style={{ textAlign: "end" }}>
                       <del>{shippingFee.toLocaleString()}</del>
                       <div>
                         {(shippingFee - shippingDiscount).toLocaleString()}

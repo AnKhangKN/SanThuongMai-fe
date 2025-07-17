@@ -39,19 +39,11 @@ export const addAddress = async (accessToken, payload) => {
   }
 };
 
-export const addPayment = async (
-  accessToken,
-  shippingInfo,
-  items,
-  totalBill,
-  paymentMethod,
-  orderNote,
-  email
-) => {
+export const addPayment = async (accessToken, payload) => {
   try {
     const response = await axios.post(
       `${process.env.REACT_APP_API_URL}/customer/order-product`,
-      { shippingInfo, items, totalBill, paymentMethod, orderNote, email },
+      payload,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
