@@ -15,6 +15,10 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess, category
     const [fileList, setFileList] = useState([]);
     const [removedImages, setRemovedImages] = useState([]);
 
+    const [vat, setVat] = useState(0);
+    const [platformFee, setPlatformFee] = useState(0);
+
+
   useEffect(() => {
   if (product) {
     form.setFieldsValue({
@@ -24,6 +28,7 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess, category
       status: product.status,
       priceOptions: product.priceOptions,
     });
+    getTaxInfo(product.categoryId);
 
     // Gán ảnh hiện tại vào fileList
     const mappedImages = product.images?.map((img, index) => ({
@@ -87,11 +92,19 @@ const ProductDetailModal = ({ open, onCancel, product, onUpdateSuccess, category
   }
 };
 
-// Hàm tìm tên danh mục từ ID
-const getCategoryName = (id) => {
-  const found = category.find((c) => c._id === id);
-  return found?.categoryName || "Không rõ";
-};
+  // Hàm tìm tên danh mục từ ID
+  const getCategoryName = (id) => {
+    const found = category.find((c) => c._id === id);
+    return found?.categoryName || "Không rõ";
+  };
+
+  const getTaxInfo = (categoryId) => {
+    const selectedCategory = category.find((c) => c._id === categoryId);
+    if (selectedCategory) {
+      setVat(selectedCategory.vat || 0);
+      setPlatformFee(selectedCategory.platformFee || 0);
+    }
+  };
 
   return (
     <Modal
@@ -109,6 +122,8 @@ const getCategoryName = (id) => {
             <div>
                 <h3>{product.productName}</h3>
                 <p><strong>Danh mục:</strong> {getCategoryName(product.categoryId)}</p>
+                <p><strong>Thuế VAT:</strong> {vat}%</p>
+                <p><strong>Phí nền tảng:</strong> {platformFee}%</p>
                 <p><strong>Mô tả:</strong> {product.description || "Không có"}</p>
                 <p><strong>Đã bán:</strong> {product.soldCount}</p>
                 <p><strong>Trạng thái:</strong> {renderStatusTag(product.status)}</p>
