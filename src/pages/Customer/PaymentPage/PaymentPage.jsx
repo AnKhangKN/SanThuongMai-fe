@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Container, Wrapper } from "./style";
 import ButtonComponent from "../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import { FaMapMarkerAlt, FaPlus } from "react-icons/fa";
 import { Button, Col, Flex, Input, message, Modal, Row } from "antd";
 import imgTest from "../../../assets/images/Logo_Trang.jpg";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
 import * as OrderServices from "../../../services/customer/OrderServices";
 import { useDispatch, useSelector } from "react-redux";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
@@ -14,6 +11,7 @@ import { resetCheckout } from "../../../redux/slices/checkoutSlice";
 import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
+import * as ValidateToken from "../../../utils/tokenUtils";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -34,20 +32,79 @@ const PaymentPage = () => {
   const products = useSelector((state) => state.checkout.products);
   const vouchers = useSelector((state) => state.checkout.vouchers);
 
-  console.log(vouchers);
   const user = useSelector((state) => state.user);
 
   const dispatch = useDispatch();
 
-  const decodeToken = () => {
-    const storageToken = localStorage.getItem("access_token");
-    if (storageToken && isJsonString(storageToken)) {
-      const token = JSON.parse(storageToken);
-      const decoded = jwtDecode(token);
-      return { decoded, token };
-    }
-    return { decoded: null, token: null };
+  const selectedVouchers = useMemo(() => {
+    if (!vouchers || !Array.isArray(vouchers)) return {};
+    return vouchers.reduce((acc, v) => {
+      if (v?._id) acc[v._id] = v;
+      return acc;
+    }, {});
+  }, [vouchers]);
+
+  const totalAmount = products.reduce(
+    (sum, product) => sum + product.finalPrice * product.quantity,
+    0
+  );
+
+  const totalQuantity = products.reduce(
+    (sum, product) => sum + product.quantity,
+    0
+  );
+
+  const calculateVoucherDiscountNoship = () => {
+    let discount = 0;
+
+    Object.values(selectedVouchers).forEach((voucher) => {
+      if (!voucher || typeof voucher !== "object") return;
+      const { type, value, maxDiscount, category, minOrderValue } = voucher;
+
+      if (category === "van-chuyen") return;
+      if (typeof minOrderValue === "number" && totalAmount < minOrderValue)
+        return;
+
+      if (type === "percentage" && typeof value === "number") {
+        const rawDiscount = (totalAmount * value) / 100;
+        discount +=
+          typeof maxDiscount === "number"
+            ? Math.min(rawDiscount, maxDiscount)
+            : rawDiscount;
+      } else if (type === "fixed" && typeof value === "number") {
+        discount += value;
+      }
+    });
+
+    return discount;
   };
+
+  const calculateVoucherDiscountAndShip = () => {
+    let discount = 0;
+
+    Object.values(selectedVouchers).forEach((voucher) => {
+      if (!voucher || typeof voucher !== "object") return;
+
+      const { type, value, maxDiscount } = voucher;
+
+      if (type === "percentage" && typeof value === "number") {
+        const rawDiscount = (totalAmount * value) / 100;
+        discount +=
+          typeof maxDiscount === "number"
+            ? Math.min(rawDiscount, maxDiscount)
+            : rawDiscount;
+      } else if (type === "fixed" && typeof value === "number") {
+        discount += value;
+      }
+    });
+
+    return discount;
+  };
+
+  const shippingVoucher = vouchers.find((v) => v.category === "van-chuyen");
+  console.log(shippingVoucher);
+  const shippingDiscount = shippingVoucher?.value;
+  const shippingFee = 30000;
 
   const handleConfirmOrder = async () => {
     if (!selectedAddressId) {
@@ -84,17 +141,11 @@ const PaymentPage = () => {
     }
 
     try {
-      let { decoded, token } = decodeToken();
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
-
+      const accessToken = await ValidateToken.getValidAccessToken();
       const totalBill = totalAmount + 30000;
 
       await OrderServices.addPayment(
-        token,
+        accessToken,
         shippingInfo,
         products,
         totalBill,
@@ -116,14 +167,8 @@ const PaymentPage = () => {
 
   const fetchAllAddress = async () => {
     try {
-      let { decoded, token } = decodeToken();
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
-
-      const response = await OrderServices.getAllAddress(token);
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const response = await OrderServices.getAllAddress(accessToken);
       const data = response?.data || [];
 
       const items = data.map((item) => ({
@@ -189,19 +234,6 @@ const PaymentPage = () => {
     }
 
     try {
-      let { decoded, token } = decodeToken();
-      let accessToken = token;
-
-      if (!accessToken || decoded?.exp * 1000 < Date.now()) {
-        const res = await AuthServices.refreshToken();
-        if (!res?.access_token) {
-          message.error("Unable to refresh session!");
-          return;
-        }
-        accessToken = res.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
-
       const payload = {
         shipping_address: {
           phone: newAddress.phone,
@@ -209,6 +241,8 @@ const PaymentPage = () => {
           city: newAddress.city,
         },
       };
+
+      const accessToken = await ValidateToken.getValidAccessToken();
 
       const res = await OrderServices.addAddress(accessToken, payload);
       if (!res || res.status !== "SUCCESS") {
@@ -231,16 +265,6 @@ const PaymentPage = () => {
     setSelectedMethod(method);
   };
 
-  const totalAmount = products.reduce(
-    (sum, product) => sum + product.finalPrice * product.quantity,
-    0
-  );
-
-  const totalQuantity = products.reduce(
-    (sum, product) => sum + product.quantity,
-    0
-  );
-
   const handleRemoveAddress = async () => {
     const selectedAddress = addresses.find(
       (addr) => addr._id === selectedAddressId
@@ -257,18 +281,9 @@ const PaymentPage = () => {
     };
 
     try {
-      let { decoded, token } = decodeToken();
-      if (!token || !decoded || decoded.exp < Date.now() / 1000) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        if (token) {
-          localStorage.setItem("access_token", token); // Lưu lại token mới
-        } else {
-          return message.warning("Không thể làm mới token!");
-        }
-      }
+      const accessToken = await ValidateToken.getValidAccessToken();
 
-      await OrderServices.removeShippingAddress(token, shippingInfo);
+      await OrderServices.removeShippingAddress(accessToken, shippingInfo);
       message.success("Địa chỉ đã xóa!");
 
       handleCancel();
@@ -521,6 +536,42 @@ const PaymentPage = () => {
             </Row>
           ))}
 
+          {/* Tổng giảm */}
+          {Object.values(selectedVouchers).length > 0 && (
+            <div
+              style={{
+                textAlign: "right",
+                backgroundColor: "#fff",
+                padding: "0px 20px 20px 20px",
+                borderTop: "1px solid #eee",
+              }}
+            >
+              <div style={{ fontSize: 14, color: "#52c41a", marginTop: 10 }}>
+                Đã áp dụng voucher:
+                <ul style={{ paddingLeft: 20, marginTop: 5 }}>
+                  {Object.values(selectedVouchers).map((voucher) => (
+                    <li style={{ listStyleType: "none" }} key={voucher._id}>
+                      {voucher.voucherName} – Giảm{" "}
+                      {voucher.type === "percentage"
+                        ? `${voucher.value}%` +
+                          (voucher.maxDiscount
+                            ? ` (tối đa ₫${voucher.maxDiscount.toLocaleString()})`
+                            : "")
+                        : `₫${voucher.value.toLocaleString()}`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ fontSize: 14, color: "#f5222d" }}>
+                Tổng giảm: ₫
+                {(shippingVoucher
+                  ? calculateVoucherDiscountAndShip()
+                  : calculateVoucherDiscountNoship()
+                ).toLocaleString()}
+              </div>
+            </div>
+          )}
+
           <div
             style={{
               display: "flex",
@@ -548,7 +599,15 @@ const PaymentPage = () => {
               }}
             >
               Tổng số tiền ({totalQuantity} sản phẩm): ₫
-              {totalAmount.toLocaleString()}
+              {calculateVoucherDiscountNoship() ? (
+                <>
+                  {(
+                    totalAmount - calculateVoucherDiscountNoship()
+                  ).toLocaleString()}
+                </>
+              ) : (
+                <>{totalAmount.toLocaleString()}</>
+              )}
             </div>
           </div>
         </div>
@@ -608,21 +667,62 @@ const PaymentPage = () => {
                   Tổng tiền hàng:
                 </div>
                 <div style={{ width: "200px", textAlign: "end" }}>
-                  {totalAmount.toLocaleString()}
+                  {calculateVoucherDiscountNoship() ? (
+                    <>
+                      {(
+                        totalAmount - calculateVoucherDiscountNoship()
+                      ).toLocaleString()}
+                    </>
+                  ) : (
+                    <>{totalAmount.toLocaleString()}</>
+                  )}
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <div style={{ width: "150px", textAlign: "start" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    width: "150px",
+                    textAlign: "start",
+                  }}
+                >
                   Phí vận chuyển:
                 </div>
-                <div style={{ width: "200px", textAlign: "end" }}>đ30,000</div>
+
+                {shippingVoucher ? (
+                  <>
+                    <div>
+                      <del>{shippingFee.toLocaleString()}</del>
+                      <div>
+                        {(shippingFee - shippingDiscount).toLocaleString()}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>{shippingFee.toLocaleString()}</>
+                )}
               </div>
+
+              <hr />
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div style={{ width: "150px", textAlign: "start" }}>
                   Tổng thanh toán:
                 </div>
                 <div style={{ width: "200px", textAlign: "end" }}>
-                  {(totalAmount + 30000).toLocaleString()}
+                  {calculateVoucherDiscountAndShip() ? (
+                    <>
+                      {(
+                        totalAmount - calculateVoucherDiscountAndShip()
+                      ).toLocaleString()}
+                    </>
+                  ) : (
+                    <>{totalAmount.toLocaleString()}</>
+                  )}
                 </div>
               </div>
             </div>
@@ -694,19 +794,7 @@ const PaymentPage = () => {
                       const paymentMethod = selectedMethod;
 
                       try {
-                        let { decoded, token } = decodeToken();
-
-                        if (
-                          !token ||
-                          (decoded && decoded.exp < Date.now() / 1000)
-                        ) {
-                          const refreshed = await AuthServices.refreshToken();
-                          token = refreshed?.access_token;
-                          localStorage.setItem(
-                            "access_token",
-                            JSON.stringify(token)
-                          );
-                        }
+                        const token = await ValidateToken.getValidAccessToken();
 
                         const totalBill = totalAmount + 30000;
 
