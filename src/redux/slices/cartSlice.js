@@ -16,14 +16,28 @@ export const cartSlice = createSlice({
       state.total_item = total_item || 0;
     },
 
-    // hoặc dùng:
     resetCart: (state) => {
       state.products = [];
       state.total_item = 0;
     },
+
+    removePurchasedItems: (state, action) => {
+      const purchased = action.payload; // Array<{ productId, attributes }>
+      state.products = state.products.filter((cartItem) => {
+        return !purchased.some(
+          (item) =>
+            item.productId === cartItem.productId &&
+            JSON.stringify(item.attributes) ===
+              JSON.stringify(cartItem.attributes)
+        );
+      });
+
+      state.total_item = state.products.length;
+    },
   },
 });
 
-export const { updateCart, resetCart } = cartSlice.actions;
+export const { updateCart, resetCart, removePurchasedItems } =
+  cartSlice.actions;
 
 export default cartSlice.reducer;

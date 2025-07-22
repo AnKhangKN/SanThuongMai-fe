@@ -82,7 +82,7 @@ const HeaderInfoComponent = () => {
                 {item.productName || "Tên sản phẩm"}
               </div>
               <div style={{ flex: "0 0 25%", textAlign: "end" }}>
-                {(item.price || 0).toLocaleString()}đ
+                {item.finalPrice.toLocaleString()} đ
               </div>
             </div>
           ))}

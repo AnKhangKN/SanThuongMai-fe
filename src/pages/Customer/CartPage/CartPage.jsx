@@ -271,11 +271,12 @@ const CartPage = () => {
         productImage: item.productImage,
         attributes: item.attributes,
         price: item.price,
+        ...(item.salePrice && { salePrice: item.salePrice }), // chỉ thêm nếu tồn tại
         finalPrice: item.finalPrice,
         quantity: item.quantity,
         shopId: item.shopId,
       })),
-      vouchers: Object.values(selectedVouchers), // gửi các voucher đã chọn
+      vouchers: Object.values(selectedVouchers),
     };
 
     dispatch(setCheckoutInfo(productItems));

@@ -134,6 +134,7 @@ const ProductDetailPage = () => {
           value,
         })),
         price: selectedProductDetail.price,
+        salePrice: selectedProductDetail.salePrice,
         finalPrice: selectedProductDetail.finalPrice,
         categoryId: productDetail.categoryId,
         quantity,

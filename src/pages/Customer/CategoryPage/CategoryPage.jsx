@@ -22,7 +22,6 @@ const CategoryPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleCount, setVisibleCount] = useState(6);
   const [sortedProducts, setSortedProducts] = useState([]);
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" = Từ thấp đến cao
   const [sortBy, setSortBy] = useState("price");
   const [selectedButton, setSelectedButton] = useState(null);
   const itemsPerPage = 10;

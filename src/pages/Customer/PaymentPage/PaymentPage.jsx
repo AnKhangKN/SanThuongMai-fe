@@ -12,6 +12,7 @@ import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 import * as ValidateToken from "../../../utils/tokenUtils";
+import { removePurchasedItems } from "../../../redux/slices/cartSlice";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -32,7 +33,7 @@ const PaymentPage = () => {
   const products = useSelector((state) => state.checkout.products);
   const vouchers = useSelector((state) => state.checkout.vouchers);
 
-  const user = useSelector((state) => state.user);
+  console.log("products", products);
 
   const dispatch = useDispatch();
 
@@ -174,6 +175,7 @@ const PaymentPage = () => {
       const res = await OrderServices.addPayment(accessToken, payload);
 
       if (res) {
+        dispatch(removePurchasedItems(productItems));
         dispatch(resetCheckout());
         setOrderNote("");
         message.success("Đặt hàng thành công!");
@@ -549,8 +551,16 @@ const PaymentPage = () => {
                 </div>
               </Col>
               <Col span={4} style={{ textAlign: "end" }}>
-                <del>{product.price.toLocaleString()}</del>
-                <div>{product.finalPrice.toLocaleString()}</div>
+                {product.finalPrice > product.price ? (
+                  <>
+                    <div>{product.finalPrice.toLocaleString()}</div>
+                  </>
+                ) : (
+                  <>
+                    <del>{product.price.toLocaleString()}</del>
+                    <div>{product.finalPrice.toLocaleString()}</div>
+                  </>
+                )}
               </Col>
               <Col span={3} style={{ textAlign: "end" }}>
                 <div>{product.quantity}</div>
@@ -796,10 +806,9 @@ const PaymentPage = () => {
                       // Giả lập số dư trong PayPal Sandbox (5,000 USD)
                       const simulatedBalance = 100000000000;
                       const finalAmount = totalAmount - discountAmount;
-                      const totalPayment = finalAmount;
 
                       // Kiểm tra nếu số dư giả lập nhỏ hơn số tiền cần thanh toán
-                      if (totalPayment > simulatedBalance) {
+                      if (finalAmount > simulatedBalance) {
                         message.error("Số dư PayPal không đủ để thanh toán!");
                         return;
                       }
@@ -894,17 +903,17 @@ const PaymentPage = () => {
                         );
 
                         if (res) {
+                          dispatch(removePurchasedItems(productItems));
                           dispatch(resetCheckout());
                           setOrderNote("");
                           message.success("Đặt hàng thành công!");
+                          message.success("Thanh toán thành công qua PayPal!");
                           navigate("/cart");
                         }
                       } catch (err) {
                         console.error("Error confirming order:", err);
                         message.warning("Có lỗi xảy ra khi đặt hàng.");
                       }
-
-                      message.success("Thanh toán thành công qua PayPal!");
                     }}
                     onError={(err) => {
                       console.error("PayPal Error:", err);
