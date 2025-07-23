@@ -38,20 +38,10 @@ const HomePage = () => {
               <Col span={8}>
                 <div>
                   <div style={{ width: "100%" }}>
-                    <img
-                      style={{ width: "100%" }}
-                      src={voucher1}
-                      alt=""
-                      srcset=""
-                    />
+                    <img style={{ width: "100%" }} src={voucher1} alt="" />
                   </div>
                   <div style={{ width: "100%" }}>
-                    <img
-                      style={{ width: "100%" }}
-                      src={voucher2}
-                      alt=""
-                      srcset=""
-                    />
+                    <img style={{ width: "100%" }} src={voucher2} alt="" />
                   </div>
                 </div>
               </Col>

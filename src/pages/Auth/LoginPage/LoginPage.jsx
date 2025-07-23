@@ -76,6 +76,7 @@ const LoginPage = () => {
               total_item: userCart.productItems?.length || 0,
             })
           );
+        } else {
         }
       }
 

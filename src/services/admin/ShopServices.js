@@ -14,10 +14,10 @@ export const getAllShops = async (accessToken) => {
 };
 
 // Duyệt trạng thái shops
-export const activateShop = async (status, accessToken) => {
+export const activateShop = async (payload, accessToken) => {
   const res = await axios.patch(
-    `${process.env.REACT_APP_API_URL}/admin/shop`,
-    status,
+    `${process.env.REACT_APP_API_URL}/admin/shops`,
+    payload,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,

@@ -148,6 +148,13 @@ const CartPage = () => {
     0
   );
 
+  const groupedByShop = displayedItems.reduce((acc, item) => {
+    const key = item.shopName; // hoặc item.shopId
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
   const groupVouchersByCategory = (vouchers) => {
     return vouchers.reduce((acc, voucher) => {
       const category = voucher.category || "khac";
@@ -275,6 +282,7 @@ const CartPage = () => {
         finalPrice: item.finalPrice,
         quantity: item.quantity,
         shopId: item.shopId,
+        shopName: item.shopName,
       })),
       vouchers: Object.values(selectedVouchers),
     };
@@ -313,126 +321,139 @@ const CartPage = () => {
           </Row>
         </div>
 
-        {/* Danh sách sản phẩm */}
-        {displayedItems.map((item) => (
-          <div
-            key={item.key}
-            style={{
-              padding: "10px 30px",
-              margin: "2px 0",
-              backgroundColor: "#fff",
-            }}
-          >
-            <Row align="middle">
-              <Col span={2}>
-                <Checkbox
-                  checked={selectedItems.includes(item.key)}
-                  onChange={() => handleItemSelection(item.key)}
-                />
-              </Col>
-              <Col span={10}>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <div style={{ width: 80 }}>
-                    <img
-                      src={`${imageURL}${item.productImage}`}
-                      alt=""
-                      style={{ width: "100%" }}
+        {Object.entries(groupedByShop).map(([shopName, items]) => (
+          <div key={shopName} style={{ marginBottom: 20 }}>
+            {/* Tên shop */}
+            <div
+              style={{
+                padding: "10px 30px",
+                backgroundColor: "#f5f5f5",
+                fontWeight: 600,
+              }}
+            >
+              🏪 {shopName}
+            </div>
+
+            {/* Danh sách sản phẩm của shop */}
+            {items.map((item) => (
+              <div
+                key={item.key}
+                style={{
+                  padding: "10px 30px",
+                  margin: "2px 0",
+                  backgroundColor: "#fff",
+                }}
+              >
+                <Row align="middle">
+                  <Col span={2}>
+                    <Checkbox
+                      checked={selectedItems.includes(item.key)}
+                      onChange={() => handleItemSelection(item.key)}
                     />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 500 }}>
-                      {item.productName}
+                  </Col>
+                  <Col span={10}>
+                    <div
+                      style={{ display: "flex", gap: 10, alignItems: "center" }}
+                    >
+                      <div style={{ width: 80 }}>
+                        <img
+                          src={`${imageURL}${item.productImage}`}
+                          alt=""
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 500 }}>
+                          {item.productName}
+                        </div>
+                        <div style={{ fontSize: 12, color: "gray" }}>
+                          {(item.attributes || []).map((attr) => (
+                            <span key={attr.name} style={{ marginRight: 10 }}>
+                              {attr.name}: {attr.value}
+                            </span>
+                          ))}
+                        </div>
+                        <div style={{ fontSize: 12 }}>{item.shopName}</div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: "gray" }}>
-                      {(item.attributes || []).map((attr) => (
-                        <span key={attr.name} style={{ marginRight: 10 }}>
-                          {attr.name}: {attr.value}
-                        </span>
-                      ))}
+                  </Col>
+                  <Col span={4}>
+                    <div>
+                      <div style={{ textDecoration: "line-through", gap: 5 }}>
+                        {item.price > item.finalPrice && (
+                          <>₫ {item.price.toLocaleString()}</>
+                        )}
+                      </div>
+                      <div style={{ gap: 5 }}>
+                        ₫ {item.finalPrice.toLocaleString()}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12 }}>{item.shopName}</div>
-                  </div>
-                </div>
-              </Col>
-              <Col span={4}>
-                <div>
-                  <div style={{ textDecoration: "line-through", gap: 5 }}>
-                    {item.price > item.finalPrice ? (
-                      <>₫ {item.price.toLocaleString()}</>
-                    ) : (
-                      <></>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      gap: 5,
-                    }}
-                  >
-                    đ {item.finalPrice.toLocaleString()}
-                  </div>
-                </div>
-              </Col>
-              <Col span={3}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <button
-                    style={buttonStyle}
-                    onClick={() => handleChangeQuantity(item._id, "decrease")}
-                  >
-                    <LuMinus />
-                  </button>
-
-                  <input
-                    style={inputStyle}
-                    value={
-                      quantityEdits[item._id] !== undefined
-                        ? quantityEdits[item._id]
-                        : item.quantity
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^\d{0,3}$/.test(value)) {
-                        setQuantityEdits((prev) => ({
-                          ...prev,
-                          [item._id]: value,
-                        }));
-                      }
-                    }}
-                    onBlur={() => {
-                      const edited = parseInt(quantityEdits[item._id]);
-                      if (
-                        !isNaN(edited) &&
-                        edited > 0 &&
-                        edited !== item.quantity
-                      ) {
-                        handleUpdateQuantity(item._id, edited);
-                      } else if (edited <= 0) {
-                        message.warning(
-                          "Số lượng không thể bằng hoặc nhỏ hơn 0"
-                        );
-                      }
-                      setQuantityEdits((prev) => {
-                        const newEdits = { ...prev };
-                        delete newEdits[item._id];
-                        return newEdits;
-                      });
-                    }}
-                  />
-
-                  <button
-                    style={buttonStyle}
-                    onClick={() => handleChangeQuantity(item._id, "increase")}
-                  >
-                    <LuPlus />
-                  </button>
-                </div>
-              </Col>
-              <Col span={3}>
-                ₫{(item.finalPrice * item.quantity).toLocaleString()}
-              </Col>
-              <Col span={2}>
-                <div style={{ color: "red", cursor: "pointer" }}>Xóa</div>
-              </Col>
-            </Row>
+                  </Col>
+                  <Col span={3}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <button
+                        style={buttonStyle}
+                        onClick={() =>
+                          handleChangeQuantity(item._id, "decrease")
+                        }
+                      >
+                        <LuMinus />
+                      </button>
+                      <input
+                        style={inputStyle}
+                        value={
+                          quantityEdits[item._id] !== undefined
+                            ? quantityEdits[item._id]
+                            : item.quantity
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (/^\d{0,3}$/.test(value)) {
+                            setQuantityEdits((prev) => ({
+                              ...prev,
+                              [item._id]: value,
+                            }));
+                          }
+                        }}
+                        onBlur={() => {
+                          const edited = parseInt(quantityEdits[item._id]);
+                          if (
+                            !isNaN(edited) &&
+                            edited > 0 &&
+                            edited !== item.quantity
+                          ) {
+                            handleUpdateQuantity(item._id, edited);
+                          } else if (edited <= 0) {
+                            message.warning(
+                              "Số lượng không thể bằng hoặc nhỏ hơn 0"
+                            );
+                          }
+                          setQuantityEdits((prev) => {
+                            const newEdits = { ...prev };
+                            delete newEdits[item._id];
+                            return newEdits;
+                          });
+                        }}
+                      />
+                      <button
+                        style={buttonStyle}
+                        onClick={() =>
+                          handleChangeQuantity(item._id, "increase")
+                        }
+                      >
+                        <LuPlus />
+                      </button>
+                    </div>
+                  </Col>
+                  <Col span={3}>
+                    ₫{(item.finalPrice * item.quantity).toLocaleString()}
+                  </Col>
+                  <Col span={2}>
+                    <div style={{ color: "red", cursor: "pointer" }}>Xóa</div>
+                  </Col>
+                </Row>
+              </div>
+            ))}
           </div>
         ))}
 

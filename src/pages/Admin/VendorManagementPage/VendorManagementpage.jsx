@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Wrapper } from "./style";
-import { Select, Table, Tag, Modal, Button } from "antd";
+import { Select, Table, Tag, Modal, Button, message } from "antd";
 import * as ShopServices from "../../../services/admin/ShopServices";
 import * as ValidateToken from "../../../utils/tokenUtils";
 
@@ -81,12 +81,26 @@ const VendorManagementPage = () => {
     setFilteredData(filtered);
   }, [selectedStatus, allData]);
 
-  // const handleChangeStatus = async () => {
-  //   try {
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  const handleChangeStatus = async (shopId, status) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const payload = {
+        shopId,
+        status,
+      };
+
+      const res = await ShopServices.activateShop(payload, accessToken);
+
+      if (res) {
+        message.success("Cập nhật shop thành công!");
+        setModalVisible(false);
+        fetchAllShop();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleFilterChange = (value) => {
     setSelectedStatus(value);
@@ -152,7 +166,11 @@ const VendorManagementPage = () => {
           <Button key="cancel" onClick={handleModalCancel}>
             Đóng
           </Button>,
-          <Button key="save" type="primary">
+          <Button
+            key="save"
+            type="primary"
+            onClick={() => handleChangeStatus(selectedUser._id, newStatus)}
+          >
             Lưu
           </Button>,
         ]}
@@ -172,7 +190,9 @@ const VendorManagementPage = () => {
               <Select
                 value={newStatus}
                 style={{ width: "120px" }}
-                onChange={(value) => setNewStatus(value)}
+                onChange={(value) => {
+                  setNewStatus(value);
+                }}
                 options={[
                   { value: "active", label: "Đang hoạt động" },
                   { value: "inactive", label: "Không hoạt động" },

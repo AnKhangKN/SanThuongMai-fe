@@ -33,8 +33,6 @@ const PaymentPage = () => {
   const products = useSelector((state) => state.checkout.products);
   const vouchers = useSelector((state) => state.checkout.vouchers);
 
-  console.log("products", products);
-
   const dispatch = useDispatch();
 
   const selectedVouchers = useMemo(() => {
@@ -101,6 +99,18 @@ const PaymentPage = () => {
 
     return discount;
   };
+
+  const groupedByShop = products.reduce((acc, product) => {
+    const key = product.shopId || product.shopName;
+    if (!acc[key]) {
+      acc[key] = {
+        shopName: product.shopName,
+        items: [],
+      };
+    }
+    acc[key].items.push(product);
+    return acc;
+  }, {});
 
   const shippingVoucher = vouchers.find((v) => v.category === "van-chuyen");
   const shippingDiscount = shippingVoucher?.value;
@@ -510,67 +520,102 @@ const PaymentPage = () => {
             padding: "30px 20px",
           }}
         >
-          <Row>
-            <Col span={12}>Sản phẩm</Col>
-            <Col span={4} style={{ textAlign: "end" }}>
-              Giá
-            </Col>
-            <Col span={3} style={{ textAlign: "end" }}>
-              Số lượng
-            </Col>
-            <Col span={5} style={{ textAlign: "end" }}>
-              Tổng tiền
-            </Col>
-          </Row>
-          {products.map((product, index) => (
-            <Row
-              key={index}
-              style={{ padding: "30px 0px", borderBottom: "2px solid #f5f5f5" }}
-            >
-              <Col
-                span={12}
-                style={{ display: "flex", gap: "10px", alignItems: "center" }}
-              >
-                <div style={{ width: "40px", height: "40px" }}>
-                  <img
-                    style={{ width: "100%", objectFit: "cover" }}
-                    src={`${imageURL}${product.productImage}` || imgTest} // dùng product.image nếu có
-                    alt={product.productName}
-                  />
-                </div>
-
-                <div>
-                  <div>{product.productName}</div>
-                  <div style={{ display: "flex", gap: "20px" }}>
-                    {(product.attributes || []).map((attribute, idx) => (
-                      <div key={idx}>
-                        {attribute.name}: {attribute.value}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Col>
+          <div style={{ marginBottom: 20 }}>
+            <Row>
+              <Col span={12}>Sản phẩm</Col>
               <Col span={4} style={{ textAlign: "end" }}>
-                {product.finalPrice > product.price ? (
-                  <>
-                    <div>{product.finalPrice.toLocaleString()}</div>
-                  </>
-                ) : (
-                  <>
-                    <del>{product.price.toLocaleString()}</del>
-                    <div>{product.finalPrice.toLocaleString()}</div>
-                  </>
-                )}
+                Giá
               </Col>
               <Col span={3} style={{ textAlign: "end" }}>
-                <div>{product.quantity}</div>
+                Số lượng
               </Col>
               <Col span={5} style={{ textAlign: "end" }}>
-                <div>
-                  {(product.finalPrice * product.quantity).toLocaleString()}
-                </div>
+                Tổng tiền
               </Col>
             </Row>
+          </div>
+
+          {Object.entries(groupedByShop).map(([shopKey, group]) => (
+            <div key={shopKey} style={{ marginBottom: 40 }}>
+              {/* Tên shop */}
+              <div
+                style={{
+                  fontWeight: "bold",
+                  background: "#fafafa",
+                  padding: "10px 0",
+                  borderTop: "1px solid #eee",
+                  borderBottom: "1px solid #eee",
+                  paddingLeft: 10,
+                }}
+              >
+                🛍️ {group.shopName}
+              </div>
+
+              {/* Danh sách sản phẩm */}
+              {group.items.map((product, index) => (
+                <Row
+                  key={index}
+                  style={{
+                    padding: "30px 0px",
+                    borderBottom: "2px solid #f5f5f5",
+                  }}
+                >
+                  <Col
+                    span={12}
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ width: "40px", height: "40px" }}>
+                      <img
+                        style={{ width: "100%", objectFit: "cover" }}
+                        src={`${imageURL}${product.productImage}` || imgTest}
+                        alt={product.productName}
+                      />
+                    </div>
+
+                    <div>
+                      <div>{product.productName}</div>
+                      <div style={{ display: "flex", gap: "20px" }}>
+                        {(product.attributes || []).map((attribute, idx) => (
+                          <div key={idx}>
+                            {attribute.name}: {attribute.value}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Col>
+
+                  <Col span={4}>
+                    <div style={{ textAlign: "end" }}>
+                      {product.finalPrice < product.price ? (
+                        <>
+                          <del style={{ display: "block" }}>
+                            ₫{product.price.toLocaleString()}
+                          </del>
+                          <div>₫{product.finalPrice.toLocaleString()}</div>
+                        </>
+                      ) : (
+                        <div>₫{product.finalPrice.toLocaleString()}</div>
+                      )}
+                    </div>
+                  </Col>
+
+                  <Col span={3}>
+                    <div style={{ textAlign: "end" }}>{product.quantity}</div>
+                  </Col>
+
+                  <Col span={5}>
+                    <div style={{ textAlign: "end" }}>
+                      ₫
+                      {(product.finalPrice * product.quantity).toLocaleString()}
+                    </div>
+                  </Col>
+                </Row>
+              ))}
+            </div>
           ))}
 
           {/* Tổng giảm */}
