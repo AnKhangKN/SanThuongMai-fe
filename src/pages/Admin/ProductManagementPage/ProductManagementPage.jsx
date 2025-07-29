@@ -11,7 +11,7 @@ const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 const columns = [
   {
     title: "Tên sản phẩm",
-    dataIndex: "product_name",
+    dataIndex: "productName",
     key: "name",
     render: (text) => (
       <Tooltip title={text}>
@@ -31,7 +31,7 @@ const columns = [
   },
   {
     title: "Danh mục",
-    dataIndex: "category",
+    dataIndex: ["categoryId", "categoryName"],
     key: "category",
     ellipsis: true,
   },
@@ -68,13 +68,11 @@ const columns = [
   },
   {
     title: "Chủ shop",
-    dataIndex: "user_id",
-    key: "user_name",
-    render: (user_id) => {
-      return user_id ? user_id.user_name : "Chưa có thông tin";
-    },
+    dataIndex: "shopId",
+    key: "shopName",
+    render: (shopId) => shopId?.shopName || "Chưa có thông tin",
     ellipsis: true,
-  },
+  }
 ];
 
 const ProductManagementPage = () => {
@@ -85,15 +83,23 @@ const ProductManagementPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [tempStatus, setTempStatus] = useState("");
 
-  const handleDecoded = () => {
-    let storageData = localStorage.getItem("access_token");
-    let decoded = {};
-    if (storageData && isJsonString(storageData)) {
+ const handleDecoded = () => {
+  let storageData = localStorage.getItem("access_token");
+  let decoded = {};
+
+  try {
+    // Nếu là chuỗi đã stringify → parse lại
+    if (storageData?.startsWith('"')) {
       storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
     }
-    return { decoded, storageData };
-  };
+
+    decoded = jwtDecode(storageData);
+  } catch (error) {
+    console.error("Lỗi khi decode token:", error.message);
+  }
+
+  return { decoded, storageData };
+};
 
   const fetchShops = useCallback(async () => {
     try {
@@ -101,12 +107,13 @@ const ProductManagementPage = () => {
 
       let accessToken = storageData;
 
+      console.log("accessToken", accessToken);
+
       if (decoded?.exp < Date.now() / 1000) {
         const res = await AuthServices.refreshToken();
         accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
-
+      localStorage.setItem("access_token", JSON.stringify(accessToken));
+    }
       const res = await ProductServices.getAllProducts(accessToken);
 
       const productsWithKeys = res.data.map((product) => ({
@@ -244,7 +251,7 @@ const ProductManagementPage = () => {
         {selectedProduct && (
           <div>
             <p>
-              <strong>Tên sản phẩm:</strong> {selectedProduct.product_name}
+              <strong>Tên sản phẩm:</strong> {selectedProduct.productName}
             </p>
             <p>
               <strong>Trạng thái hiện tại:</strong> {selectedProduct.status}

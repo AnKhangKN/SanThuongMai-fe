@@ -44,7 +44,7 @@ const AddProduct = () => {
       decoded = jwtDecode(token);
     }
   } catch (err) {
-    console.error("❌ Lỗi khi decode token:", err.message || err);
+    console.error("Lỗi khi decode token:", err.message || err);
   }
 
   return { decoded, storageData: token };
@@ -171,26 +171,31 @@ const onFinish = async (values) => {
       decoded = jwtDecode(accessToken);
     }
 
-    // ✅ Lấy dữ liệu từ form
+    // Lấy dữ liệu từ form
     const classifications = form.getFieldValue("classifications") || [];
     const priceOptions = form.getFieldValue("priceOptions") || [];
 
-    // ✅ Kiểm tra biến thể
+    // Kiểm tra biến thể
     if (!priceOptions.length) {
       message.error("Phải có ít nhất 1 biến thể sản phẩm");
       return;
     }
 
-    // ✅ Chuyển đổi dữ liệu thành đúng format backend yêu cầu
-    const transformedPriceOptions = priceOptions.filter((opt) => {
-    const key = opt.attributes.map(a => a.value).join("-");
+    const transformedPriceOptions = (priceOptions || [])
+  .filter((opt) => {
+    const key = opt.attributes.map(a => a.value).join("-") + (opt.attributes.length === 1 ? "-" : "");
     return activeCombinations[key];
-  }).map((opt) => ({
+  })
+  .map((opt) => ({
     attributes: opt.attributes || [],
     price: opt.price,
     salePrice: opt.salePrice,
     stock: opt.stock,
   }));
+if (!transformedPriceOptions.length) {
+  message.error("Bạn phải chọn ít nhất một biến thể để bán.");
+  return;
+}
 
     const formData = new FormData();
     formData.append("productName", values.productName);
@@ -199,12 +204,12 @@ const onFinish = async (values) => {
     formData.append("status", values.status || "active");
     formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
 
-    // ✅ Thêm ảnh
+    // Thêm ảnh
     fileList.forEach((file) => {
       formData.append("productImages", file.originFileObj);
     });
 
-    // ✅ Gọi API
+    // Gọi API
     const response = await ProductServices.createProduct(accessToken, formData);
     message.success("Thêm sản phẩm thành công!");
     form.resetFields();
