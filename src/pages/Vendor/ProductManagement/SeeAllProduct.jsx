@@ -138,10 +138,30 @@ const fetchProducts = async () => {
   // Cột
   const columns = [
     {
-      title: "Tên sản phẩm",
+       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
+      ellipsis: true,
+      render: (text) => (
+        <span title={text}>{text}</span>
+      ),
     },
+    {
+  title: "Hình ảnh sản phẩm",
+  dataIndex: "images",
+  key: "images",
+  render: (images) => {
+    if (!images || images.length === 0) return "Không có ảnh";
+    const firstImage = typeof images[0] === "string" ? images[0] : images[0]?.name || "";
+    return (
+      <img
+        src={`${imageURL}${firstImage}`}
+        alt="product"
+        style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: 4 }}
+      />
+    );
+  },
+},
     {
       title: "Danh mục",
       key: "categoryId",
@@ -174,17 +194,6 @@ const fetchProducts = async () => {
       key: "priceOptions",
       render: (priceOptions) => priceOptions?.length ?? 0,
     },
-    // {
-    //   title: "Thao tác",
-    //   render: (_, record) => (
-    //     <Tooltip title="Chỉnh sửa">
-    //       <EditOutlined
-    //         style={{ color: "blue", cursor: "pointer" }}
-    //         onClick={() => navigate(`/vendor/edit-product/${record._id}`)}
-    //       />
-    //     </Tooltip>
-    //   ),
-    // },
   ];
     const filterProductsByStatus = (status) => {
     if (status === "all") {
