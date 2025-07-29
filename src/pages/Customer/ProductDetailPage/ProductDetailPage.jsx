@@ -10,6 +10,7 @@ import * as ProductServices from "../../../services/shared/ProductServices";
 import * as CartServices from "../../../services/customer/CartServices";
 import { updateCart } from "../../../redux/slices/cartSlice";
 import * as ValidToken from "../../../utils/tokenUtils";
+import useSendViewAfterDelay from "../../../hook/useSendViewAfterDelay";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -29,6 +30,8 @@ const ProductDetailPage = () => {
   const [startIndex, setStartIndex] = useState(0);
   const [shopDetail, setShopDetail] = useState({});
   const maxVisible = 5;
+
+  useSendViewAfterDelay(id); // Lấy thông tin sản phẩm người dùng đã xem.
 
   useEffect(() => {
     const fetchDetailProduct = async () => {
