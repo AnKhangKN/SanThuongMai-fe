@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { routes } from "./routes/index";
 import CustomerLayout from "./components/CustomerComponents/CustomerLayout/CustomerLayout";
 import AdminLayout from "./components/AdminComponents/AdminLayout/AdminLayout";
