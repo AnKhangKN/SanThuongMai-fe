@@ -25,10 +25,12 @@ const ChatBoxComponents = ({ onClose }) => {
   const userId = user?.id;
   const chatEndRef = useRef(null);
 
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [chatRoomId, setChatRoomId] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState({});
+  const [selectReceiverId, setSelectReceiverId] = useState(null);
+
+  console.log("chat list", chatList);
 
   const {
     messages: historyMessages,
@@ -61,11 +63,11 @@ const ChatBoxComponents = ({ onClose }) => {
   }, [chatRoomId]);
 
   // Set default selected chat
-  useEffect(() => {
-    if (chatList.length > 0 && !selectedUserId) {
-      setSelectedUserId(chatList[0]._id);
-    }
-  }, [chatList]);
+  // useEffect(() => {
+  //   if (chatList.length > 0) {
+  //     setSelectedUserId(chatList[0]._id);
+  //   }
+  // }, [chatList]);
 
   // Join user-specific room
   useEffect(() => {
@@ -95,10 +97,11 @@ const ChatBoxComponents = ({ onClose }) => {
   }, []);
 
   const handleSend = async () => {
-    if (!inputValue.trim() || !selectedUserId) return;
+    if (!inputValue.trim()) return;
 
     const text = inputValue.trim();
     const senderId = userId;
+    const receiverId = selectReceiverId;
     const chatId = chatRoomId;
 
     try {
@@ -107,6 +110,7 @@ const ChatBoxComponents = ({ onClose }) => {
 
       const payload = {
         senderId,
+        receiverId,
         chatId,
         text,
       };
@@ -118,7 +122,7 @@ const ChatBoxComponents = ({ onClose }) => {
 
       await ChatServices.sendMessage(accessToken, payload); // Gửi tin nhắn
 
-      socket.emit("sendMessage", { senderId, chatId, text }); // socket vẫn như cũ
+      socket.emit("sendMessage", { senderId, receiverId, chatId, text }); // socket vẫn như cũ
 
       setMessages((prev) => ({
         ...prev,
@@ -133,7 +137,8 @@ const ChatBoxComponents = ({ onClose }) => {
     }
   };
 
-  const handleSelectChatRoom = (chatId) => {
+  const handleSelectChatRoom = (chatId, receiverId) => {
+    setSelectReceiverId(receiverId);
     setChatRoomId(chatId);
   };
 
@@ -149,9 +154,9 @@ const ChatBoxComponents = ({ onClose }) => {
       <Sidebar>
         {chatList.map((u) => (
           <UserItem
-            key={u.chatId}
+            key={u._id}
             active={u.chatId === selectChatRoom}
-            onClick={() => handleSelectChatRoom(u.chatId)}
+            onClick={() => handleSelectChatRoom(u.chatId, u._id)}
           >
             <div>
               <strong>{getDisplayName(u)}</strong>
