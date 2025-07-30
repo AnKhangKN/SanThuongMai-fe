@@ -23,20 +23,8 @@ export const changeStatusOrder = async (accessToken, itemId) => {
   );
 };
 
-// export const getOrderStatus = async (accessToken, ownerId) => {
-//   try {
-//     const response = await axios.get(
-//       `${process.env.REACT_APP_API_URL}/vendor/order-status`,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//         params: { ownerId }, // Truyền ownerId qua query param
-//       }
-//     );
-//     return response.data;
-//   } catch (error) {
-//     console.error("Lỗi khi lấy thống kê đơn hàng:", error);
-//     throw error;
-//   }
-// };
+export const getBuyers = async (accessToken) => {
+  return await axios.get(`${process.env.REACT_APP_API_URL}/vendor/get-buyers`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+};
