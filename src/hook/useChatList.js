@@ -3,11 +3,8 @@ import { useEffect, useState } from "react";
 import * as ChatServices from "../services/shared/ChatServices";
 import * as ValidateToken from "../utils/tokenUtils";
 
-const ADMIN_ID = "6860059faead400715c4b4de";
-
-const useChatList = () => {
+const useChatList = (refreshTrigger) => {
   const [chatList, setChatList] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,7 +26,7 @@ const useChatList = () => {
     };
 
     fetchChats();
-  }, []);
+  }, [refreshTrigger]); // thêm dependency ở đây
 
   return { chatList, loading, error };
 };

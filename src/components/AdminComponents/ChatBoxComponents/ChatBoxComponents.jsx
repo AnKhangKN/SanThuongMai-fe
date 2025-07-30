@@ -20,7 +20,9 @@ import * as ValidateToken from "../../../utils/tokenUtils";
 import * as ChatServices from "../../../services/shared/ChatServices";
 
 const ChatBoxComponents = ({ onClose }) => {
-  const { chatList = [], loading, error } = useChatList();
+  const [refreshChatList, setRefreshChatList] = useState(0);
+  const { chatList = [], loading, error } = useChatList(refreshChatList);
+
   const user = useSelector((state) => state.user);
   const userId = user?.id;
   const chatEndRef = useRef(null);
@@ -28,9 +30,7 @@ const ChatBoxComponents = ({ onClose }) => {
   const [chatRoomId, setChatRoomId] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState({});
-  const [selectReceiverId, setSelectReceiverId] = useState(null);
-
-  console.log("chat list", chatList);
+  const [receiverUserId, setReceiverUserId] = useState(null);
 
   const {
     messages: historyMessages,
@@ -62,17 +62,10 @@ const ChatBoxComponents = ({ onClose }) => {
     scrollToBottom();
   }, [chatRoomId]);
 
-  // Set default selected chat
-  // useEffect(() => {
-  //   if (chatList.length > 0) {
-  //     setSelectedUserId(chatList[0]._id);
-  //   }
-  // }, [chatList]);
-
   // Join user-specific room
   useEffect(() => {
     if (socket && userId && chatList.length > 0) {
-      const chatIds = chatList.map((chat) => chat.chatId); // Hoặc chat.chatId nếu bạn dùng field khác
+      const chatIds = chatList.map((chat) => chat.chatId).filter(Boolean);
       socket.emit("joinRooms", { userId, chatIds });
     }
   }, [socket, userId, chatList]);
@@ -96,12 +89,30 @@ const ChatBoxComponents = ({ onClose }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleMessageSent = ({ senderId, receiverId }) => {
+      console.log("📩 messageSent received:", {
+        senderId,
+        receiverId,
+      });
+
+      // Trigger reload danh sách chat
+      setRefreshChatList((prev) => prev + 1);
+    };
+
+    socket.on("messageSent", handleMessageSent);
+
+    return () => {
+      socket.off("messageSent", handleMessageSent);
+    };
+  }, []);
+
   const handleSend = async () => {
     if (!inputValue.trim()) return;
 
     const text = inputValue.trim();
     const senderId = userId;
-    const receiverId = selectReceiverId;
+    const receiverId = receiverUserId;
     const chatId = chatRoomId;
 
     try {
@@ -121,8 +132,11 @@ const ChatBoxComponents = ({ onClose }) => {
       }
 
       await ChatServices.sendMessage(accessToken, payload); // Gửi tin nhắn
+      setRefreshChatList((prev) => prev + 1);
 
-      socket.emit("sendMessage", { senderId, receiverId, chatId, text }); // socket vẫn như cũ
+      socket.emit("sendMessage", { senderId, receiverId, chatId, text });
+
+      socket.emit("messageSent", { senderId, receiverId });
 
       setMessages((prev) => ({
         ...prev,
@@ -138,7 +152,7 @@ const ChatBoxComponents = ({ onClose }) => {
   };
 
   const handleSelectChatRoom = (chatId, receiverId) => {
-    setSelectReceiverId(receiverId);
+    setReceiverUserId(receiverId);
     setChatRoomId(chatId);
   };
 
@@ -148,13 +162,15 @@ const ChatBoxComponents = ({ onClose }) => {
 
   const selectChatRoom = chatList.find((u) => u.chatId === chatRoomId);
 
+  console.log(chatList);
+
   return (
     <ChatBoxWrapper>
       {/* Sidebar: User List */}
       <Sidebar>
         {chatList.map((u) => (
           <UserItem
-            key={u._id}
+            key={u.chatId}
             active={u.chatId === selectChatRoom}
             onClick={() => handleSelectChatRoom(u.chatId, u._id)}
           >
