@@ -26,6 +26,7 @@ const ChatBoxComponents = ({ onClose }) => {
   const chatEndRef = useRef(null);
 
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [chatRoomId, setChatRoomId] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState({});
 
@@ -33,20 +34,20 @@ const ChatBoxComponents = ({ onClose }) => {
     messages: historyMessages,
     loading: loadingMessages,
     error: errorMessages,
-  } = useMessageHistory({ receiverId: selectedUserId });
+  } = useMessageHistory({ chatId: chatRoomId });
 
-  // Load lịch sử tin nhắn khi đổi selectedUserId
+  // Load lịch sử tin nhắn khi đổi chatRoomId
   useEffect(() => {
-    if (!selectedUserId || !historyMessages) return;
+    if (!chatRoomId || !historyMessages) return;
 
     setMessages((prev) => ({
       ...prev,
-      [selectedUserId]: historyMessages.map((msg) => ({
+      [chatRoomId]: historyMessages.map((msg) => ({
         text: msg.text,
         senderId: msg.senderId, // giữ lại
       })),
     }));
-  }, [historyMessages, selectedUserId]);
+  }, [chatRoomId, historyMessages]);
 
   // Scroll to latest message
   const scrollToBottom = () => {
@@ -57,7 +58,7 @@ const ChatBoxComponents = ({ onClose }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages[selectedUserId]]);
+  }, [chatRoomId]);
 
   // Set default selected chat
   useEffect(() => {
@@ -66,25 +67,18 @@ const ChatBoxComponents = ({ onClose }) => {
     }
   }, [chatList]);
 
-  console.log(chatList);
-
   // Join user-specific room
   useEffect(() => {
-    if (socket && userId) {
-      socket.emit("joinRoom", userId);
-      console.log("🟢 Joined room:", userId);
+    if (socket && userId && chatList.length > 0) {
+      const chatIds = chatList.map((chat) => chat.chatId); // Hoặc chat.chatId nếu bạn dùng field khác
+      socket.emit("joinRooms", { userId, chatIds });
     }
-  }, [userId]);
+  }, [socket, userId, chatList]);
 
   // Receive message handler
   useEffect(() => {
     const handleReceiveMessage = (data) => {
       console.log("📥 [socket] receiveMessage:", data);
-
-      // setMessages((prev) => ({
-      //   ...prev,
-      //   [data.senderId]: [...(prev[data.senderId] || []), data],
-      // }));
 
       setMessages((prev) => ({
         ...prev,
@@ -105,7 +99,7 @@ const ChatBoxComponents = ({ onClose }) => {
 
     const text = inputValue.trim();
     const senderId = userId;
-    const receiverId = selectedUserId;
+    const chatId = chatRoomId;
 
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
@@ -113,23 +107,25 @@ const ChatBoxComponents = ({ onClose }) => {
 
       const payload = {
         senderId,
-        receiverId,
+        chatId,
         text,
       };
 
       // Nếu có chatId thì thêm vào payload
-      if (historyMessages && historyMessages[0]?.chatId) {
-        payload.chatId = historyMessages[0].chatId;
+      if (chatId) {
+        payload.chatId = chatId;
       }
 
       await ChatServices.sendMessage(accessToken, payload); // Gửi tin nhắn
 
-      socket.emit("sendMessage", { senderId, receiverId, text }); // socket vẫn như cũ
+      socket.emit("sendMessage", { senderId, chatId, text }); // socket vẫn như cũ
 
-      // setMessages((prev) => ({
-      //   ...prev,
-      //   [selectedUserId]: [...(prev[selectedUserId] || []), { text, senderId }],
-      // }));
+      setMessages((prev) => ({
+        ...prev,
+        [chatId]: [...(prev[chatId] || []), { text, senderId, chatId }],
+      }));
+
+      scrollToBottom();
 
       setInputValue("");
     } catch (err) {
@@ -137,15 +133,15 @@ const ChatBoxComponents = ({ onClose }) => {
     }
   };
 
-  const handleSelectUser = (id) => {
-    setSelectedUserId(id);
+  const handleSelectChatRoom = (chatId) => {
+    setChatRoomId(chatId);
   };
 
   const getDisplayName = (user) => {
     return user.fullName?.trim() || user.email;
   };
 
-  const selectedUser = chatList.find((u) => u._id === selectedUserId);
+  const selectChatRoom = chatList.find((u) => u.chatId === chatRoomId);
 
   return (
     <ChatBoxWrapper>
@@ -153,9 +149,9 @@ const ChatBoxComponents = ({ onClose }) => {
       <Sidebar>
         {chatList.map((u) => (
           <UserItem
-            key={u._id}
-            active={u._id === selectedUserId}
-            onClick={() => handleSelectUser(u._id)}
+            key={u.chatId}
+            active={u.chatId === selectChatRoom}
+            onClick={() => handleSelectChatRoom(u.chatId)}
           >
             <div>
               <strong>{getDisplayName(u)}</strong>
@@ -169,7 +165,9 @@ const ChatBoxComponents = ({ onClose }) => {
       {/* Chat Area */}
       <ChatContainer>
         <ChatHeader>
-          <span>{selectedUser ? getDisplayName(selectedUser) : "Chat"}</span>
+          <span>
+            {selectChatRoom ? getDisplayName(selectChatRoom) : "Chat"}
+          </span>
           <FaTimes style={{ cursor: "pointer" }} onClick={onClose} />
         </ChatHeader>
         {/*   (messages[selectedUserId] || []) */}
