@@ -42,7 +42,7 @@ export const getMessagesHistory = async (accessToken, receiverId) => {
     const res = await axios.get(
       `${process.env.REACT_APP_API_URL}/shared/messages/history`,
       {
-        params: { receiverId }, // 👈 phải nằm trong `params`
+        params: { receiverId },
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

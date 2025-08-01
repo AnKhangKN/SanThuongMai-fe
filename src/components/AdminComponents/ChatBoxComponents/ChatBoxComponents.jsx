@@ -13,166 +13,134 @@ import {
 import { Input } from "antd";
 import { FaTimes, FaPaperPlane } from "react-icons/fa";
 import socket from "../../../utils/socket";
-import useChatList from "../../../hook/useChatList";
 import { useSelector } from "react-redux";
-import useMessageHistory from "../../../hook/useMessagesHistory";
 import * as ValidateToken from "../../../utils/tokenUtils";
 import * as ChatServices from "../../../services/shared/ChatServices";
 
+// ...import giữ nguyên
+
 const ChatBoxComponents = ({ onClose }) => {
-  const [refreshChatList, setRefreshChatList] = useState(0);
-  const { chatList = [], loading, error } = useChatList(refreshChatList);
+  const [chatList, setChatList] = useState([]);
+  const [chatRoomId, setChatRoomId] = useState(null);
+  const [receiverUserId, setReceiverUserId] = useState(null);
+  const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState({});
 
   const user = useSelector((state) => state.user);
   const userId = user?.id;
   const chatEndRef = useRef(null);
 
-  const [chatRoomId, setChatRoomId] = useState(null);
-  const [inputValue, setInputValue] = useState("");
-  const [messages, setMessages] = useState({});
-  const [receiverUserId, setReceiverUserId] = useState(null);
-
-  const {
-    messages: historyMessages,
-    loading: loadingMessages,
-    error: errorMessages,
-  } = useMessageHistory({ chatId: chatRoomId });
-
-  // Load lịch sử tin nhắn khi đổi chatRoomId
-  useEffect(() => {
-    if (!chatRoomId || !historyMessages) return;
-
-    setMessages((prev) => ({
-      ...prev,
-      [chatRoomId]: historyMessages.map((msg) => ({
-        text: msg.text,
-        senderId: msg.senderId, // giữ lại
-      })),
-    }));
-  }, [chatRoomId, historyMessages]);
-
-  // Scroll to latest message
-  const scrollToBottom = () => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+  // Lấy danh sách chat
+  const fetchChatList = async () => {
+    try {
+      const token = await ValidateToken.getValidAccessToken();
+      if (!token) return;
+      const res = await ChatServices.getChat(token);
+      setChatList(res);
+    } catch (err) {
+      console.error("❌ fetchChatList:", err);
     }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [chatRoomId]);
+  // Gọi khi chọn user để chat
+  const handleSelectChatRoom = (receiverId) => {
+    setReceiverUserId(receiverId);
+    socket.emit("joinRoom", { senderId: userId, receiverId });
+  };
 
-  // Join user-specific room
+  // Khi đã join room (từ server trả về chatId)
   useEffect(() => {
-    if (socket && userId && chatList.length > 0) {
-      const chatIds = chatList.map((chat) => chat.chatId).filter(Boolean);
-      socket.emit("joinRooms", { userId, chatIds });
+    const handleJoinedRoom = async ({ chatId }) => {
+      setChatRoomId(chatId);
+      await fetchMessages(chatId);
+    };
+
+    socket.on("joinedRoom", handleJoinedRoom);
+    return () => socket.off("joinedRoom", handleJoinedRoom);
+  }, []);
+
+  const fetchMessages = async (chatId) => {
+    try {
+      const token = await ValidateToken.getValidAccessToken();
+      if (!token) return;
+      const res = await ChatServices.getMessagesHistory(token, { chatId });
+      setMessages((prev) => ({ ...prev, [chatId]: res || [] }));
+      scrollToBottom();
+    } catch (err) {
+      console.error("❌ fetchMessages:", err);
     }
-  }, [socket, userId, chatList]);
+  };
 
-  // Receive message handler
+  // Nhận tin nhắn
   useEffect(() => {
-    const handleReceiveMessage = (data) => {
-      console.log("📥 [socket] receiveMessage:", data);
-
+    const handleReceiveMessage = ({ chatId, text, senderId }) => {
       setMessages((prev) => ({
         ...prev,
-        [data.chatId]: [...(prev[data.chatId] || []), data],
+        [chatId]: [...(prev[chatId] || []), { text, senderId }],
       }));
+      scrollToBottom();
     };
 
     socket.on("receiveMessage", handleReceiveMessage);
-
-    // 🧹 Cleanup để tránh gắn nhiều lần
-    return () => {
-      socket.off("receiveMessage", handleReceiveMessage);
-    };
+    return () => socket.off("receiveMessage", handleReceiveMessage);
   }, []);
 
+  // Cập nhật danh sách chat khi có refresh
   useEffect(() => {
-    const handleMessageSent = ({ senderId, receiverId }) => {
-      console.log("📩 messageSent received:", {
-        senderId,
-        receiverId,
-      });
-
-      // Trigger reload danh sách chat
-      setRefreshChatList((prev) => prev + 1);
-    };
-
-    socket.on("messageSent", handleMessageSent);
-
-    return () => {
-      socket.off("messageSent", handleMessageSent);
-    };
+    fetchChatList();
+    const handleRefresh = () => fetchChatList();
+    socket.on("refreshChatList", handleRefresh);
+    return () => socket.off("refreshChatList", handleRefresh);
   }, []);
+
+  // Room riêng
+  useEffect(() => {
+    if (socket) {
+      socket.emit("setup", userId); // Join vào room riêng của mình
+    }
+  }, [socket, userId]);
 
   const handleSend = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !chatRoomId) return;
 
     const text = inputValue.trim();
-    const senderId = userId;
-    const receiverId = receiverUserId;
-    const chatId = chatRoomId;
+    const payload = {
+      senderId: userId,
+      receiverId: receiverUserId,
+      chatId: chatRoomId,
+      text,
+    };
 
     try {
-      const accessToken = await ValidateToken.getValidAccessToken();
-      if (!accessToken) throw new Error("No access token");
-
-      const payload = {
-        senderId,
-        receiverId,
-        chatId,
-        text,
-      };
-
-      // Nếu có chatId thì thêm vào payload
-      if (chatId) {
-        payload.chatId = chatId;
-      }
-
-      await ChatServices.sendMessage(accessToken, payload); // Gửi tin nhắn
-      setRefreshChatList((prev) => prev + 1);
-
-      socket.emit("sendMessage", { senderId, receiverId, chatId, text });
-
-      socket.emit("messageSent", { senderId, receiverId });
-
-      setMessages((prev) => ({
-        ...prev,
-        [chatId]: [...(prev[chatId] || []), { text, senderId, chatId }],
-      }));
-
-      scrollToBottom();
+      const token = await ValidateToken.getValidAccessToken();
+      if (!token) return;
+      await ChatServices.sendMessage(token, payload);
+      socket.emit("sendMessage", payload);
 
       setInputValue("");
+      scrollToBottom();
     } catch (err) {
       console.error("❌ Gửi tin nhắn thất bại:", err);
     }
   };
 
-  const handleSelectChatRoom = (chatId, receiverId) => {
-    setReceiverUserId(receiverId);
-    setChatRoomId(chatId);
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const getDisplayName = (user) => {
-    return user.fullName?.trim() || user.email;
-  };
-
-  const selectChatRoom = chatList.find((u) => u.chatId === chatRoomId);
+  const getDisplayName = (u) => u.fullName?.trim() || u.email;
+  const currentMessages = messages[chatRoomId] || [];
 
   console.log(chatList);
 
   return (
     <ChatBoxWrapper>
-      {/* Sidebar: User List */}
       <Sidebar>
         {chatList.map((u) => (
           <UserItem
-            key={u.chatId}
-            active={u.chatId === selectChatRoom}
-            onClick={() => handleSelectChatRoom(u.chatId, u._id)}
+            key={u._id}
+            active={u._id === receiverUserId}
+            onClick={() => handleSelectChatRoom(u._id)}
           >
             <div>
               <strong>{getDisplayName(u)}</strong>
@@ -183,22 +151,29 @@ const ChatBoxComponents = ({ onClose }) => {
         ))}
       </Sidebar>
 
-      {/* Chat Area */}
       <ChatContainer>
         <ChatHeader>
           <span>
-            {selectChatRoom ? getDisplayName(selectChatRoom) : "Chat"}
+            {chatList.find((u) => u._id === receiverUserId)?.fullName || "Chat"}
           </span>
           <FaTimes style={{ cursor: "pointer" }} onClick={onClose} />
         </ChatHeader>
-        {/*   (messages[selectedUserId] || []) */}
-        <ChatBody>
-          {(messages[historyMessages?.[0]?.chatId] || []).map((msg, index) => (
-            <MessageBubble key={index} isSender={msg.senderId === userId}>
-              {msg.text}
-            </MessageBubble>
-          ))}
 
+        <ChatBody>
+          {currentMessages.map((msg, idx) => (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                justifyContent:
+                  msg.senderId === userId ? "flex-end" : "flex-start",
+              }}
+            >
+              <MessageBubble isSender={msg.senderId === userId}>
+                {msg.text}
+              </MessageBubble>
+            </div>
+          ))}
           <div ref={chatEndRef} />
         </ChatBody>
 
