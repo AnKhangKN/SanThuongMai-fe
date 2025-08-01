@@ -131,8 +131,6 @@ const ChatBoxComponents = ({ onClose }) => {
   const getDisplayName = (u) => u.fullName?.trim() || u.email;
   const currentMessages = messages[chatRoomId] || [];
 
-  console.log(chatList);
-
   return (
     <ChatBoxWrapper>
       <Sidebar>

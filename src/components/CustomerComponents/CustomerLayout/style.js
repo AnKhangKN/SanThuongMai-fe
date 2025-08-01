@@ -10,7 +10,7 @@ export const ModalChatBox = styled.div`
   border-radius: 12px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  z-index: 1000;
+  z-index: 3000;
 `;
 
 export const ChatButton = styled.button`
