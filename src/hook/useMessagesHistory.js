@@ -15,9 +15,7 @@ const useMessageHistory = ({ chatId }) => {
         const accessToken = await ValidateToken.getValidAccessToken();
         const res = await ChatServices.getMessagesHistory(accessToken, {
           chatId,
-        }); // 👈 truyền trực tiếp
-
-        console.log("lịch sử trò chuyện: ", res);
+        });
 
         setMessages(res);
       } catch (err) {
