@@ -5,6 +5,7 @@ import * as OrderProductService from "../../../services/vendor/OrderProductServi
 import * as AuthServices from "../../../services/shared/AuthServices";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
+import OrderDetailModal from "./OrderDetailModal";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -31,6 +32,15 @@ const OrderReview = () => {
      const { TabPane } = Tabs;
       const [activeTab, setActiveTab] = useState("all");
       const [orders, setOrders] = useState([]);
+
+      const [selectedOrder, setSelectedOrder] = useState(null);
+      const [isModalVisible, setIsModalVisible] = useState(false);
+
+      const showOrderDetails = (record) => {
+      const order = orders.find((o) => o._id === record.orderId);
+      setSelectedOrder(order);
+      setIsModalVisible(true);
+    };
 
     const fetchOrders = async () => {
     try {
@@ -127,7 +137,7 @@ const OrderReview = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button type="link">Chi tiết</Button>
+          <Button type="link" onClick={() => showOrderDetails(record)}>Chi tiết</Button>
           {record.status === "pending" && <Button type="primary">Xác nhận</Button>}
           {record.status === "shipped" && <Button>Đã giao</Button>}
         </Space>
@@ -152,6 +162,12 @@ const OrderReview = () => {
       />
 
       <Table columns={columns} dataSource={filteredOrders} pagination={{ pageSize: 5 }} />
+
+      <OrderDetailModal
+      open={isModalVisible}
+      onClose={() => setIsModalVisible(false)}
+      order={selectedOrder}
+    />
     </div>
   );
 };
