@@ -3,28 +3,26 @@ import { Modal, Descriptions, Divider, Table, Image, Tag } from "antd";
 
 const OrderDetailModal = ({ open, onClose, order }) => {
   if (!order) return null;
-
-  // Nếu order.productItems không tồn tại, tránh lỗi
   const items = order.productItems || [];
 
   const statusLabels = {
-  all: "Tất cả",
-  pending: "Chờ xác nhận",
-  processing: "Đang xử lý",
-  shipped: "Đang giao",
-  delivered: "Đã giao",
-  returned: "Đã trả hàng",
-  cancelled: "Đã hủy",
-};
+    all: "Tất cả",
+    pending: "Chờ xác nhận",
+    processing: "Đang xử lý",
+    shipping: "Đang giao",
+    delivered: "Đã giao",
+    returned: "Đã trả hàng",
+    cancelled: "Đã hủy",
+  };
 
-const statusColors = {
-  pending: "orange",
-  processing: "blue",
-  shipped: "cyan",
-  delivered: "green",
-  returned: "red",
-  cancelled: "default",
-};
+  const statusColors = {
+    pending: "orange",
+    processing: "blue",
+    shipping: "cyan",
+    delivered: "green",
+    returned: "red",
+    cancelled: "default",
+  };
 
   const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -33,12 +31,7 @@ const statusColors = {
       title: "Ảnh",
       dataIndex: "productImage",
       key: "productImage",
-      render: (image) => (
-        <Image
-          width={50}
-          src={`${imageURL}${image}`}
-        />
-      ),
+      render: (image) => <Image width={50} src={`${imageURL}${image}`} />,
     },
     {
       title: "Tên sản phẩm",
@@ -62,6 +55,28 @@ const statusColors = {
       key: "finalPrice",
       render: (price) => `${price.toLocaleString()}₫`,
     },
+    {
+      title: "Lý do trả hàng",
+      dataIndex: "returnReason",
+      key: "returnReason",
+      render: (reason) => reason || "—",
+    },
+    {
+      title: "Ảnh minh họa",
+      dataIndex: "imgReturnReason",
+      key: "imgReturnReason",
+      render: (imgs) =>
+        imgs?.length
+          ? imgs.map((img, idx) => (
+              <Image
+                key={idx}
+                src={`${process.env.REACT_APP_API_URL}/return-images/${img}`}
+                width={50}
+                style={{ marginRight: 5 }}
+              />
+            ))
+          : "—",
+    },
   ];
 
   return (
@@ -73,16 +88,14 @@ const statusColors = {
       footer={null}
     >
       <Descriptions column={1} bordered size="small">
-        <Descriptions.Item label="Mã đơn hàng">
-          {order._id}
-        </Descriptions.Item>
+        <Descriptions.Item label="Mã đơn hàng">{order._id}</Descriptions.Item>
         <Descriptions.Item label="Ngày đặt">
           {new Date(order.createdAt).toLocaleString()}
         </Descriptions.Item>
         <Descriptions.Item label="Trạng thái">
-        <Tag color={statusColors[order.orderStatus] || "default"}>
-            {statusLabels[order.orderStatus] || "Không rõ"}
-        </Tag>
+          <Tag color={statusColors[items[0]?.status] || "default"}>
+            {statusLabels[items[0]?.status] || "Không rõ"}
+          </Tag>
         </Descriptions.Item>
         <Descriptions.Item label="Tổng tiền">
           <strong>{order.totalPrice?.toLocaleString()}₫</strong>
