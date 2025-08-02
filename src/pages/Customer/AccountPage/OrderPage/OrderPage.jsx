@@ -14,7 +14,7 @@ const statuses = [
   { label: "Hoàn thành", value: "delivered" },
   { label: "Chờ xử lý", value: "pending" },
   { label: "Đóng gói", value: "processing" },
-  { label: "Vận chuyển", value: "shipped" },
+  { label: "Vận chuyển", value: "shippingOrShipped" },
   { label: "Hủy/Hoàn trả", value: "returnedOrCancelled" },
 ];
 
@@ -88,7 +88,6 @@ const OrderPage = () => {
         return;
       }
 
-      // Lọc sản phẩm theo shop cần hủy
       const shopItems = order.productItems.filter(
         (item) => item.shopId === selectedShopId
       );
@@ -214,6 +213,10 @@ const OrderPage = () => {
                               </button>
                               <button>Hoàn trả</button>
                             </div>
+                          </>
+                        ) : item.status === "shipping" ? (
+                          <>
+                            <div>đang vận chuyển</div>
                           </>
                         ) : null}
                       </Col>

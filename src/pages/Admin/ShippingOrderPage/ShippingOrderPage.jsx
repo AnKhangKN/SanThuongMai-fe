@@ -1,114 +1,89 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Wrapper } from "./style";
-import { Modal, Table, Button, Select, Tag, message } from "antd";
+import { Select, Tag, Button, Divider, Pagination } from "antd";
 import * as OrderServices from "../../../services/admin/OrderServices";
-import { isJsonString } from "../../../utils";
-import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
+import * as ValidateToken from "../../../utils/tokenUtils";
 
-const columns = [
-  { title: "Tên khách hàng", dataIndex: ["user", "name"], key: "user.name" },
-  {
-    title: "Địa chỉ giao hàng",
-    dataIndex: "shipping_address",
-    key: "shipping_address.address",
-    render: (shipping_address) =>
-      `${shipping_address?.phone}, ${shipping_address?.address}, ${shipping_address?.city}`,
-  },
-  { title: "Tổng giá tiền", dataIndex: "total_price", key: "total_price" },
-  {
-    title: "Trạng thái đơn hàng",
-    dataIndex: "status",
-    key: "status",
-    render: (status) => (
-      <Tag
-        color={
-          status === "pending"
-            ? "orange"
-            : status === "processing"
-            ? "blue"
-            : "green"
-        }
-      >
-        {status.toUpperCase()}
-      </Tag>
-    ),
-  },
+const statusOptions = [
+  { value: "all", label: "Tất cả" },
+  { value: "shipping", label: "Đang giao" },
+  { value: "shipped", label: "Đã giao" },
+  { value: "others", label: "Khác" },
 ];
 
 const ShippingOrderPage = () => {
-  const [orders, setOrders] = useState([]);
+  const [groupedOrders, setGroupedOrders] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [filteredData, setFilteredData] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 3;
 
   const fetchAllOrder = useCallback(async () => {
     try {
-      const token = await handleDecoded();
+      const token = await ValidateToken.getValidAccessToken();
       const res = await OrderServices.getAllOrder(token);
-      setOrders(res.data.map((order) => ({ ...order, key: order._id })));
-    } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
+      const rawOrders = res.data;
+
+      const grouped = [];
+      rawOrders.forEach((order) => {
+        const { productItems, user, shippingAddress, _id: orderId } = order;
+
+        const shopMap = new Map();
+        productItems.forEach((item) => {
+          const { shopId, shopName } = item;
+          const key = `${orderId}_${shopId}`;
+          if (!shopMap.has(key)) {
+            shopMap.set(key, {
+              key,
+              orderId,
+              shopId,
+              shopName,
+              user,
+              shippingAddress,
+              items: [],
+            });
+          }
+          shopMap.get(key).items.push(item);
+        });
+
+        grouped.push(...shopMap.values());
+      });
+
+      setGroupedOrders(grouped);
+    } catch (err) {
+      console.error("Lỗi lấy đơn hàng:", err);
     }
   }, []);
-
-  const handleDecoded = async () => {
-    let storageData = localStorage.getItem("access_token");
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      const decoded = jwtDecode(storageData);
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        const accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-        return accessToken;
-      }
-      return storageData;
-    }
-    return null;
-  };
 
   useEffect(() => {
     fetchAllOrder();
   }, [fetchAllOrder]);
 
-  useEffect(() => {
-    setFilteredData(
-      selectedStatus === "all"
-        ? orders
-        : orders.filter((order) => order.status === selectedStatus)
-    );
-  }, [selectedStatus, orders]);
-
-  const handleSave = async () => {
-    if (selectedOrder.items.some((item) => item.status === "pending")) {
-      message.warning("Hãy nhắc chủ shop đóng gói trước khi xác nhận!");
-      return;
-    }
-
-    try {
-      const token = await handleDecoded();
-
-      await OrderServices.setStatusOrder(token, {
-        Order_id: selectedOrder?._id,
-      });
-
-      message.success("Đơn hàng đã được chuyển sang trạng thái Đã vận chuyển!");
-
-      setOrders((prev) =>
-        prev.map((order) =>
-          order._id === selectedOrder._id
-            ? { ...order, status: "shipped" }
-            : order
+  const getFilteredGroups = () => {
+    let filtered = groupedOrders;
+    if (selectedStatus === "others") {
+      filtered = groupedOrders.filter((group) =>
+        group.items.every(
+          (item) => item.status !== "shipping" && item.status !== "shipped"
         )
       );
-      setModalVisible(false);
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
-      message.error("Lỗi khi cập nhật trạng thái đơn hàng!");
+    } else if (selectedStatus !== "all") {
+      filtered = groupedOrders.filter((group) =>
+        group.items.some((item) => item.status === selectedStatus)
+      );
     }
+    return filtered;
   };
+
+  const handleComplete = (group) => {
+    console.log("Mark as completed:", group);
+    // Call API to mark all items in this group as shipped/delivered
+  };
+
+  const filteredGroups = getFilteredGroups();
+  const paginatedGroups = filteredGroups.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <Wrapper>
@@ -116,8 +91,8 @@ const ShippingOrderPage = () => {
       <div
         style={{
           backgroundColor: "#fff",
-          padding: "20px",
-          borderRadius: "5px",
+          padding: 20,
+          borderRadius: 5,
           boxShadow: "1px 1px 10px #e9e9e9",
         }}
       >
@@ -125,95 +100,100 @@ const ShippingOrderPage = () => {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
+            marginBottom: 20,
           }}
         >
-          <h5>Danh sách đơn hàng</h5>
+          <h5>Đơn hàng theo trạng thái</h5>
           <Select
             value={selectedStatus}
-            onChange={setSelectedStatus}
+            onChange={(value) => {
+              setSelectedStatus(value);
+              setCurrentPage(1);
+            }}
+            options={statusOptions}
             style={{ width: 200 }}
-            options={[
-              { value: "all", label: "Tất cả" },
-              { value: "shipped", label: "Đã vận chuyển" },
-              { value: "pending", label: "Chờ duyệt" },
-            ]}
           />
         </div>
 
-        <Table
-          bordered
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="_id"
-          onRow={(record) => ({
-            onClick: () => {
-              setSelectedOrder(record);
-              setModalVisible(true);
-            },
-          })}
-        />
-      </div>
-      <Modal
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        onOk={handleSave}
-      >
-        {selectedOrder && (
-          <div>
-            <h4>Chi tiết đơn hàng</h4>
+        {paginatedGroups.map((group) => (
+          <div
+            key={group.key}
+            style={{
+              border: "1px solid #eee",
+              borderRadius: 6,
+              padding: 16,
+              marginBottom: 24,
+              backgroundColor: "#fafafa",
+            }}
+          >
+            <h4>🧾 Mã đơn: {group.orderId}</h4>
+            <p>🛍 Shop: {group.shopName}</p>
+            <p>👤 Người mua: {group.user?.name}</p>
+            <p>📦 Địa chỉ: {group.shippingAddress?.address}</p>
 
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div>Tên Khách Hàng: </div>
-              <div>{selectedOrder.user?.name}</div>
-            </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div>Địa chỉ khách hàng: </div>
-              <div>
-                {selectedOrder.shipping_address?.phone},{" "}
-                {selectedOrder.shipping_address?.address},{" "}
-                {selectedOrder.shipping_address?.city}
-              </div>
-            </div>
-
-            {selectedOrder.items.map((item, index) => (
-              <div key={index}>
-                <p style={{ display: "flex", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", gap: "20px" }}>
-                    <div>{item.product_name}</div>
-
-                    <div
-                      style={{
-                        backgroundColor:
-                          item.status === "pending" ? "#bc8268" : "#60ca71",
-                        color: "#fff",
-                        padding: "0px 5px 4px 5px",
-                        borderRadius: "5px",
-                      }}
-                    >
-                      {item.status}
-                    </div>
-                  </div>
-                  <div>
-                    {item.quantity} x {item.price}₫
-                  </div>
-                </p>
-
-                <p style={{ display: "flex", gap: "10px" }}>
-                  <div>Chủ cửa hàng:</div>
-                  <div>{item.owner.name}</div>
-                  <div>{item.owner.email}</div>
-                </p>
+            {group.items.map((item) => (
+              <div
+                key={item.productId}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "8px 0",
+                  borderBottom: "1px dashed #ddd",
+                }}
+              >
+                <div style={{ flex: 2 }}>{item.productName}</div>
+                <div style={{ flex: 1, textAlign: "center" }}>
+                  {item.quantity}
+                </div>
+                <div style={{ flex: 1, textAlign: "right" }}>
+                  {item.price.toLocaleString()}₫
+                </div>
+                <div style={{ flex: 1, textAlign: "right" }}>
+                  <Tag
+                    color={
+                      item.status === "shipping"
+                        ? "cyan"
+                        : item.status === "shipped"
+                        ? "blue"
+                        : "gray"
+                    }
+                  >
+                    {item.status}
+                  </Tag>
+                </div>
               </div>
             ))}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>Tổng tiền: </div>
-              <div>{selectedOrder.total_price}₫</div>
+
+            <div style={{ textAlign: "right", marginTop: 12 }}>
+              <strong>
+                Tổng tiền:{" "}
+                {group.items
+                  .reduce((acc, item) => acc + item.price * item.quantity, 0)
+                  .toLocaleString()}
+                ₫
+              </strong>
             </div>
+
+            {selectedStatus === "shipping" && (
+              <div style={{ textAlign: "right", marginTop: 12 }}>
+                <Button type="primary" onClick={() => handleComplete(group)}>
+                  Đánh dấu hoàn tất
+                </Button>
+              </div>
+            )}
+
+            <Divider />
           </div>
-        )}
-      </Modal>
+        ))}
+
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={filteredGroups.length}
+          onChange={(page) => setCurrentPage(page)}
+          style={{ textAlign: "right", marginTop: 24 }}
+        />
+      </div>
     </Wrapper>
   );
 };
