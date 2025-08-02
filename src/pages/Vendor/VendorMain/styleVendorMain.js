@@ -1,51 +1,65 @@
 import { Row } from "antd";
 import styled from "styled-components";
 
+// Wrapper chính cho toàn bộ trang
 export const WrapperVendor = styled(Row)`
   width: 100%;
-  mix-height: 100vh;
-  max-height: 500vh;
+  // min-height: 100vh;
+  padding: 32px 16px;
 `;
 
-export const WrapperVendorMainItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-`;
-
-export const WrapperVendorTextMain = styled.h1`
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  font-weight: 400;
-  margin-left: 18px;
-`;
-
+// Phần container chính giữa
 export const WrapperVendorMain = styled.div`
-  padding: 0 14px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
-export const WrapperItemNumber = styled.div`
-  margin-bottom: 4px;
-  font-size: 20px;
-  line-height: 28px;
-  color: #2673dd;
-  font-weight: 500;
-  font-weight: var(--font-weight);
+// Tiêu đề
+export const WrapperVendorTextMain = styled.h1`
+  font-size: 24px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 24px;
 `;
 
-export const WrapperItemText = styled.div`
-  overflow: hidden;
-  font-size: 12px;
-  line-height: 16px;
-  max-height: 32px;
-  color: #333;
+// Flex cho danh sách các khối thông tin
+export const WrapperVendorMainItem = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 `;
 
+// Ô thông tin từng trạng thái
 export const WrapperVendorBackgroundItem = styled.div`
-  border-radius: 14px;
-  padding: 14px 40px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  transition: all 0.3s ease;
+
   &:hover {
-    background-color: #f6f6f6;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    background-color: #f0f8ff;
   }
+`;
+
+// Số đơn
+export const WrapperItemNumber = styled.div`
+  font-size: 32px;
+  font-weight: 700;
+  color: #2673dd;
+  margin-bottom: 8px;
+`;
+
+// Mô tả
+export const WrapperItemText = styled.div`
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;

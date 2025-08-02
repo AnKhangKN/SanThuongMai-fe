@@ -28,3 +28,15 @@ export const getBuyers = async (accessToken) => {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 };
+
+export const updateOrderStatus = async (orderId, newStatus, token) => {
+  return await axios.put(
+    `${process.env.REACT_APP_API_URL}/vendor/update-status/${orderId}`,
+    { newStatus },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};
