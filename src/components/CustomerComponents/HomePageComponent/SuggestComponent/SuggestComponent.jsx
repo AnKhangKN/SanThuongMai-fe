@@ -62,9 +62,20 @@ const SuggestComponent = () => {
                     />
                   </div>
                   <div style={{ padding: "10px" }}>
-                    <div style={{ marginBottom: "30px", fontSize: "20px" }}>
+                    <div
+                      style={{
+                        marginBottom: "30px",
+                        fontSize: "20px",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
                       {product.productName}
                     </div>
+
                     <div
                       style={{
                         display: "flex",

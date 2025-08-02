@@ -166,8 +166,8 @@ const ProductDetailPage = () => {
 
       message.success("Đã thêm vào giỏ hàng");
     } catch (error) {
-      console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      message.error("Lỗi hệ thống! Không thể thêm sản phẩm vào giỏ hàng.");
+      console.error("Lỗi khi thêm vào giỏ hàng:", error.message);
+      message.error(error.message);
     }
   };
 

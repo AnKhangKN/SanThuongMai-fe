@@ -123,6 +123,28 @@ const CartPage = () => {
     }
   };
 
+  const handleDeleteCartItem = async (productItemId) => {
+    try {
+      const targetItem = cartItems.find((item) => item._id === productItemId);
+
+      const data = {
+        cartId: cart._id,
+        productItemId: targetItem._id,
+        attributes: targetItem.attributes,
+        productId: targetItem.productId,
+      };
+
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await CartServices.deleteCartItem(accessToken, data);
+
+      if (res) {
+        fetchCartItems();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleItemSelection = (itemKey) => {
     setSelectedItems((prev) =>
       prev.includes(itemKey)
@@ -449,7 +471,12 @@ const CartPage = () => {
                     ₫{(item.finalPrice * item.quantity).toLocaleString()}
                   </Col>
                   <Col span={2}>
-                    <div style={{ color: "red", cursor: "pointer" }}>Xóa</div>
+                    <div
+                      onClick={() => handleDeleteCartItem(item._id)}
+                      style={{ color: "red", cursor: "pointer" }}
+                    >
+                      Xóa
+                    </div>
                   </Col>
                 </Row>
               </div>

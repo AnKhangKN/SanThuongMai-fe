@@ -4,11 +4,9 @@ import { DetailBox } from "./style";
 import { useNavigate, useParams } from "react-router-dom";
 import { Col, message, Modal, Row } from "antd";
 import ButtonComponent from "../../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
-import * as AuthServices from "../../../../services/shared/AuthServices";
 import * as OrderServices from "../../../../services/customer/OrderServices";
-import { isJsonString } from "../../../../utils";
-import { jwtDecode } from "jwt-decode";
 import TextArea from "antd/es/input/TextArea";
+import * as ValidateToken from "../../../../utils/tokenUtils";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -17,7 +15,7 @@ const statuses = [
   { label: "Chờ xử lý", value: "pending" },
   { label: "Đóng gói", value: "processing" },
   { label: "Vận chuyển", value: "shipped" },
-  { label: "Hủy", value: "cancelled" },
+  { label: "Hủy/Hoàn trả", value: "returnedOrCancelled" },
 ];
 
 const OrderPage = () => {
@@ -26,45 +24,17 @@ const OrderPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedShopId, setSelectedShopId] = useState(null);
 
   const { "status-order": keyword } = useParams();
   const navigate = useNavigate();
 
-  const handleDecoded = () => {
-    let storageData = localStorage.getItem("access_token");
-    let decoded = {};
-    if (storageData && isJsonString(storageData)) {
-      storageData = JSON.parse(storageData);
-      decoded = jwtDecode(storageData);
-    }
-    return { decoded, storageData };
-  };
-
   const fetchAllOrderByStatus = async () => {
     try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
-
+      const accessToken = await ValidateToken.getValidAccessToken();
       const res = await OrderServices.getAllOrderByStatus(accessToken, keyword);
-
-      if (res?.status === "ERROR") {
-        throw new Error(res.message);
-      }
-
-      const formattedOrders = Array.isArray(res.data)
-        ? res.data.map((order) => ({
-            ...order,
-            key: order._id || order.id,
-          }))
-        : [];
-
-      setAllData(formattedOrders);
+      if (res?.status === "ERROR") throw new Error(res.message);
+      setAllData(res.data);
     } catch (error) {
       console.error("Lỗi khi lấy đơn hàng:", error.message || error);
     }
@@ -81,25 +51,14 @@ const OrderPage = () => {
 
   const handleSuccessfulDelivered = async (orderId) => {
     try {
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
-
-      const status = "delivered";
+      const accessToken = await ValidateToken.getValidAccessToken();
       const order = allData.find(
         (item) => item._id === orderId || item.id === orderId
       );
-
       await OrderServices.successfulDelivered(accessToken, {
-        status,
+        status: "delivered",
         order,
       });
-
       message.success("Xác nhận thành công!");
       fetchAllOrderByStatus();
     } catch (error) {
@@ -107,51 +66,67 @@ const OrderPage = () => {
     }
   };
 
-  const showModal = (orderId) => {
+  const showModal = (orderId, shopId) => {
     setSelectedOrderId(orderId);
+    setSelectedShopId(shopId);
     setIsModalOpen(true);
   };
 
   const handleCancelOrder = async () => {
     try {
-      if (!selectedOrderId) {
-        message.error("Không xác định được đơn hàng cần hủy.");
+      if (!selectedOrderId || !selectedShopId) {
+        message.error("Thiếu thông tin đơn hàng hoặc shop.");
         return;
       }
 
-      let { storageData, decoded } = handleDecoded();
-      let accessToken = storageData;
-
-      if (decoded?.exp < Date.now() / 1000) {
-        const res = await AuthServices.refreshToken();
-        accessToken = res?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(accessToken));
-      }
-
-      const status = "cancelled";
+      const accessToken = await ValidateToken.getValidAccessToken();
       const order = allData.find(
         (item) => item._id === selectedOrderId || item.id === selectedOrderId
       );
-
       if (!order) {
         message.error("Không tìm thấy đơn hàng.");
         return;
       }
 
-      await OrderServices.cancelledOrder(accessToken, {
-        status,
-        order,
+      // Lọc sản phẩm theo shop cần hủy
+      const shopItems = order.productItems.filter(
+        (item) => item.shopId === selectedShopId
+      );
+      const orderPayload = {
+        status: "cancelled",
+        order: {
+          ...order,
+          productItems: shopItems,
+        },
         cancelReason,
-      });
+      };
 
-      message.success("Đã hủy đơn hàng!");
+      await OrderServices.cancelledOrder(accessToken, orderPayload);
+
+      message.success("Đã hủy đơn hàng cho shop!");
       setIsModalOpen(false);
       setSelectedOrderId(null);
+      setSelectedShopId(null);
       setCancelReason("");
       fetchAllOrderByStatus();
     } catch (error) {
-      console.error("Lỗi khi xác nhận đơn hàng:", error.message || error);
+      console.error("Lỗi khi hủy đơn hàng:", error.message || error);
     }
+  };
+
+  const groupByShopId = (items) => {
+    return items.reduce((acc, item) => {
+      const shopId = item.shopId;
+      if (!acc[shopId]) acc[shopId] = { shopName: item.shopName, items: [] };
+      acc[shopId].items.push(item);
+      return acc;
+    }, {});
+  };
+
+  const isAllPendingOrProcessing = (items) => {
+    return items.every(
+      (item) => item.status === "pending" || item.status === "processing"
+    );
   };
 
   return (
@@ -179,33 +154,25 @@ const OrderPage = () => {
         ))}
       </div>
 
-      <DetailBox>
-        <Row>
-          <Col span={4}></Col>
-          <Col span={16}>Sản phẩm</Col>
-          <Col span={4} style={{ textAlign: "end" }}>
-            Đơn giá
-          </Col>
-        </Row>
-      </DetailBox>
-
-      {Array.isArray(allData) && allData.length > 0 ? (
-        allData.map((order) => (
-          <div key={order.key}>
-            <DetailBox>
-              {(keyword === "shipped"
-                ? order.items || [] // giả định API có trường "products" cho shipped
-                : order.items || []
-              ) // còn lại dùng "items"
-                .map((item, index) => (
-                  <>
+      {allData && allData.length > 0 ? (
+        allData.map((order) => {
+          const groupedByShop = groupByShopId(order.productItems);
+          return (
+            <DetailBox key={order._id}>
+              <div style={{ fontWeight: "bold", marginBottom: "20px" }}>
+                🧾 Mã đơn: {order._id}
+              </div>
+              {Object.entries(groupedByShop).map(([shopId, group]) => (
+                <div key={shopId}>
+                  <div style={{ fontWeight: "bold", margin: "10px 0" }}>
+                    🛍 Shop: {group.shopName || shopId}
+                  </div>
+                  {group.items.map((item, index) => (
                     <Row key={index} style={{ marginBottom: "10px" }}>
                       <Col span={4}>
                         <div style={{ padding: "10px" }}>
                           <img
-                            src={
-                              `${imageURL}${item.product_image}` || item.image
-                            }
+                            src={`${imageURL}${item.productImage}`}
                             alt="ảnh sản phẩm"
                             style={{
                               width: "100%",
@@ -216,111 +183,92 @@ const OrderPage = () => {
                         </div>
                       </Col>
                       <Col span={16}>
-                        <div>{item.product_name || item.name}</div>
+                        <div>{item.productName}</div>
                         <div style={{ display: "flex", gap: "20px" }}>
-                          <div>{item.size || "Không có size"}</div>
-                          <div>{item.color || "Không có màu"}</div>
+                          {item.attributes.map((attr, idx) => (
+                            <div key={idx}>
+                              {attr.name}: {attr.value}
+                            </div>
+                          ))}
                         </div>
                         <div>Số lượng: {item.quantity}</div>
                       </Col>
                       <Col span={4} style={{ textAlign: "end" }}>
-                        {item.price?.toLocaleString()}₫
+                        <div>{item.finalPrice?.toLocaleString()}₫</div>
+                        <div>
+                          {item.status === "cancelled" ? (
+                            <p>Đã hủy</p>
+                          ) : item.status === "returned" ? (
+                            <p>Đã hoàn trả</p>
+                          ) : null}
+                        </div>
+                        {item.status === "shipped" ? (
+                          <>
+                            <div>
+                              <button
+                                onClick={() =>
+                                  handleSuccessfulDelivered(order._id)
+                                }
+                              >
+                                Nhận sản phẩm
+                              </button>
+                              <button>Hoàn trả</button>
+                            </div>
+                          </>
+                        ) : null}
                       </Col>
                     </Row>
-                    <div
-                      style={{
-                        height: "1px",
-                        margin: "20px 0px",
-                        backgroundColor: "#ccc",
-                      }}
-                    ></div>
-                  </>
-                ))}
-
+                  ))}
+                  {isAllPendingOrProcessing(group.items) && (
+                    <div style={{ textAlign: "end" }}>
+                      <button onClick={() => showModal(order._id, shopId)}>
+                        Hủy đơn của shop
+                      </button>
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      height: "1px",
+                      margin: "20px 0px",
+                      backgroundColor: "#ccc",
+                    }}
+                  ></div>
+                </div>
+              ))}
               <div>
                 <div>
-                  Số điện thoại:{" "}
-                  {order.shipping_address.phone || "Không có số giao hàng"}
+                  Số điện thoại: {order.shippingAddress?.phone || "Không có"}
                 </div>
                 <div>
                   Địa chỉ:{" "}
-                  {order.shipping_address.address ||
-                    "Không có địa chỉ giao hàng"}
-                  ,{order.shipping_address.city}
+                  {order.shippingAddress?.address || "Không có địa chỉ"},{" "}
+                  {order.shippingAddress?.city}
                 </div>
               </div>
-
-              {keyword === "shipped" && (
-                <div
-                  style={{
-                    display: "flex",
-                    flexFlow: "column",
-                  }}
-                >
-                  <div style={{ textAlign: "end" }}>
-                    Tổng đơn hàng: {order.total_price?.toLocaleString()}
-                  </div>
-                  <ButtonComponent
-                    name="Xác nhận đơn hàng"
-                    onClick={() =>
-                      handleSuccessfulDelivered(order._id || order.id)
-                    }
-                  />
-                </div>
-              )}
-
-              {(keyword === "pending" || keyword === "processing") && (
-                <>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexFlow: "column",
-                    }}
-                    key={order._id}
-                  >
-                    <div style={{ textAlign: "end" }}>
-                      Tổng đơn hàng: {order.total_price?.toLocaleString()}
-                    </div>
-                    <button
-                      style={{
-                        backgroundColor: "#fff",
-                        color: "#333",
-                        padding: "9px 20px",
-                        border: "1px solid #333",
-                        borderRadius: "2px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => showModal(order._id)}
-                    >
-                      Hủy đơn hàng
-                    </button>
-
-                    <Modal
-                      title="Lý do hủy đơn"
-                      open={isModalOpen}
-                      zIndex={2000}
-                      maskStyle={{ backgroundColor: "rgba(0, 0, 0, 0.1)" }}
-                      onOk={handleCancelOrder} // ✅ Đã sửa
-                      onCancel={() => setIsModalOpen(false)}
-                    >
-                      <TextArea
-                        placeholder="Hãy thêm lý do bạn hủy đơn hàng"
-                        value={cancelReason}
-                        onChange={(e) => setCancelReason(e.target.value)}
-                        rows={4}
-                      />
-                    </Modal>
-                  </div>
-                </>
-              )}
             </DetailBox>
-          </div>
-        ))
+          );
+        })
       ) : (
         <div style={{ padding: "20px", textAlign: "center" }}>
           Không có đơn hàng nào ở trạng thái này.
         </div>
       )}
+
+      <Modal
+        title="Lý do hủy đơn"
+        open={isModalOpen}
+        zIndex={2000}
+        maskStyle={{ backgroundColor: "rgba(0, 0, 0, 0.1)" }}
+        onOk={handleCancelOrder}
+        onCancel={() => setIsModalOpen(false)}
+      >
+        <TextArea
+          placeholder="Hãy thêm lý do bạn hủy đơn hàng"
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          rows={4}
+        />
+      </Modal>
     </AccountPage>
   );
 };
