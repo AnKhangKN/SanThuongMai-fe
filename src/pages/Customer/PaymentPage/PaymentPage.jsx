@@ -33,8 +33,6 @@ const PaymentPage = () => {
   const products = useSelector((state) => state.checkout.products);
   const vouchers = useSelector((state) => state.checkout.vouchers);
 
-  console.log(products);
-
   const dispatch = useDispatch();
 
   const selectedVouchers = useMemo(() => {
@@ -592,10 +590,10 @@ const PaymentPage = () => {
 
                   <Col span={4}>
                     <div style={{ textAlign: "end" }}>
-                      {product.finalPrice < product.price ? (
+                      {product.finalPrice < product.priceFee ? (
                         <>
                           <del style={{ display: "block" }}>
-                            ₫{product.price.toLocaleString()}
+                            ₫{product.priceFee.toLocaleString()}
                           </del>
                           <div>₫{product.finalPrice.toLocaleString()}</div>
                         </>

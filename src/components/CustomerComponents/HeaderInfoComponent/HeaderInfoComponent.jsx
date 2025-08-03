@@ -3,7 +3,7 @@ import { AiOutlineShoppingCart } from "react-icons/ai";
 import { CartModal, CartWrapper, IconWrapper, SumCart } from "./style";
 import Logo_Xoa_Phong from "../../../assets/images/Logo_Den-removebg-preview.png";
 import SearchComponent from "../SearchComponent/SearchComponent";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import anh from "../../../assets/images/Logo_Den.jpg";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import { useSelector } from "react-redux";
@@ -13,6 +13,7 @@ const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 const HeaderInfoComponent = () => {
   const cart = useSelector((state) => state.cart);
   const cartItems = cart.products;
+  const navigate = useNavigate();
 
   return (
     <div
@@ -49,7 +50,7 @@ const HeaderInfoComponent = () => {
 
       {/* Cart */}
       <CartWrapper>
-        <IconWrapper>
+        <IconWrapper onClick={() => navigate("/cart")}>
           <AiOutlineShoppingCart />
           <SumCart>{cart.total_item > 99 ? "99+" : cart.total_item}</SumCart>
         </IconWrapper>

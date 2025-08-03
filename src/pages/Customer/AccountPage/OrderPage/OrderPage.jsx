@@ -3,7 +3,6 @@ import AccountPage from "../AccountPage";
 import { DetailBox } from "./style";
 import { useNavigate, useParams } from "react-router-dom";
 import { Col, message, Modal, Row } from "antd";
-import ButtonComponent from "../../../../components/CustomerComponents/ButtonComponent/ButtonComponent";
 import * as OrderServices from "../../../../services/customer/OrderServices";
 import TextArea from "antd/es/input/TextArea";
 import * as ValidateToken from "../../../../utils/tokenUtils";
@@ -18,6 +17,8 @@ const statuses = [
   { label: "Hủy/Hoàn trả", value: "returnedOrCancelled" },
 ];
 
+const ORDERS_PER_PAGE = 5;
+
 const OrderPage = () => {
   const [allData, setAllData] = useState([]);
   const [status, setStatus] = useState();
@@ -25,6 +26,8 @@ const OrderPage = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedShopId, setSelectedShopId] = useState(null);
+  const [expandedShops, setExpandedShops] = useState({});
+  const [currentOrderPage, setCurrentOrderPage] = useState(1);
 
   const { "status-order": keyword } = useParams();
   const navigate = useNavigate();
@@ -43,6 +46,7 @@ const OrderPage = () => {
   useEffect(() => {
     fetchAllOrderByStatus();
     setStatus(keyword);
+    setCurrentOrderPage(1);
   }, [keyword]);
 
   const handleOrderStatus = (statusValue) => {
@@ -128,6 +132,20 @@ const OrderPage = () => {
     );
   };
 
+  const toggleExpandShop = (orderId, shopId) => {
+    const key = `${orderId}_${shopId}`;
+    setExpandedShops((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const totalOrderPages = Math.ceil(allData.length / ORDERS_PER_PAGE);
+  const paginatedOrders = allData.slice(
+    (currentOrderPage - 1) * ORDERS_PER_PAGE,
+    currentOrderPage * ORDERS_PER_PAGE
+  );
+
   return (
     <AccountPage>
       <div style={{ display: "flex", backgroundColor: "#fff" }}>
@@ -153,91 +171,111 @@ const OrderPage = () => {
         ))}
       </div>
 
-      {allData && allData.length > 0 ? (
-        allData.map((order) => {
+      {paginatedOrders.length > 0 ? (
+        paginatedOrders.map((order) => {
           const groupedByShop = groupByShopId(order.productItems);
           return (
             <DetailBox key={order._id}>
               <div style={{ fontWeight: "bold", marginBottom: "20px" }}>
                 🧾 Mã đơn: {order._id}
               </div>
-              {Object.entries(groupedByShop).map(([shopId, group]) => (
-                <div key={shopId}>
-                  <div style={{ fontWeight: "bold", margin: "10px 0" }}>
-                    🛍 Shop: {group.shopName || shopId}
-                  </div>
-                  {group.items.map((item, index) => (
-                    <Row key={index} style={{ marginBottom: "10px" }}>
-                      <Col span={4}>
-                        <div style={{ padding: "10px" }}>
-                          <img
-                            src={`${imageURL}${item.productImage}`}
-                            alt="ảnh sản phẩm"
-                            style={{
-                              width: "100%",
-                              height: "100px",
-                              objectFit: "contain",
-                            }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={16}>
-                        <div>{item.productName}</div>
-                        <div style={{ display: "flex", gap: "20px" }}>
-                          {item.attributes.map((attr, idx) => (
-                            <div key={idx}>
-                              {attr.name}: {attr.value}
-                            </div>
-                          ))}
-                        </div>
-                        <div>Số lượng: {item.quantity}</div>
-                      </Col>
-                      <Col span={4} style={{ textAlign: "end" }}>
-                        <div>{item.finalPrice?.toLocaleString()}₫</div>
-                        <div>
-                          {item.status === "cancelled" ? (
-                            <p>Đã hủy</p>
-                          ) : item.status === "returned" ? (
-                            <p>Đã hoàn trả</p>
-                          ) : null}
-                        </div>
-                        {item.status === "shipped" ? (
-                          <>
-                            <div>
-                              <button
-                                onClick={() =>
-                                  handleSuccessfulDelivered(order._id)
-                                }
-                              >
-                                Nhận sản phẩm
-                              </button>
-                              <button>Hoàn trả</button>
-                            </div>
-                          </>
-                        ) : item.status === "shipping" ? (
-                          <>
-                            <div>đang vận chuyển</div>
-                          </>
-                        ) : null}
-                      </Col>
-                    </Row>
-                  ))}
-                  {isAllPendingOrProcessing(group.items) && (
-                    <div style={{ textAlign: "end" }}>
-                      <button onClick={() => showModal(order._id, shopId)}>
-                        Hủy đơn của shop
-                      </button>
+              {Object.entries(groupedByShop).map(([shopId, group]) => {
+                const key = `${order._id}_${shopId}`;
+                const isExpanded = expandedShops[key];
+                const itemsToShow = isExpanded
+                  ? group.items
+                  : group.items.slice(0, 2);
+
+                return (
+                  <div key={shopId}>
+                    <div style={{ fontWeight: "bold", margin: "10px 0" }}>
+                      🛍 Shop: {group.shopName || shopId}
                     </div>
-                  )}
-                  <div
-                    style={{
-                      height: "1px",
-                      margin: "20px 0px",
-                      backgroundColor: "#ccc",
-                    }}
-                  ></div>
-                </div>
-              ))}
+                    {itemsToShow.map((item, index) => (
+                      <Row key={index} style={{ marginBottom: "10px" }}>
+                        <Col span={4}>
+                          <div style={{ padding: "10px" }}>
+                            <img
+                              src={`${imageURL}${item.productImage}`}
+                              alt="ảnh sản phẩm"
+                              style={{
+                                width: "100%",
+                                height: "100px",
+                                objectFit: "contain",
+                              }}
+                            />
+                          </div>
+                        </Col>
+                        <Col span={16}>
+                          <div>{item.productName}</div>
+                          <div style={{ display: "flex", gap: "20px" }}>
+                            {item.attributes.map((attr, idx) => (
+                              <div key={idx}>
+                                {attr.name}: {attr.value}
+                              </div>
+                            ))}
+                          </div>
+                          <div>Số lượng: {item.quantity}</div>
+                        </Col>
+                        <Col span={4} style={{ textAlign: "end" }}>
+                          <div>{item.finalPrice?.toLocaleString()}₫</div>
+                          <div>
+                            {item.status === "cancelled" ? (
+                              <p>Đã hủy</p>
+                            ) : item.status === "returned" ? (
+                              <p>Đã hoàn trả</p>
+                            ) : null}
+                          </div>
+                          {item.status === "shipped" ? (
+                            <>
+                              <div>
+                                <button
+                                  onClick={() =>
+                                    handleSuccessfulDelivered(order._id)
+                                  }
+                                >
+                                  Nhận sản phẩm
+                                </button>
+                                <button>Hoàn trả</button>
+                              </div>
+                            </>
+                          ) : item.status === "shipping" ? (
+                            <div>đang vận chuyển</div>
+                          ) : null}
+                        </Col>
+                      </Row>
+                    ))}
+
+                    {group.items.length > 2 && (
+                      <div
+                        style={{ textAlign: "center", marginBottom: "10px" }}
+                      >
+                        <button
+                          onClick={() => toggleExpandShop(order._id, shopId)}
+                        >
+                          {isExpanded ? "Thu gọn" : "Xem thêm"}
+                        </button>
+                      </div>
+                    )}
+
+                    {isAllPendingOrProcessing(group.items) && (
+                      <div style={{ textAlign: "end" }}>
+                        <button onClick={() => showModal(order._id, shopId)}>
+                          Hủy đơn của shop
+                        </button>
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        height: "1px",
+                        margin: "20px 0px",
+                        backgroundColor: "#ccc",
+                      }}
+                    ></div>
+                  </div>
+                );
+              })}
+
               <div>
                 <div>
                   Số điện thoại: {order.shippingAddress?.phone || "Không có"}
@@ -254,6 +292,32 @@ const OrderPage = () => {
       ) : (
         <div style={{ padding: "20px", textAlign: "center" }}>
           Không có đơn hàng nào ở trạng thái này.
+        </div>
+      )}
+
+      {totalOrderPages > 1 && (
+        <div style={{ textAlign: "center", margin: "20px 0" }}>
+          {Array.from({ length: totalOrderPages }, (_, i) => i + 1).map(
+            (pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => setCurrentOrderPage(pageNum)}
+                style={{
+                  margin: "0 5px",
+                  padding: "5px 10px",
+                  fontWeight: pageNum === currentOrderPage ? "bold" : "normal",
+                  backgroundColor:
+                    pageNum === currentOrderPage ? "#194a7a" : "#fff",
+                  color: pageNum === currentOrderPage ? "#fff" : "#000",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                {pageNum}
+              </button>
+            )
+          )}
         </div>
       )}
 

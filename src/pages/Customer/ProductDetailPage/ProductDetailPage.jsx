@@ -24,6 +24,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(0);
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
+  const [category, setCategory] = useState([]);
   const [productDetail, setProductDetail] = useState(null);
   const [productImages, setProductImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -39,6 +40,7 @@ const ProductDetailPage = () => {
         const res = await ProductServices.getDetailProduct({ id });
 
         const images = res.product.images || [];
+        setCategory(res.category);
         setProductDetail(res.product);
         setShopDetail(res.shop);
         setProductImages(images);
@@ -254,10 +256,31 @@ const ProductDetailPage = () => {
               </div>
               <div style={{ backgroundColor: "#f5f5f5", padding: "10px 20px" }}>
                 <div style={{ display: "flex" }}>
-                  <div>đ</div>
-                  <p style={{ fontSize: 30, margin: 0 }}>
-                    {selectedProductDetail ? selectedProductDetail.price : "0"}
-                  </p>
+                  <div>đ</div>{" "}
+                  <div>
+                    {/* Chỉ hiển thị giá gốc nếu nó khác finalPrice */}
+                    {selectedProductDetail &&
+                      selectedProductDetail.finalPrice !==
+                        selectedProductDetail.price +
+                          (selectedProductDetail.price * category.vat) / 100 +
+                          (selectedProductDetail.price * category.platformFee) /
+                            100 && (
+                        <p style={{ margin: 0 }}>
+                          {selectedProductDetail.price +
+                            (selectedProductDetail.price * category.vat) / 100 +
+                            (selectedProductDetail.price *
+                              category.platformFee) /
+                              100}
+                        </p>
+                      )}
+
+                    {/* Hiển thị finalPrice nếu có */}
+                    {selectedProductDetail?.finalPrice && (
+                      <p style={{ fontSize: 30, margin: 0 }}>
+                        {selectedProductDetail.finalPrice}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 

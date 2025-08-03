@@ -19,6 +19,7 @@ const SuggestComponent = () => {
         ...product,
         key: product._id || product.id,
       }));
+
       setAllData(productsWithKeys);
     } catch (error) {
       console.error("Lỗi khi lấy sản phẩm:", error);
@@ -34,12 +35,13 @@ const SuggestComponent = () => {
 
   const visibleProducts = allData.slice(0, visibleRows * itemsPerRow);
 
+
   return (
     <div>
       <Row gutter={[16, 16]}>
         {visibleProducts.length > 0 ? (
           visibleProducts.map((product) => (
-            <Col span={6} key={product.key}>
+            <Col span={6} key={product._id}>
               <Link
                 to={`/product/${product._id}`}
                 style={{ textDecoration: "none", color: "#333" }}
@@ -76,25 +78,23 @@ const SuggestComponent = () => {
                       {product.productName}
                     </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
+                    <div className="d-flex justify-content-between align-items-center">
                       <div
+                        className="d-flex justify-content-center align-items-center"
                         style={{
                           color: "#ee4d2d",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
                           gap: "2px",
                         }}
                       >
                         <div style={{ fontSize: "10px" }}>đ</div>
                         <div style={{ fontSize: "18px" }}>
-                          {product.priceOptions[0].price}
+                          {(product.priceOptions[0].price *
+                            product.categoryInfo.platformFee) /
+                            100 +
+                            (product.priceOptions[0].price *
+                              product.categoryInfo.vat) /
+                              100 +
+                            product.priceOptions[0].price}
                         </div>
                       </div>
                       <div style={{ fontSize: "13px" }}>

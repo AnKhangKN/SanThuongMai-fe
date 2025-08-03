@@ -300,6 +300,7 @@ const CartPage = () => {
         productImage: item.productImage,
         attributes: item.attributes,
         price: item.price,
+        priceFee: item.priceFee,
         ...(item.salePrice && { salePrice: item.salePrice }), // chỉ thêm nếu tồn tại
         finalPrice: item.finalPrice,
         quantity: item.quantity,
@@ -402,8 +403,8 @@ const CartPage = () => {
                   <Col span={4}>
                     <div>
                       <div style={{ textDecoration: "line-through", gap: 5 }}>
-                        {item.price > item.finalPrice && (
-                          <>₫ {item.price.toLocaleString()}</>
+                        {item.priceFee > item.finalPrice && (
+                          <>₫ {item.priceFee.toLocaleString()}</>
                         )}
                       </div>
                       <div style={{ gap: 5 }}>

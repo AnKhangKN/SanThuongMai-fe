@@ -171,7 +171,11 @@ const ShippingOrderPage = () => {
             <h4>🧾 Mã đơn: {group.orderId}</h4>
             <p>🛍 Shop: {group.shopName}</p>
             <p>👤 Người mua: {group.user?.fullName}</p>
-            <p>📦 Địa chỉ: {group.shippingAddress?.address}</p>
+            <p>Số điện thoại: {group.shippingAddress?.phone}</p>
+            <p>
+              📦 Địa chỉ: {group.shippingAddress?.address}{" "}
+              {group.shippingAddress?.city}
+            </p>
 
             {group.items.map((item) => (
               <div
