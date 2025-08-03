@@ -16,12 +16,14 @@ const ShippingOrderPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 3;
+  const [allOrders, setAllOrders] = useState([]);
 
   const fetchAllOrder = useCallback(async () => {
     try {
       const token = await ValidateToken.getValidAccessToken();
       const res = await OrderServices.getAllOrder(token);
       const rawOrders = res.data;
+      setAllOrders(rawOrders);
 
       const grouped = [];
       rawOrders.forEach((order) => {
@@ -74,9 +76,49 @@ const ShippingOrderPage = () => {
     return filtered;
   };
 
-  const handleComplete = (group) => {
-    console.log("Mark as completed:", group);
-    // Call API to mark all items in this group as shipped/delivered
+  const handleComplete = async (group) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const selectedOrder = allOrders.find(
+        (order) => order._id === group.orderId
+      );
+
+      const totalPriceItems = group.items.reduce(
+        (acc, item) => acc + item.finalPrice * item.quantity,
+        0
+      );
+
+      const vendorGetPrice = group.items.reduce((acc, item) => {
+        if (item.salePrice) {
+          return acc + item.salePrice * item.quantity;
+        } else {
+          return acc + item.price * item.quantity;
+        }
+      }, 0);
+
+      console.log(totalPriceItems);
+
+      const data = {
+        orderId: selectedOrder._id,
+        totalPriceItems: totalPriceItems, // Tổng tiền các items chưa gồm voucher của shop
+        vendorGetPriceItems: vendorGetPrice, // Tiền vendor thực nhận của shop
+        amount: selectedOrder.totalPrice, // Tổng tiền ban đầu toàn đơn
+        discountAmount: selectedOrder.discountAmount, // Tổng tiền đã giảm từ voucher
+        finalAmount: selectedOrder.finalAmount, // Tổng tiền sau giảm của toàn đơn hàng
+        items: group,
+      };
+
+      console.log(data);
+
+      const res = await OrderServices.setStatusOrder(accessToken, data);
+
+      if (res) {
+        fetchAllOrder();
+      }
+    } catch (error) {
+      console.log("Lỗi trong handleComplete:", error);
+    }
   };
 
   const filteredGroups = getFilteredGroups();
@@ -128,7 +170,7 @@ const ShippingOrderPage = () => {
           >
             <h4>🧾 Mã đơn: {group.orderId}</h4>
             <p>🛍 Shop: {group.shopName}</p>
-            <p>👤 Người mua: {group.user?.name}</p>
+            <p>👤 Người mua: {group.user?.fullName}</p>
             <p>📦 Địa chỉ: {group.shippingAddress?.address}</p>
 
             {group.items.map((item) => (
@@ -146,7 +188,7 @@ const ShippingOrderPage = () => {
                   {item.quantity}
                 </div>
                 <div style={{ flex: 1, textAlign: "right" }}>
-                  {item.price.toLocaleString()}₫
+                  {item.finalPrice.toLocaleString()}₫
                 </div>
                 <div style={{ flex: 1, textAlign: "right" }}>
                   <Tag
@@ -168,7 +210,10 @@ const ShippingOrderPage = () => {
               <strong>
                 Tổng tiền:{" "}
                 {group.items
-                  .reduce((acc, item) => acc + item.price * item.quantity, 0)
+                  .reduce(
+                    (acc, item) => acc + item.finalPrice * item.quantity,
+                    0
+                  )
                   .toLocaleString()}
                 ₫
               </strong>

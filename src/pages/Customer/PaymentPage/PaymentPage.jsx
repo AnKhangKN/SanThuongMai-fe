@@ -33,6 +33,8 @@ const PaymentPage = () => {
   const products = useSelector((state) => state.checkout.products);
   const vouchers = useSelector((state) => state.checkout.vouchers);
 
+  console.log(products);
+
   const dispatch = useDispatch();
 
   const selectedVouchers = useMemo(() => {
