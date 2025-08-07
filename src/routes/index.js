@@ -98,17 +98,17 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/shop/:id/dashboard",
+    path: "/shop/:shopName/dashboard/:id",
     page: DashboardShopPage,
     isShowHeader: true,
   },
   {
-    path: "/shop/:id/products",
+    path: "/shop/:shopName/products/:id",
     page: ProductsShopPage,
     isShowHeader: true,
   },
   {
-    path: "/shop/:id/chat",
+    path: "/shop/:shopName/chat/:id",
     page: ChatShopPage,
     isShowHeader: true,
   },

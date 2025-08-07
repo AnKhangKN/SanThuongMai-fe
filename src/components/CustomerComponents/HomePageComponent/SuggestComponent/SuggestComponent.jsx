@@ -8,9 +8,28 @@ const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
 const SuggestComponent = () => {
   const [visibleRows, setVisibleRows] = useState(4); // 4 dòng mặc định
-  const [allData, setAllData] = useState([]); // chứa sản phẩm thực tế
-  const itemsPerRow = 4;
+  const [allData, setAllData] = useState([]); // chứa tất cả sản phẩm
+  const [itemsPerRow, setItemsPerRow] = useState(getItemsPerRow()); // số sản phẩm mỗi dòng theo màn hình
 
+  // ✅ Hàm tính số item mỗi dòng theo chiều rộng màn hình
+  function getItemsPerRow() {
+    const width = window.innerWidth;
+    if (width < 576) return 1; // xs: mobile
+    if (width < 768) return 2; // sm: small tablet
+    if (width < 992) return 3; // md: tablet
+    return 4; // lg+: desktop
+  }
+
+  // ✅ Lắng nghe resize để cập nhật số sản phẩm mỗi dòng
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerRow(getItemsPerRow());
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // ✅ Gọi API lấy sản phẩm
   const fetchProducts = async () => {
     try {
       const res = await ProductServices.getAllProducts();
@@ -25,23 +44,23 @@ const SuggestComponent = () => {
       console.error("Lỗi khi lấy sản phẩm:", error);
     }
   };
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const handleLoadMore = () => {
-    setVisibleRows((prev) => prev + 2);
+    setVisibleRows((prev) => prev + 2); // mỗi lần xem thêm 2 dòng
   };
 
   const visibleProducts = allData.slice(0, visibleRows * itemsPerRow);
-
 
   return (
     <div>
       <Row gutter={[16, 16]}>
         {visibleProducts.length > 0 ? (
           visibleProducts.map((product) => (
-            <Col span={6} key={product._id}>
+            <Col xs={24} sm={12} md={8} lg={6} key={product._id}>
               <Link
                 to={`/product/${product._id}`}
                 style={{ textDecoration: "none", color: "#333" }}
@@ -58,44 +77,54 @@ const SuggestComponent = () => {
                       alt={product.productName}
                       style={{
                         width: "100%",
-                        height: "300px",
-                        objectFit: "contain",
+                        height: "200px",
+                        objectFit: "cover",
                       }}
                     />
                   </div>
                   <div style={{ padding: "10px" }}>
                     <div
                       style={{
-                        marginBottom: "30px",
-                        fontSize: "20px",
+                        marginBottom: "20px",
+                        fontSize: "18px",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
+                        minHeight: "48px",
                       }}
                     >
                       {product.productName}
                     </div>
 
-                    <div className="d-flex justify-content-between align-items-center">
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
                       <div
-                        className="d-flex justify-content-center align-items-center"
                         style={{
                           color: "#ee4d2d",
-                          gap: "2px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                       >
-                        <div style={{ fontSize: "10px" }}>đ</div>
-                        <div style={{ fontSize: "18px" }}>
-                          {(product.priceOptions[0].price *
-                            product.categoryInfo.platformFee) /
-                            100 +
+                        <span style={{ fontSize: "12px" }}>đ</span>
+                        <span style={{ fontSize: "18px" }}>
+                          {(
+                            product.priceOptions[0].price +
+                            (product.priceOptions[0].price *
+                              product.categoryInfo.platformFee) /
+                              100 +
                             (product.priceOptions[0].price *
                               product.categoryInfo.vat) /
-                              100 +
-                            product.priceOptions[0].price}
-                        </div>
+                              100
+                          ).toLocaleString()}
+                        </span>
                       </div>
                       <div style={{ fontSize: "13px" }}>
                         Đã bán: {product.soldCount}

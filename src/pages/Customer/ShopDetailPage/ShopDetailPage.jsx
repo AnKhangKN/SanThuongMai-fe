@@ -55,7 +55,6 @@ const ShopDetailPage = ({ children }) => {
         shop_name,
       });
 
-
       if (!response) {
         message.error("Lỗi thêm vào yêu thích");
       }
@@ -75,7 +74,7 @@ const ShopDetailPage = ({ children }) => {
     try {
       const data = await ShopServices.getDetailShop(id);
 
-      const shop = data?.data?.data?.owner;
+      const shop = data?.data?.data?.shop;
 
       const products = data?.data?.data?.products;
 
@@ -84,7 +83,6 @@ const ShopDetailPage = ({ children }) => {
       if (shop) {
         setShopDetail(shop);
       }
-
     } catch (err) {
       console.error("Error fetching shop details:", err);
       message.error(
@@ -96,6 +94,8 @@ const ShopDetailPage = ({ children }) => {
   useEffect(() => {
     fetchDetailShop();
   }, [id]);
+
+  console.log(shopDetail);
 
   return (
     <>
@@ -121,9 +121,9 @@ const ShopDetailPage = ({ children }) => {
                 }}
               >
                 <div style={{ marginRight: "15px" }}>
-                  {shopDetail?.images ? (
+                  {shopDetail?.shopAvatar ? (
                     <img
-                      src={`${imageURL}${shopDetail.images}`}
+                      src={`${imageURL}${shopDetail.shopAvatar}`}
                       alt="Ảnh shop"
                       style={{
                         width: "80px",
@@ -144,7 +144,7 @@ const ShopDetailPage = ({ children }) => {
                   )}
                 </div>
                 <div>
-                  <h3>{shopDetail?.shop?.name || "Tên shop"}</h3>
+                  <h3>{shopDetail?.shopName || "Tên shop"}</h3>
                   <div
                     style={{ display: "flex", gap: "10px", marginTop: "10px" }}
                   >
@@ -232,23 +232,19 @@ const ShopDetailPage = ({ children }) => {
                   <strong>Sản phẩm:</strong> {products?.length || 0}
                 </div>
                 <div>
-                  <strong>Người theo dõi:</strong>{" "}
-                  {shopDetail?.shop?.followers || 0}
+                  <strong>Người theo dõi:</strong> {shopDetail?.followers || 0}
                 </div>
                 <div>
                   <strong>Ngày tham gia:</strong>{" "}
-                  {shopDetail?.shop?.created_at
-                    ? new Date(shopDetail.shop.created_at).toLocaleString(
-                        "vi-VN",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        }
-                      )
+                  {shopDetail?.createdAt
+                    ? new Date(shopDetail?.createdAt).toLocaleString("vi-VN", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })
                     : "N/A"}
                 </div>
               </div>
@@ -276,7 +272,9 @@ const ShopDetailPage = ({ children }) => {
                 position: "relative",
                 fontWeight: isActive(`/${tab}`) ? "bold" : "normal",
               }}
-              onClick={() => navigate(`/shop/${id}/${tab}`)}
+              onClick={() =>
+                navigate(`/shop/${shopDetail.shopName}/${tab}/${id}`)
+              }
             >
               {tab === "dashboard"
                 ? "Tổng quan"

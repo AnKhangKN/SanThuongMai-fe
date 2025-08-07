@@ -130,7 +130,7 @@ const CategoryPage = () => {
         height: "100%",
       }}
     >
-      <div style={{ width: "1200px", margin: "auto" }}>
+      <div style={{ maxWidth: "1200px", margin: "auto" }}>
         <div style={{ height: "15px" }}></div>
         <div>
           <SliderComponent arrImages={images} height="450px" />

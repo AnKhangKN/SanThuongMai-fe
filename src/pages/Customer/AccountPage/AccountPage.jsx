@@ -16,7 +16,7 @@ const AccountPage = ({ children }) => {
         <Row
           style={{
             display: "flex",
-            width: "1200px",
+            maxWidth: "1200px",
             margin: "auto",
             padding: " 20px 0px 50px 0px",
             height: "100%",

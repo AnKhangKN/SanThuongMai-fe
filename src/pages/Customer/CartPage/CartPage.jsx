@@ -316,7 +316,7 @@ const CartPage = () => {
 
   return (
     <div style={{ marginTop: 120, backgroundColor: "#f5f5f5" }}>
-      <div style={{ width: 1200, margin: "auto" }}>
+      <div style={{ maxWidth: 1200, margin: "auto" }}>
         <div style={{ height: 20 }} />
 
         {/* Header */}

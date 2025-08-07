@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import anh from "../../../assets/images/Logo_Den.jpg";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import { useSelector } from "react-redux";
+import { FaBars } from "react-icons/fa";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -42,11 +43,15 @@ const HeaderInfoComponent = () => {
       </Link>
 
       {/* Search + Category */}
-      <div style={{ width: "100%", margin: "0px 30px 0px 60px" }}>
+      <div
+        className="d-none d-md-block"
+        style={{ width: "100%", margin: "0px 30px 0px 60px" }}
+      >
         <div>
           <SearchComponent />
         </div>
       </div>
+      <div className="d-md-none d-block">Tìm kiếm</div>
 
       {/* Cart */}
       <CartWrapper>
@@ -106,6 +111,13 @@ const HeaderInfoComponent = () => {
           )}
         </CartModal>
       </CartWrapper>
+
+      {/* Chi tiết */}
+      <div className="d-md-none d-block">
+        <div style={{ fontSize: 26 }}>
+          <FaBars />
+        </div>
+      </div>
     </div>
   );
 };

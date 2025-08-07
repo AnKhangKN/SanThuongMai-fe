@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { DetailBox } from "./style";
 import { Col, message, Row } from "antd";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
-import { BsCartPlus } from "react-icons/bs";
+import { BsCartPlus, BsShopWindow } from "react-icons/bs";
 import { FiMinus, FiPlus } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -11,8 +11,10 @@ import * as CartServices from "../../../services/customer/CartServices";
 import { updateCart } from "../../../redux/slices/cartSlice";
 import * as ValidToken from "../../../utils/tokenUtils";
 import useSendViewAfterDelay from "../../../hook/useSendViewAfterDelay";
+import { IoMdChatbubbles } from "react-icons/io";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
+const avatarUrl = `${process.env.REACT_APP_API_URL}/avatar/`;
 
 const ProductDetailPage = () => {
   const user = useSelector((state) => state.user);
@@ -30,6 +32,7 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [startIndex, setStartIndex] = useState(0);
   const [shopDetail, setShopDetail] = useState({});
+
   const maxVisible = 5;
 
   useSendViewAfterDelay(id); // Lấy thông tin sản phẩm người dùng đã xem.
@@ -117,7 +120,11 @@ const ProductDetailPage = () => {
       return;
     }
 
-    if (quantity <= 0) {
+    if (
+      isNaN(quantity) ||
+      quantity <= 0 ||
+      !Number.isInteger(Number(quantity))
+    ) {
       message.warning("Vui lòng chọn số lượng hợp lệ!");
       return;
     }
@@ -175,10 +182,10 @@ const ProductDetailPage = () => {
 
   return (
     <div style={{ backgroundColor: "#f5f5f5" }}>
-      <div style={{ width: "1200px", margin: "auto", marginTop: "120px" }}>
+      <div style={{ maxWidth: "1200px", margin: "auto", marginTop: "120px" }}>
         <DetailBox>
-          <Row>
-            <Col span={10}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
               <img
                 style={{ width: "100%", height: "450px", objectFit: "contain" }}
                 src={selectedImage ? `${imageURL}${selectedImage}` : ""}
@@ -249,38 +256,57 @@ const ProductDetailPage = () => {
               )}
             </Col>
 
-            <Col span={14}>
+            <Col xs={24} md={12}>
               <p style={{ fontSize: "25px" }}>{productDetail?.productName}</p>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <div>{productDetail?.soldCount} Lượt mua</div>
-              </div>
-              <div style={{ backgroundColor: "#f5f5f5", padding: "10px 20px" }}>
-                <div style={{ display: "flex" }}>
-                  <div>đ</div>{" "}
-                  <div>
-                    {/* Chỉ hiển thị giá gốc nếu nó khác finalPrice */}
-                    {selectedProductDetail &&
-                      selectedProductDetail.finalPrice !==
-                        selectedProductDetail.price +
-                          (selectedProductDetail.price * category.vat) / 100 +
-                          (selectedProductDetail.price * category.platformFee) /
-                            100 && (
-                        <p style={{ margin: 0 }}>
-                          {selectedProductDetail.price +
-                            (selectedProductDetail.price * category.vat) / 100 +
-                            (selectedProductDetail.price *
-                              category.platformFee) /
-                              100}
-                        </p>
-                      )}
 
-                    {/* Hiển thị finalPrice nếu có */}
-                    {selectedProductDetail?.finalPrice && (
-                      <p style={{ fontSize: 30, margin: 0 }}>
-                        {selectedProductDetail.finalPrice}
-                      </p>
-                    )}
-                  </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "10px",
+                }}
+              >
+                <div>{productDetail?.soldCount || 0} Lượt mua</div>
+              </div>
+
+              <div style={{ backgroundColor: "#f5f5f5", padding: "10px 20px" }}>
+                <div>
+                  {/* Tính giá gốc (gồm VAT và phí nền tảng) */}
+                  {selectedProductDetail ? (
+                    <>
+                      {(() => {
+                        const { price, finalPrice } = selectedProductDetail;
+                        const priceOrigin =
+                          price +
+                          (price * category.vat) / 100 +
+                          (price * category.platformFee) / 100;
+
+                        return (
+                          <>
+                            {/* Hiển thị giá gốc nếu khác finalPrice */}
+                            {finalPrice !== priceOrigin && (
+                              <p
+                                style={{
+                                  margin: 0,
+                                  textDecoration: "line-through",
+                                  color: "#999",
+                                }}
+                              >
+                                {priceOrigin.toLocaleString()} đ
+                              </p>
+                            )}
+
+                            {/* Hiển thị finalPrice hoặc 0 */}
+                            <p style={{ fontSize: 30, margin: 0 }}>
+                              {(finalPrice || 0).toLocaleString()} đ
+                            </p>
+                          </>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <p style={{ fontSize: 30, margin: 0 }}>0 đ</p>
+                  )}
                 </div>
               </div>
 
@@ -335,8 +361,12 @@ const ProductDetailPage = () => {
               })}
 
               <div style={{ marginTop: 20 }}>
-                <div style={{ marginBottom: 10 }}>
-                  Số lượng còn lại: {selectedProductDetail?.stock || 0}
+                <div
+                  className="d-flex align-items-center"
+                  style={{ marginBottom: 10 }}
+                >
+                  <div style={{ width: 108 }}>Còn lại: </div>
+                  <div>{selectedProductDetail?.stock || 0}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <button
@@ -374,6 +404,80 @@ const ProductDetailPage = () => {
               </button>
             </Col>
           </Row>
+        </DetailBox>
+
+        <DetailBox>
+          {shopDetail ? (
+            <>
+              <Row gutter={[16, 16]}>
+                <Col xs={16} md={8}>
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div
+                      className="d-flex align-items-center justify-content-center"
+                      style={{
+                        width: "80px",
+                        height: "80px",
+                        overflow: "hidden",
+                        borderRadius: "50%",
+                      }}
+                    >
+                      <img
+                        className="w-100 object-fit-cover"
+                        src={`${avatarUrl}${shopDetail.shopAvatar}`}
+                        alt={shopDetail.shopName}
+                      />
+                    </div>
+                    <div className="d-flex flex-column gap-4">
+                      <div>{shopDetail.shopName}</div>
+                      <div className="d-flex align-items-center justify-content-between gap-4">
+                        <div
+                          className="d-flex align-items-center gap-3"
+                          style={{
+                            border: "0.5px solid #333",
+                            lineHeight: "34px",
+                            padding: "0px 15px",
+                          }}
+                        >
+                          <div className="d-flex align-items-center">
+                            <IoMdChatbubbles />
+                          </div>
+                          <div>Chat ngay</div>
+                        </div>
+                        <div
+                          className="d-flex align-items-center gap-3"
+                          style={{
+                            border: "0.5px solid #333",
+                            lineHeight: "34px",
+                            padding: "0px 15px",
+                          }}
+                        >
+                          <div className="d-flex align-items-center">
+                            <BsShopWindow />
+                          </div>
+                          <div
+                            onClick={() =>
+                              navigate(
+                                `/shop/${shopDetail.shopName}/dashboard/${shopDetail._id}`
+                              )
+                            }
+                          >
+                            Xem shop
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={8} md={16}>
+                  col-12
+                </Col>
+              </Row>
+            </>
+          ) : (
+            <>
+              <div>Đang tải ...</div>
+            </>
+          )}
         </DetailBox>
       </div>
     </div>

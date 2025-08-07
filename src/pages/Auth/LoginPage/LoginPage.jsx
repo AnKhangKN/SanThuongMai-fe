@@ -32,10 +32,6 @@ const LoginPage = () => {
       MessageComponent.success("Đăng nhập thành công");
       localStorage.setItem("access_token", JSON.stringify(data?.access_token));
     }
-
-    // if (isError) {
-    //   MessageComponent.error("Đăng nhập thất bại!");
-    // }
   }, [isSuccess, isError, data]);
 
   // useEffect 2: xử lý navigate và gọi API
@@ -152,7 +148,7 @@ const LoginPage = () => {
         style={{
           lineHeight: "84px",
           display: "flex",
-          width: "1200px",
+          maxWidth: "1200px",
           margin: "auto",
           alignItems: "center",
         }}
@@ -180,7 +176,7 @@ const LoginPage = () => {
       <div style={{ backgroundColor: "#194a7a", minHeight: "600px" }}>
         <div
           style={{
-            width: "1200px",
+            maxWidth: "1200px",
             margin: "auto",
             height: "600px",
             display: "flex",
@@ -189,7 +185,10 @@ const LoginPage = () => {
           }}
         >
           {/* Logo bên trái */}
-          <div style={{ textAlign: "center", color: "#fff" }}>
+          <div
+            className="d-none d-md-block"
+            style={{ textAlign: "center", color: "#fff" }}
+          >
             <img src={logo_removebg} alt="logo" style={{ width: 300 }} />
             <div style={{ fontSize: 24, fontWeight: "bold" }}>HKN</div>
           </div>

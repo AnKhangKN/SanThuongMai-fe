@@ -20,12 +20,13 @@ const DashboardShopPage = () => {
   const [loading, setLoading] = useState(true);
 
   const productRef = useRef();
-
   const fetchAllProduct = async () => {
     setLoading(true);
     try {
       const res = await ShopServices.getDetailShop(id);
-      setProducts(res?.data?.data?.product_top || []);
+
+      console.log(res);
+      setProducts(res?.data?.data?.productsTop || []);
     } catch (error) {
       message.error("Failed to load products.");
     } finally {

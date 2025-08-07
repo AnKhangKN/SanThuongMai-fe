@@ -25,7 +25,6 @@ const SearchPage = () => {
     const fetchData = async () => {
       try {
         const response = await ProductServices.getSearchProducts(keyword);
-
         setProducts(response.data);
         setSortedProducts(response.data);
       } catch (error) {
@@ -37,8 +36,8 @@ const SearchPage = () => {
 
   const sortProductsByPrice = (order) => {
     const sorted = [...products].sort((a, b) => {
-      const priceA = a.details[0]?.price || 0;
-      const priceB = b.details[0]?.price || 0;
+      const priceA = a.priceOptions[0]?.finalPrice || 0;
+      const priceB = b.priceOptions[0]?.finalPrice || 0;
       return order === "asc" ? priceA - priceB : priceB - priceA;
     });
     setSortedProducts(sorted);
@@ -53,7 +52,7 @@ const SearchPage = () => {
 
   const sortProductsByBest = () => {
     const sorted = [...products].sort(
-      (a, b) => (b.sales || 0) - (a.sales || 0)
+      (a, b) => (b.soldCount || 0) - (a.soldCount || 0)
     );
     setSortedProducts(sorted);
   };
@@ -72,10 +71,28 @@ const SearchPage = () => {
     startIndex + itemsPerPage
   );
 
+  // Responsive columns per row
+  const getColWidth = () => {
+    const width = window.innerWidth;
+    if (width >= 1200) return "calc(100% / 6)";
+    if (width >= 992) return "calc(100% / 4)";
+    if (width >= 768) return "calc(100% / 3)";
+    if (width >= 576) return "calc(100% / 2)";
+    return "100%";
+  };
+
+  const [colWidth, setColWidth] = useState(getColWidth());
+
+  useEffect(() => {
+    const handleResize = () => setColWidth(getColWidth());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div style={{ marginTop: "120px" }}>
       <div style={{ backgroundColor: "#f5f5f5" }}>
-        <div style={{ width: "1200px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <SliderComponent arrImages={images} height="450px" />
           <div style={{ height: "30px" }}></div>
 
@@ -89,9 +106,10 @@ const SearchPage = () => {
               display: "flex",
               justifyContent: "space-between",
               padding: "20px 5px",
+              flexWrap: "wrap",
             }}
           >
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               <button
                 style={{
                   backgroundColor:
@@ -134,13 +152,13 @@ const SearchPage = () => {
           <div style={{ display: "flex", flexWrap: "wrap" }}>
             {currentProducts.map((product) => (
               <Link
+                key={product._id}
+                to={`/product/${product._id}`}
                 style={{
                   textDecoration: "none",
                   color: "#333",
-                  flex: "0 0 calc(100%/6)",
+                  flex: `0 0 ${colWidth}`,
                 }}
-                to={`/product/${product._id}`}
-                key={product._id}
               >
                 <div style={{ border: "0.5px solid #cdcdcd", margin: "3px" }}>
                   <img
@@ -150,7 +168,7 @@ const SearchPage = () => {
                       objectFit: "contain",
                     }}
                     src={`${imageURL}${product.images[0]}`}
-                    alt={product.product_name}
+                    alt={product.productName}
                   />
                   <div
                     style={{
@@ -159,7 +177,7 @@ const SearchPage = () => {
                       maxWidth: "100%",
                     }}
                   >
-                    {product.product_name}
+                    {product.productName}
                   </div>
 
                   <div
@@ -170,13 +188,13 @@ const SearchPage = () => {
                       marginTop: "30px",
                     }}
                   >
-                    <div
-                      style={{
-                        color: "red",
-                      }}
-                    >
-                      {product?.details[0]?.price}đ
+                    <div style={{ color: "red" }}>
+                      {product?.priceOptions[0]?.finalPrice?.toLocaleString(
+                        "vi-VN"
+                      )}
+                      đ
                     </div>
+
                     <div
                       style={{
                         fontSize: "14px",
@@ -185,8 +203,8 @@ const SearchPage = () => {
                         gap: "5px",
                       }}
                     >
-                      <div>Đã bán: </div>
-                      <div>{product?.sold_count}</div>
+                      <div>Đã bán:</div>
+                      <div>{product?.soldCount}</div>
                     </div>
                   </div>
                 </div>
@@ -194,7 +212,6 @@ const SearchPage = () => {
             ))}
           </div>
 
-          {/* Pagination */}
           <div style={{ textAlign: "center", marginTop: "20px" }}>
             {Array.from({ length: totalPages }, (_, i) => (
               <button

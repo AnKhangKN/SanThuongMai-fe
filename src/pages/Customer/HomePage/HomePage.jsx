@@ -27,22 +27,33 @@ const HomePage = () => {
         }}
       >
         {/* slide voucher */}
-        <div style={{ backgroundColor: "#fff", paddingBottom: "10px" }}>
-          <div style={{ width: "1200px", margin: "0 auto" }}>
-            <Row>
-              <Col span={16}>
-                <div style={{ marginRight: "10px" }}>
-                  <SliderComponent arrImages={images} height="245px" />
-                </div>
+        <div
+          style={{
+            backgroundColor: "#fff",
+            paddingBottom: "10px",
+          }}
+        >
+          <div
+            style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 0px" }}
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={16}>
+                <SliderComponent arrImages={images} height="245px" />
               </Col>
-              <Col span={8}>
-                <div>
-                  <div style={{ width: "100%" }}>
-                    <img style={{ width: "100%" }} src={voucher1} alt="" />
-                  </div>
-                  <div style={{ width: "100%" }}>
-                    <img style={{ width: "100%" }} src={voucher2} alt="" />
-                  </div>
+              <Col xs={24} md={8}>
+                <div style={{ width: "100%" }}>
+                  <img
+                    style={{ width: "100%" }}
+                    src={voucher1}
+                    alt="Voucher 1"
+                  />
+                </div>
+                <div style={{ width: "100%", marginTop: "10px" }}>
+                  <img
+                    style={{ width: "100%" }}
+                    src={voucher2}
+                    alt="Voucher 2"
+                  />
                 </div>
               </Col>
             </Row>
@@ -52,7 +63,7 @@ const HomePage = () => {
         {/* category */}
         <div
           style={{
-            width: "1200px",
+            maxWidth: "1200px",
             margin: "0 auto",
             backgroundColor: "#fff",
           }}
@@ -67,7 +78,7 @@ const HomePage = () => {
         {/* top search */}
         <div
           style={{
-            width: "1200px",
+            maxWidth: "1200px",
             margin: "0 auto",
             backgroundColor: "#fff",
           }}
@@ -81,7 +92,11 @@ const HomePage = () => {
 
         {/* today suggest */}
         <div
-          style={{ width: "1200px", margin: "0 auto", backgroundColor: "#fff" }}
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            backgroundColor: "#fff",
+          }}
         >
           <LineSuggest>
             <p style={{ margin: 0 }}>Gợi ý hôm nay</p>

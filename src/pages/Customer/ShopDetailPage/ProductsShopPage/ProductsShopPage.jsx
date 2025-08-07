@@ -18,6 +18,7 @@ const ProductsShopPage = () => {
     setLoading(true);
     try {
       const res = await ShopServices.getDetailShop(id);
+
       const productsWithKeys =
         res.data?.data?.products?.map((product) => ({
           ...product,
@@ -69,7 +70,7 @@ const ProductsShopPage = () => {
                             ? `${imageURL}${product.images[0]}`
                             : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                         }
-                        alt={product.product_name}
+                        alt={product.productName}
                         style={{
                           width: "100%",
                           height: "300px",
@@ -78,9 +79,19 @@ const ProductsShopPage = () => {
                       />
                     </div>
                     <div style={{ padding: "10px" }}>
-                      <div style={{ marginBottom: "30px" }}>
-                        {product.product_name}
+                      <div
+                        style={{
+                          marginBottom: "30px",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {product.productName}
                       </div>
+
                       <div
                         style={{
                           display: "flex",
@@ -91,11 +102,11 @@ const ProductsShopPage = () => {
                         <div style={{ color: "#ee4d2d" }}>
                           <span style={{ fontSize: "10px" }}>đ</span>
                           <span style={{ fontSize: "18px" }}>
-                            {product.details?.[0]?.price || "0"}
+                            {product.priceOptions?.[0]?.finalPrice || "0"}
                           </span>
                         </div>
                         <div style={{ fontSize: "13px" }}>
-                          Đã bán: {product.sold_count || 0}
+                          Đã bán: {product.soldCount || 0}
                         </div>
                       </div>
                     </div>

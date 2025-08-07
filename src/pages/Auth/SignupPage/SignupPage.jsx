@@ -86,7 +86,7 @@ const SignupPage = () => {
         style={{
           lineHeight: "84px",
           display: "flex",
-          width: "1200px",
+          maxWidth: "1200px",
           margin: "auto",
           alignItems: "center",
         }}
@@ -114,7 +114,7 @@ const SignupPage = () => {
       <div style={{ backgroundColor: "#194a7a", minHeight: "600px" }}>
         <div
           style={{
-            width: "1200px",
+            maxWidth: "1200px",
             margin: "auto",
             height: "600px",
             display: "flex",
@@ -123,7 +123,10 @@ const SignupPage = () => {
           }}
         >
           {/* Logo bên trái */}
-          <div style={{ textAlign: "center", color: "#fff" }}>
+          <div
+            className="d-none d-md-block"
+            style={{ textAlign: "center", color: "#fff" }}
+          >
             <img src={logo_remove_bg} alt="logo" style={{ width: 300 }} />
             <div style={{ fontSize: 24, fontWeight: "bold" }}>HKN</div>
           </div>

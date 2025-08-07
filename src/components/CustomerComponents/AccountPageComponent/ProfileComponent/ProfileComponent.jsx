@@ -90,18 +90,6 @@ const ProfileComponent = () => {
     }
   };
 
-  // const showModal = () => {
-  //   setIsModalOpen(true);
-  // };
-
-  // const handleOk = () => {
-  //   setIsModalOpen(false);
-  // };
-
-  // const handleCancel = () => {
-  //   setIsModalOpen(false);
-  // };
-
   const handleChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -153,24 +141,6 @@ const ProfileComponent = () => {
                 Thay tên
               </div>
             </WrapperChange>
-
-            {/* <WrapperChange>
-              <TextNameChange>Địa chỉ giao hàng</TextNameChange>
-              <BoxChange onClick={showModal} style={{ gap: "20px" }}>
-                Thêm địa chỉ
-              </BoxChange>
-
-              <Modal
-                title="Basic Modal"
-                closable={{ "aria-label": "Custom Close Button" }}
-                zIndex={2000}
-                open={isModalOpen}
-                onOk={handleOk}
-                onCancel={handleCancel}
-              >
-
-              </Modal>
-            </WrapperChange> */}
           </div>
           <div style={{ flex: "0 0 34%" }}>
             <div>
