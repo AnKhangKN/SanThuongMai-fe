@@ -12,6 +12,7 @@ import { updateCart } from "../../../redux/slices/cartSlice";
 import * as ValidToken from "../../../utils/tokenUtils";
 import useSendViewAfterDelay from "../../../hook/useSendViewAfterDelay";
 import { IoMdChatbubbles } from "react-icons/io";
+import SuggestProduct from "./SuggestProduct";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 const avatarUrl = `${process.env.REACT_APP_API_URL}/avatar/`;
@@ -478,6 +479,10 @@ const ProductDetailPage = () => {
               <div>Đang tải ...</div>
             </>
           )}
+        </DetailBox>
+
+        <DetailBox>
+          <SuggestProduct />
         </DetailBox>
       </div>
     </div>

@@ -86,3 +86,15 @@ export const getTopCartProducts = async () => {
     throw error;
   }
 };
+
+export const getSuggestProduct = async (productId) => {
+  try {
+    const res = await axios.get(
+      `${process.env.REACT_APP_API_URL}/ai/products/suggest/${productId}`
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch search products:", error);
+    throw error;
+  }
+};

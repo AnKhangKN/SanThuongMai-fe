@@ -7,7 +7,6 @@ import { LiaListAltSolid } from "react-icons/lia";
 import { Link, useNavigate } from "react-router-dom";
 
 const SidebarAccount = () => {
-  const navigage = useNavigate();
 
   return (
     <>
