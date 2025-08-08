@@ -17,8 +17,6 @@ import { useSelector } from "react-redux";
 import * as ValidateToken from "../../../utils/tokenUtils";
 import * as ChatServices from "../../../services/shared/ChatServices";
 
-// ...import giữ nguyên
-
 const ChatBoxComponents = ({ onClose }) => {
   const [chatList, setChatList] = useState([]);
   const [chatRoomId, setChatRoomId] = useState(null);

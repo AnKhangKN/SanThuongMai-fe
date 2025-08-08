@@ -59,3 +59,26 @@ export const CartModal = styled.div`
     transform: rotate(45deg);
   }
 `;
+
+export const BarModal = styled.div`
+  visibility: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+  transition: opacity 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  justify-content: end;
+`;
+
+export const BarNav = styled.div``;
+
+export const ModalContent = styled.div`
+  background: white;
+  width: 40%;
+  padding: 20px;
+  border-radius: 8px;
+`;

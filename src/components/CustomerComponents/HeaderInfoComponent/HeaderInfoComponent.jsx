@@ -1,6 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
-import { CartModal, CartWrapper, IconWrapper, SumCart } from "./style";
+import {
+  BarModal,
+  BarNav,
+  CartModal,
+  CartWrapper,
+  IconWrapper,
+  ModalContent,
+  SumCart,
+} from "./style";
 import Logo_Xoa_Phong from "../../../assets/images/Logo_Den-removebg-preview.png";
 import SearchComponent from "../SearchComponent/SearchComponent";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,8 +21,34 @@ const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
 const HeaderInfoComponent = () => {
   const cart = useSelector((state) => state.cart);
+  const user = useSelector((state) => state.user);
+  const avatar = useSelector((state) => state.avatar);
   const cartItems = cart.products;
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleNavigateView = () => {
+    if (user.isAdmin) {
+      navigate("/admin");
+      setIsOpen(false);
+    } else if (user.isVendor) {
+      navigate("/vendor");
+      setIsOpen(false);
+    } else {
+      navigate("/user/account/profile");
+      setIsOpen(false);
+    }
+  };
+
+  const handleNavigateVendor = () => {
+    if (user.isVendor) {
+      navigate("/vendor");
+      setIsOpen(false);
+    } else {
+      navigate("/vendor/register");
+      setIsOpen(false);
+    }
+  };
 
   return (
     <div
@@ -113,11 +147,67 @@ const HeaderInfoComponent = () => {
       </CartWrapper>
 
       {/* Chi tiết */}
-      <div className="d-md-none d-block">
-        <div style={{ fontSize: 26 }}>
+      <BarNav className="d-md-none d-block">
+        <div
+          style={{ fontSize: 26, cursor: "pointer" }}
+          onClick={() => setIsOpen(true)}
+        >
           <FaBars />
         </div>
-      </div>
+
+        <BarModal $isOpen={isOpen}>
+          <ModalContent>
+            <button onClick={() => setIsOpen(false)}>X</button>
+
+            <div style={{ color: "#333" }}>
+              <div onClick={handleNavigateVendor}>Kênh bán hàng</div>
+              <div onClick={() => navigate("/vendor/register")}>
+                Trở thành người bán hàng
+              </div>
+              <div>Thông báo</div>
+              <div>Hỗ trợ</div>
+              {user.fullName ? (
+                <>
+                  <div className="d-flex align-items-center gap-2">
+                    <div
+                      style={{
+                        height: "24px",
+                        width: "24px",
+                        borderRadius: "50%",
+                      }}
+                    >
+                      <img
+                        src={avatar?.avatar || user?.avatar}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: "50%",
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      onClick={handleNavigateView}
+                      style={{ marginLeft: "5px" }}
+                    >
+                      {user.fullName}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div onClick={() => navigate("/login")}>Đăng nhập</div>
+                    <div onClick={() => navigate("/sign-up")}>Đăng kí</div>
+                  </div>
+                </>
+              )}
+            </div>
+          </ModalContent>
+        </BarModal>
+      </BarNav>
     </div>
   );
 };
