@@ -1,103 +1,252 @@
-import React, { useState } from "react";
-import { Card, Col, Row, Statistic, Select, Table } from "antd";
+import React, { useEffect, useState } from "react";
+import { Row, Col, Card, Statistic, Table, Spin, message } from "antd";
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
+import * as StatisticalService from "../../../services/vendor/StatisticalService";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import { isJsonString } from "../../../utils";
+import { jwtDecode } from "jwt-decode";
 
-const { Option } = Select;
+const IncomeStatistics = ({ shopId }) => {
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(null);
+  const [trend, setTrend] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [lowStock, setLowStock] = useState([]);
 
-const IncomeStatistics = () => {
-  const [timeFilter, setTimeFilter] = useState("month");
+  const handleDecoded = async () => {
+    const token = localStorage.getItem("access_token");
 
-  const dataChart = [
-    { month: "Tháng 1", revenue: 500000 },
-    { month: "Tháng 2", revenue: 1200000 },
-    { month: "Tháng 3", revenue: 900000 },
-    { month: "Tháng 4", revenue: 1800000 },
-  ];
+    if (!token) {
+      return null;
+    }
 
-  const columns = [
-    { title: "Mã đơn", dataIndex: "orderId", key: "orderId" },
-    { title: "Khách hàng", dataIndex: "customer", key: "customer" },
-    { title: "Tổng tiền", dataIndex: "total", key: "total" },
-    { title: "Ngày", dataIndex: "date", key: "date" },
-  ];
+    try {
+      const decoded = jwtDecode(token);
 
-  const dataTable = [
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        const newToken = res?.access_token;
+
+        if (!newToken) {
+          console.error("❌ Refresh thất bại");
+          return null;
+        }
+
+        localStorage.setItem("access_token", newToken); // không cần stringify
+        return newToken;
+      }
+
+      return token;
+    } catch (err) {
+      console.error("❌ Token decode lỗi:", err);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const token = await handleDecoded(); // Lấy token (có thể refresh)
+        if (!token) {
+          message.error("Bạn chưa đăng nhập hoặc phiên đã hết hạn");
+          setLoading(false);
+          return;
+        }
+
+        // Gọi API có truyền token
+        const [{ data: s }, { data: t }, { data: tp }, { data: ls }] =
+          await Promise.all([
+            StatisticalService.getSummary({ shopId }, token),
+            StatisticalService.getRevenueTrend({ shopId, days: 30 }, token),
+            StatisticalService.getTopProducts({ shopId, limit: 5 }, token),
+            StatisticalService.getLowStock({ shopId, threshold: 5 }, token),
+          ]);
+
+        setSummary(s);
+        setTrend(t);
+        setTopProducts(tp);
+        setLowStock(ls);
+      } catch (err) {
+        console.error(err);
+        message.error("Không thể load dữ liệu thống kê");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
+  }, [shopId]);
+
+  const topCols = [
     {
-      key: 1,
-      orderId: "DH001",
-      customer: "Nguyễn Văn A",
-      total: "1.200.000₫",
-      date: "2025-04-09",
+      title: "Sản phẩm",
+      dataIndex: "productName",
+      key: "productName",
+      ellipsis: true,
+      render: (text, row) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <img
+            src={row.images?.[0]}
+            alt=""
+            style={{
+              width: 40,
+              height: 40,
+              objectFit: "cover",
+              marginRight: 8,
+              borderRadius: 4,
+            }}
+          />
+          <span>{text || "—"}</span>
+        </div>
+      ),
     },
+    { title: "Số lượng bán", dataIndex: "qty", key: "qty" },
     {
-      key: 2,
-      orderId: "DH002",
-      customer: "Trần Thị B",
-      total: "950.000₫",
-      date: "2025-04-08",
+      title: "Doanh thu",
+      dataIndex: "revenue",
+      key: "revenue",
+      render: (value) =>
+        value?.toLocaleString("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }) || "0₫",
+    },
+  ];
+
+  const lowCols = [
+    { title: "Sản phẩm", dataIndex: "productName", key: "productName" },
+    {
+      title: "Variant",
+      dataIndex: "priceOptions",
+      key: "priceOptions",
+      render: (arr) =>
+        arr
+          .map(
+            (p) =>
+              `[stk:${p.stock}] ${p.attributes.map((a) => a.value).join("/")}`
+          )
+          .join(", "),
     },
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Row gutter={16}>
-        <Col span={8}>
+    <Spin spinning={loading} tip="Đang tải dữ liệu..." size="large">
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col span={6}>
           <Card>
-            <Statistic title="Tổng doanh thu" value={5200000} suffix="₫" />
+            <Statistic
+              title="Doanh thu (30 ngày)"
+              value={summary?.revenue || 0}
+              precision={0}
+              valueStyle={{ color: "#3f8600" }}
+              prefix="₫"
+            />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
-            <Statistic title="Số đơn hàng" value={68} />
+            <Statistic
+              title="Đơn hàng (30 ngày)"
+              value={summary?.ordersCount || 0}
+              valueStyle={{ color: "#1890ff" }}
+            />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
-            <Statistic title="Doanh thu hôm nay" value={820000} suffix="₫" />
+            <Statistic
+              title="Sản phẩm bán"
+              value={summary?.totalQuantity || 0}
+              valueStyle={{ color: "#cf1322" }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="Sản phẩm khác"
+              value={summary?.productsSoldCount || 0}
+            />
           </Card>
         </Col>
       </Row>
 
-      <Card
-        style={{ marginTop: 24 }}
-        title="Biểu đồ doanh thu theo tháng"
-        extra={
-          <Select value={timeFilter} onChange={setTimeFilter}>
-            <Option value="today">Hôm nay</Option>
-            <Option value="week">Tuần này</Option>
-            <Option value="month">Tháng này</Option>
-          </Select>
-        }
-      >
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={dataChart}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="revenue" fill="#1890ff" label={{ position: "top" }} />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+      <Row gutter={[16, 16]}>
+        <Col span={16}>
+          <Card
+            title="Doanh thu theo ngày (30 ngày)"
+            style={{ marginBottom: 16 }}
+          >
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis
+                  tickFormatter={(value) =>
+                    value.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })
+                  }
+                />
+                <Tooltip
+                  formatter={(value) =>
+                    value.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })
+                  }
+                />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#1890ff"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
 
-      <Card title="Danh sách đơn hàng gần đây" style={{ marginTop: 24 }}>
-        <Table
-          columns={columns}
-          dataSource={dataTable}
-          pagination={{ pageSize: 5 }}
-        />
-      </Card>
-    </div>
+          <Card title="Top sản phẩm">
+            <Table
+              dataSource={topProducts}
+              columns={topCols}
+              rowKey="productId"
+              pagination={false}
+              bordered
+              size="middle"
+              scroll={{ y: 300 }}
+              rowClassName={() => "hover-row"}
+            />
+          </Card>
+        </Col>
+
+        <Col span={8}>
+          <Card title="Sản phẩm sắp hết hàng">
+            <Table
+              dataSource={lowStock}
+              columns={lowCols}
+              rowKey="_id"
+              pagination={false}
+              bordered
+              size="middle"
+              scroll={{ y: 600 }}
+              rowClassName={() => "hover-row"}
+            />
+          </Card>
+        </Col>
+      </Row>
+    </Spin>
   );
 };
 
