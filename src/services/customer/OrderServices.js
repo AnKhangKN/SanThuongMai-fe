@@ -130,3 +130,21 @@ export const removeShippingAddress = async (accessToken, data) => {
     throw error;
   }
 };
+
+export const returnOrder = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${process.env.REACT_APP_API_URL}/customer/orders/return`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Đảm bảo có header Authorization
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+}

@@ -28,6 +28,8 @@ const OrderPage = () => {
   const [selectedShopId, setSelectedShopId] = useState(null);
   const [expandedShops, setExpandedShops] = useState({});
   const [currentOrderPage, setCurrentOrderPage] = useState(1);
+  const [returnShowModal, setReturnShowModal] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
 
   const { "status-order": keyword } = useParams();
   const navigate = useNavigate();
@@ -78,33 +80,48 @@ const OrderPage = () => {
 
   const handleCancelOrder = async () => {
     try {
+      // Kiểm tra thông tin cần thiết
       if (!selectedOrderId || !selectedShopId) {
-        message.error("Thiếu thông tin đơn hàng hoặc shop.");
-        return;
+        return message.error("Thiếu thông tin đơn hàng hoặc shop.");
+      }
+      if (!cancelReason.trim()) {
+        return message.error("Vui lòng nhập lý do hủy đơn.");
       }
 
+      // Lấy token
       const accessToken = await ValidateToken.getValidAccessToken();
+
+      // Tìm đơn hàng
       const order = allData.find(
         (item) => item._id === selectedOrderId || item.id === selectedOrderId
       );
       if (!order) {
-        message.error("Không tìm thấy đơn hàng.");
-        return;
+        return message.error("Không tìm thấy đơn hàng.");
       }
 
+      // Lấy sản phẩm của shop đó trong đơn
       const shopItems = order.productItems.filter(
         (item) => item.shopId === selectedShopId
       );
+      if (!shopItems.length) {
+        return message.error("Không tìm thấy sản phẩm thuộc shop này.");
+      }
+
+      // Tạo payload gửi lên API
       const orderPayload = {
         status: "cancelled",
         order: {
           ...order,
-          productItems: shopItems,
+          productItems: shopItems, // Chỉ gửi sản phẩm của shop bị hủy
         },
-        cancelReason,
+        cancelReason: cancelReason.trim(),
       };
 
-      await OrderServices.cancelledOrder(accessToken, orderPayload);
+      // Gọi API hủy đơn
+      const res = await OrderServices.cancelledOrder(accessToken, orderPayload);
+      if (res?.status === "ERROR") {
+        throw new Error(res.message);
+      }
 
       message.success("Đã hủy đơn hàng cho shop!");
       setIsModalOpen(false);
@@ -113,7 +130,66 @@ const OrderPage = () => {
       setCancelReason("");
       fetchAllOrderByStatus();
     } catch (error) {
-      console.error("Lỗi khi hủy đơn hàng:", error.message || error);
+      console.error(error);
+      message.error(error.response.data.message || "Hủy đơn hàng thất bại.");
+    }
+  };
+
+  const showModalReturnOrder = (orderId, shopId) => {
+    setSelectedOrderId(orderId);
+    setSelectedShopId(shopId);
+    setReturnShowModal(true);
+  };
+
+  const handleReturnOrder = async () => {
+    try {
+      // Kiểm tra thông tin cần thiết
+      if (!selectedOrderId || !selectedShopId) {
+        return message.error("Thiếu thông tin đơn hàng hoặc shop.");
+      }
+      if (!refundReason.trim()) {
+        return message.error("Vui lòng nhập lý do hoàn đơn.");
+      }
+
+      // Lấy token
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      // Tìm đơn hàng
+      const order = allData.find(
+        (item) => item._id === selectedOrderId || item.id === selectedOrderId
+      );
+      if (!order) {
+        return message.error("Không tìm thấy đơn hàng.");
+      }
+
+      // Lấy sản phẩm của shop đó trong đơn
+      const shopItems = order.productItems.filter(
+        (item) => item.shopId === selectedShopId
+      );
+      if (!shopItems.length) {
+        return message.error("Không tìm thấy sản phẩm thuộc shop này.");
+      }
+
+      // Tạo payload gửi lên API
+      const orderPayload = {
+        status: "returned",
+        order: {
+          ...order,
+          productItems: shopItems, // Chỉ gửi sản phẩm của shop bị hủy
+        },
+        refundReason: refundReason.trim(),
+      };
+
+      const res = await OrderServices.returnOrder(accessToken, orderPayload);
+
+      message.success("Đã hoàn trả cho shop!");
+      setReturnShowModal(false);
+      setSelectedOrderId(null);
+      setSelectedShopId(null);
+      setRefundReason("");
+      fetchAllOrderByStatus();
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -186,6 +262,11 @@ const OrderPage = () => {
                   ? group.items
                   : group.items.slice(0, 2);
 
+                // Lấy thông tin phí vận chuyển của shop này trong đơn
+                const shippingInfo = order.shippingByShop?.find(
+                  (s) => s.shopId.toString() === shopId.toString()
+                );
+
                 return (
                   <div key={shopId}>
                     <div style={{ fontWeight: "bold", margin: "10px 0" }}>
@@ -236,7 +317,13 @@ const OrderPage = () => {
                                 >
                                   Nhận sản phẩm
                                 </button>
-                                <button>Hoàn trả</button>
+                                <button
+                                  onClick={() =>
+                                    showModalReturnOrder(order._id, shopId)
+                                  }
+                                >
+                                  Hoàn trả
+                                </button>
                               </div>
                             </>
                           ) : item.status === "shipping" ? (
@@ -258,20 +345,34 @@ const OrderPage = () => {
                       </div>
                     )}
 
-                    {isAllPendingOrProcessing(group.items) && (
-                      <div style={{ textAlign: "end" }}>
-                        <button onClick={() => showModal(order._id, shopId)}>
-                          Hủy đơn của shop
-                        </button>
-                      </div>
-                    )}
                     <div
-                      style={{
-                        height: "1px",
-                        margin: "20px 0px",
-                        backgroundColor: "#ccc",
-                      }}
-                    ></div>
+                      className="d-flex gap-3 flex-column"
+                      style={{ textAlign: "end" }}
+                    >
+                      {isAllPendingOrProcessing(group.items) && (
+                        <div className="d-flex align-items-center justify-content-end gap-2">
+                          <div>Phí ship: </div>
+                          <div>
+                            {shippingInfo
+                              ? shippingInfo.shippingFeeFinal.toLocaleString()
+                              : "Không có phí vận chuyển"}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        {isAllPendingOrProcessing(group.items) && (
+                          <div>
+                            <button
+                              onClick={() => showModal(order._id, shopId)}
+                            >
+                              Hủy đơn của shop
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <hr />
                   </div>
                 );
               })}
@@ -333,6 +434,22 @@ const OrderPage = () => {
           placeholder="Hãy thêm lý do bạn hủy đơn hàng"
           value={cancelReason}
           onChange={(e) => setCancelReason(e.target.value)}
+          rows={4}
+        />
+      </Modal>
+
+      <Modal
+        title="Lý do hoàn đơn"
+        open={returnShowModal}
+        zIndex={2000}
+        maskStyle={{ backgroundColor: "rgba(0, 0, 0, 0.1)" }}
+        onOk={handleReturnOrder}
+        onCancel={() => setReturnShowModal(false)}
+      >
+        <TextArea
+          placeholder="Hãy thêm lý do hoàn trả"
+          value={refundReason}
+          onChange={(e) => setRefundReason(e.target.value)}
           rows={4}
         />
       </Modal>

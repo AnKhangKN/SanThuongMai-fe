@@ -23,11 +23,16 @@ const PaymentPage = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState();
   const [orderNote, setOrderNote] = useState("");
+  const [orderNotes, setOrderNotes] = useState({});
   const [newAddress, setNewAddress] = useState({
     phone: "",
     address: "",
     city: "",
   });
+
+  // State lưu phí ship cho từng shop
+  const [selectedShippingByShop, setSelectedShippingByShop] = useState({});
+  const [shippingFeeByShop, setShippingFeeByShop] = useState({});
 
   const navigate = useNavigate();
   const products = useSelector((state) => state.checkout.products);
@@ -84,37 +89,84 @@ const PaymentPage = () => {
     Object.values(selectedVouchers).forEach((voucher) => {
       if (!voucher || typeof voucher !== "object") return;
 
-      const { type, value, maxDiscount } = voucher;
+      const { type, value, category, maxDiscount } = voucher;
 
-      if (type === "percentage" && typeof value === "number") {
-        const rawDiscount = (totalAmount * value) / 100;
-        discount +=
-          typeof maxDiscount === "number"
-            ? Math.min(rawDiscount, maxDiscount)
-            : rawDiscount;
-      } else if (type === "fixed" && typeof value === "number") {
-        discount += value;
+      if (category === "van-chuyen") {
+        // Giảm phí vận chuyển, không vượt quá shippingFee
+        if (type === "percentage" && typeof value === "number") {
+          const rawDiscount = shippingFee * (value / 100);
+          const appliedDiscount =
+            typeof maxDiscount === "number"
+              ? Math.min(rawDiscount, maxDiscount)
+              : rawDiscount;
+          discount += Math.min(appliedDiscount, shippingFee - discount); // tránh giảm quá phí ship hiện tại
+        } else if (type === "fixed" && typeof value === "number") {
+          discount += Math.min(value, shippingFee - discount); // tránh giảm vượt phí ship
+        }
+      } else {
+        if (type === "percentage" && typeof value === "number") {
+          const rawDiscount = (totalAmount * value) / 100;
+          discount +=
+            typeof maxDiscount === "number"
+              ? Math.min(rawDiscount, maxDiscount)
+              : rawDiscount;
+        } else if (type === "fixed" && typeof value === "number") {
+          discount += value;
+        }
       }
     });
 
     return discount;
   };
 
-  const groupedByShop = products.reduce((acc, product) => {
-    const key = product.shopId || product.shopName;
-    if (!acc[key]) {
-      acc[key] = {
-        shopName: product.shopName,
-        items: [],
-      };
+  const groupedByShop = useMemo(() => {
+    return products.reduce((acc, product) => {
+      const key = product.shopId || product.shopName;
+      if (!acc[key]) {
+        acc[key] = {
+          shopName: product.shopName,
+          items: [],
+        };
+      }
+      acc[key].items.push(product);
+      return acc;
+    }, {});
+  }, [products]);
+
+  useEffect(() => {
+    if (Object.keys(groupedByShop).length > 0) {
+      const defaultSelected = {};
+      const defaultFee = {};
+
+      Object.keys(groupedByShop).forEach((shopKey) => {
+        defaultSelected[shopKey] = 15000; // mặc định tiêu chuẩn
+        defaultFee[shopKey] = 15000; // mặc định phí ship
+      });
+
+      setSelectedShippingByShop(defaultSelected);
+      setShippingFeeByShop(defaultFee);
     }
-    acc[key].items.push(product);
-    return acc;
-  }, {});
+  }, [groupedByShop]);
+
+  // Khi chọn phương thức vận chuyển
+  const handleSelectShipping = (shopKey, fee) => {
+    setSelectedShippingByShop((prev) => ({
+      ...prev,
+      [shopKey]: fee,
+    }));
+
+    setShippingFeeByShop((prev) => ({
+      ...prev,
+      [shopKey]: fee,
+    }));
+  };
 
   const shippingVoucher = vouchers.find((v) => v.category === "van-chuyen");
   const shippingDiscount = shippingVoucher?.value;
-  const shippingFee = 30000;
+  const shippingFee = Object.values(shippingFeeByShop).reduce(
+    (sum, fee) => sum + (fee || 15000), // mặc định 15k nếu chưa có
+    0
+  );
 
   const handleConfirmOrder = async () => {
     if (!selectedAddressId) {
@@ -151,7 +203,7 @@ const PaymentPage = () => {
     const productItems = products;
     const paymentMethod = selectedMethod;
     const totalPrice = totalAmount;
-    const note = orderNote;
+    const shippingFeeFinal = shippingFee - shippingDiscount;
 
     let discountAmount = 0;
 
@@ -166,7 +218,16 @@ const PaymentPage = () => {
       discountAmount = 0;
     }
 
-    const finalAmount = totalAmount - discountAmount;
+    let finalAmount = 0;
+
+    if (calculateVoucherDiscountNoShip()) {
+      finalAmount =
+        totalAmount -
+        calculateVoucherDiscountNoShip() +
+        Math.max(shippingFee - shippingDiscount, 0);
+    } else {
+      finalAmount = totalAmount + shippingFee;
+    }
 
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
@@ -179,7 +240,9 @@ const PaymentPage = () => {
         vouchers,
         discountAmount,
         finalAmount,
-        note,
+        shippingFeeByShop,
+        shippingFee: shippingFeeFinal,
+        noteItemsByShop: orderNotes,
       };
 
       const res = await OrderServices.addPayment(accessToken, payload);
@@ -304,27 +367,16 @@ const PaymentPage = () => {
     setSelectedMethod(method);
   };
 
-  const handleRemoveAddress = async () => {
-    const selectedAddress = addresses.find(
-      (addr) => addr._id === selectedAddressId
-    );
-
-    if (!selectedAddress) {
-      return message.warning("Địa chỉ không tồn tại!");
-    }
-
-    const shippingInfo = {
-      phone: selectedAddress.phone,
-      address: selectedAddress.address,
-      city: selectedAddress.city,
+  const handleRemoveAddress = async (idAddress) => {
+    const data = {
+      idAddress,
     };
-
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
 
-      await OrderServices.removeShippingAddress(accessToken, shippingInfo);
+      await OrderServices.removeShippingAddress(accessToken, data);
       message.success("Địa chỉ đã xóa!");
-
+      fetchAllAddress();
       handleCancel();
     } catch (err) {
       console.error("Error removing address:", err);
@@ -443,7 +495,7 @@ const PaymentPage = () => {
                             justifyContent: "flex-end",
                             alignItems: "center",
                           }}
-                          onClick={handleRemoveAddress}
+                          onClick={() => handleRemoveAddress(addr._id)}
                         >
                           <IoMdClose />
                         </div>
@@ -535,88 +587,170 @@ const PaymentPage = () => {
             </Row>
           </div>
 
-          {Object.entries(groupedByShop).map(([shopKey, group]) => (
-            <div key={shopKey} style={{ marginBottom: 40 }}>
-              {/* Tên shop */}
-              <div
-                style={{
-                  fontWeight: "bold",
-                  background: "#fafafa",
-                  padding: "10px 0",
-                  borderTop: "1px solid #eee",
-                  borderBottom: "1px solid #eee",
-                  paddingLeft: 10,
-                }}
-              >
-                🛍️ {group.shopName}
-              </div>
+          {Object.entries(groupedByShop).map(([shopKey, group]) => {
+            const shopShipping = selectedShippingByShop[shopKey] || 15000; // mặc định tiêu chuẩn
+            const shopShippingFee = shippingFeeByShop[shopKey] || 15000;
 
-              {/* Danh sách sản phẩm */}
-              {group.items.map((product, index) => (
-                <Row
-                  key={index}
+            return (
+              <div key={shopKey} style={{ marginBottom: 40 }}>
+                {/* Tên shop */}
+                <div
                   style={{
-                    padding: "30px 0px",
-                    borderBottom: "2px solid #f5f5f5",
+                    fontWeight: "bold",
+                    background: "#fafafa",
+                    padding: "10px 0",
+                    borderTop: "1px solid #eee",
+                    borderBottom: "1px solid #eee",
+                    paddingLeft: 10,
                   }}
                 >
-                  <Col
-                    span={12}
+                  🛍️ {group.shopName}
+                </div>
+
+                {/* Danh sách sản phẩm */}
+                {group.items.map((product, index) => (
+                  <Row
+                    key={index}
                     style={{
-                      display: "flex",
-                      gap: "10px",
-                      alignItems: "center",
+                      padding: "30px 0px",
+                      borderBottom: "2px solid #f5f5f5",
                     }}
                   >
-                    <div style={{ width: "40px", height: "40px" }}>
-                      <img
-                        style={{ width: "100%", objectFit: "cover" }}
-                        src={`${imageURL}${product.productImage}` || imgTest}
-                        alt={product.productName}
-                      />
-                    </div>
-
-                    <div>
-                      <div>{product.productName}</div>
-                      <div style={{ display: "flex", gap: "20px" }}>
-                        {(product.attributes || []).map((attribute, idx) => (
-                          <div key={idx}>
-                            {attribute.name}: {attribute.value}
-                          </div>
-                        ))}
+                    <Col
+                      span={12}
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div style={{ width: "40px", height: "40px" }}>
+                        <img
+                          style={{ width: "100%", objectFit: "cover" }}
+                          src={`${imageURL}${product.productImage}` || imgTest}
+                          alt={product.productName}
+                        />
                       </div>
-                    </div>
-                  </Col>
+                      <div>
+                        <div>{product.productName}</div>
+                        <div style={{ display: "flex", gap: "20px" }}>
+                          {(product.attributes || []).map((attribute, idx) => (
+                            <div key={idx}>
+                              {attribute.name}: {attribute.value}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Col>
 
-                  <Col span={4}>
-                    <div style={{ textAlign: "end" }}>
-                      {product.finalPrice < product.priceFee ? (
-                        <>
-                          <del style={{ display: "block" }}>
-                            ₫{product.priceFee.toLocaleString()}
-                          </del>
+                    <Col span={4}>
+                      <div style={{ textAlign: "end" }}>
+                        {product.finalPrice < product.priceFee ? (
+                          <>
+                            <del style={{ display: "block" }}>
+                              ₫{product.priceFee.toLocaleString()}
+                            </del>
+                            <div>₫{product.finalPrice.toLocaleString()}</div>
+                          </>
+                        ) : (
                           <div>₫{product.finalPrice.toLocaleString()}</div>
-                        </>
-                      ) : (
-                        <div>₫{product.finalPrice.toLocaleString()}</div>
-                      )}
-                    </div>
-                  </Col>
+                        )}
+                      </div>
+                    </Col>
 
-                  <Col span={3}>
-                    <div style={{ textAlign: "end" }}>{product.quantity}</div>
-                  </Col>
+                    <Col span={3}>
+                      <div style={{ textAlign: "end" }}>{product.quantity}</div>
+                    </Col>
 
-                  <Col span={5}>
-                    <div style={{ textAlign: "end" }}>
-                      ₫
-                      {(product.finalPrice * product.quantity).toLocaleString()}
+                    <Col span={5}>
+                      <div style={{ textAlign: "end" }}>
+                        ₫
+                        {(
+                          product.finalPrice * product.quantity
+                        ).toLocaleString()}
+                      </div>
+                    </Col>
+                  </Row>
+                ))}
+
+                {/* Tổng của 1 shop */}
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: "18px",
+                    textAlign: "right",
+                  }}
+                >
+                  {/* Phương thức vận chuyển */}
+                  <div>
+                    <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
+                      Phương thức vận chuyển
                     </div>
-                  </Col>
-                </Row>
-              ))}
-            </div>
-          ))}
+
+                    <label style={{ display: "block", marginBottom: "6px" }}>
+                      <input
+                        type="radio"
+                        name={`shippingMethod-${shopKey}`} // 👈 quan trọng: name khác nhau cho mỗi shop
+                        value={15000}
+                        checked={shopShipping === 15000}
+                        onChange={() => handleSelectShipping(shopKey, 15000)}
+                      />
+                      Tiêu chuẩn: 15.000 đ
+                    </label>
+
+                    <label style={{ display: "block" }}>
+                      <input
+                        type="radio"
+                        name={`shippingMethod-${shopKey}`}
+                        value={30000}
+                        checked={shopShipping === 30000}
+                        onChange={() => handleSelectShipping(shopKey, 30000)}
+                      />
+                      Nhanh: 30.000 đ
+                    </label>
+                  </div>
+
+                  {/* Ship */}
+                  <div>Tiền ship: ₫{shopShippingFee.toLocaleString()}</div>
+                  <hr />
+
+                  {/* Tổng tiền của shop */}
+                  <div>
+                    Tổng cộng: ₫
+                    {(
+                      group.items.reduce(
+                        (sum, product) =>
+                          sum + product.finalPrice * product.quantity,
+                        0
+                      ) + shopShippingFee
+                    ).toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Ghi chú riêng cho shop */}
+                <div
+                  style={{
+                    marginTop: 10,
+                    backgroundColor: "#fafdff",
+                    padding: 10,
+                  }}
+                >
+                  <TextArea
+                    rows={3}
+                    value={orderNotes[shopKey] || ""}
+                    onChange={(e) =>
+                      setOrderNotes((prev) => ({
+                        ...prev,
+                        [shopKey]: e.target.value,
+                      }))
+                    }
+                    placeholder={`Lời nhắn cho ${group.shopName} (giới hạn 500 kí tự)`}
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+            );
+          })}
 
           {/* Tổng giảm */}
           {Object.values(selectedVouchers).length > 0 && (
@@ -644,13 +778,6 @@ const PaymentPage = () => {
                   ))}
                 </ul>
               </div>
-              <div style={{ fontSize: 14, color: "#f5222d" }}>
-                Tổng giảm: ₫
-                {(shippingVoucher
-                  ? calculateVoucherDiscountAndShip()
-                  : calculateVoucherDiscountNoShip()
-                ).toLocaleString()}
-              </div>
             </div>
           )}
 
@@ -665,16 +792,6 @@ const PaymentPage = () => {
               borderBottom: "0.5px dashed #c6e8ff",
             }}
           >
-            <div style={{ width: "60%" }}>
-              <TextArea
-                rows={4}
-                value={orderNote}
-                onChange={(e) => setOrderNote(e.target.value)}
-                placeholder="Lời nhắn cho người bán (giới hạn 500 kí tự)"
-                maxLength={500}
-              />
-            </div>
-
             <div
               style={{
                 fontWeight: "bold",
@@ -781,7 +898,10 @@ const PaymentPage = () => {
                     <div style={{ textAlign: "end" }}>
                       <del>{shippingFee.toLocaleString()}</del>
                       <div>
-                        {(shippingFee - shippingDiscount).toLocaleString()}
+                        {Math.max(
+                          shippingFee - shippingDiscount,
+                          0
+                        ).toLocaleString()}
                       </div>
                     </div>
                   </>
@@ -793,17 +913,19 @@ const PaymentPage = () => {
               <hr />
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div style={{ width: "150px", textAlign: "start" }}>
-                  Tổng thanh toán:
+                  Tổng thanh toán:{" "}
                 </div>
                 <div style={{ width: "200px", textAlign: "end" }}>
-                  {calculateVoucherDiscountAndShip() ? (
+                  {calculateVoucherDiscountNoShip() ? (
                     <>
                       {(
-                        totalAmount - calculateVoucherDiscountAndShip()
+                        totalAmount -
+                        calculateVoucherDiscountNoShip() +
+                        Math.max(shippingFee - shippingDiscount, 0)
                       ).toLocaleString()}
                     </>
                   ) : (
-                    <>{totalAmount.toLocaleString()}</>
+                    <>{(totalAmount + shippingFee).toLocaleString()}</>
                   )}
                 </div>
               </div>
@@ -910,7 +1032,7 @@ const PaymentPage = () => {
                       const productItems = products;
                       const paymentMethod = selectedMethod;
                       const totalPrice = totalAmount;
-                      const note = orderNote;
+                      const shippingFeeFinal = shippingFee - shippingDiscount;
 
                       let discountAmount = 0;
 
@@ -939,7 +1061,9 @@ const PaymentPage = () => {
                           vouchers,
                           discountAmount,
                           finalAmount,
-                          note,
+                          shippingFeeByShop,
+                          shippingFee: shippingFeeFinal,
+                          noteItemsByShop: orderNotes,
                         };
 
                         const res = await OrderServices.addPayment(
