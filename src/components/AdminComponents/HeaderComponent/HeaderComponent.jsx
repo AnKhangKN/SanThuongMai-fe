@@ -122,7 +122,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
                 objectFit: "contain",
                 borderRadius: "50%",
               }}
-              src={avatar?.avatar ? avatar?.avatar : user?.avatar} // nếu được làm thêm default img admin
+              src={avatar?.avatar ? avatar?.avatar : user?.img} // nếu được làm thêm default img admin
               alt=""
             />
           </div>
