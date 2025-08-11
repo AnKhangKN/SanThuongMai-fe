@@ -22,7 +22,7 @@ const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 const HeaderInfoComponent = () => {
   const cart = useSelector((state) => state.cart);
   const user = useSelector((state) => state.user);
-  const avatar = useSelector((state) => state.avatar);
+
   const cartItems = cart.products;
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -49,7 +49,6 @@ const HeaderInfoComponent = () => {
       setIsOpen(false);
     }
   };
-
   return (
     <div
       style={{
@@ -170,20 +169,21 @@ const HeaderInfoComponent = () => {
                 <>
                   <div className="d-flex align-items-center gap-2">
                     <div
+                      className="d-flex align-items-center justify-content-center"
                       style={{
                         height: "24px",
                         width: "24px",
                         borderRadius: "50%",
+                        overflow: "hidden", // đảm bảo ảnh không tràn ra ngoài
                       }}
                     >
                       <img
-                        src={avatar?.avatar || user?.avatar}
-                        alt=""
+                        src={user?.img}
+                        alt={user.img}
                         style={{
                           width: "100%",
                           height: "100%",
                           objectFit: "cover",
-                          borderRadius: "50%",
                         }}
                       />
                     </div>

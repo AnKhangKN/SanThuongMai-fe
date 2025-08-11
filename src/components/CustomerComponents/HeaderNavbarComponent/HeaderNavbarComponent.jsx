@@ -159,6 +159,7 @@ const HeaderNavbarComponent = () => {
           {user?.fullName ? (
             <InformationWrapper>
               <div
+                className="d-flex align-items-center justify-content-center"
                 style={{
                   height: "24px",
                   width: "24px",
@@ -167,7 +168,7 @@ const HeaderNavbarComponent = () => {
                 }}
               >
                 <img
-                  src={avatar?.avatar || user?.avatar}
+                  src={avatar?.img || user?.img}
                   alt=""
                   style={{
                     width: "100%",
