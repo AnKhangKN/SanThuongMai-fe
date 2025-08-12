@@ -31,6 +31,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
       await AuthServices.logoutUser();
 
       // Xoá access token localStorage
+      localStorage.removeItem("access-token");
       localStorage.removeItem("access_token");
 
       // Reset redux user state

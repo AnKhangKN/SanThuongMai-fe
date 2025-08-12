@@ -18,9 +18,7 @@ const CategoryComponent = () => {
     try {
       const res = await ProductServices.getAllCategoryHome();
 
-      const lsProduct = res.data;
-
-      setProducts(lsProduct);
+      setProducts(res);
     } catch (err) {
       console.error("Lỗi khi lấy danh mục:", err);
     }
@@ -55,7 +53,7 @@ const CategoryComponent = () => {
       >
         {currentItems.map((product) => (
           <div
-            key={product.name}
+            key={product._id}
             style={{
               width: `${100 / itemsPerRow}%`,
               boxSizing: "border-box",
@@ -63,7 +61,7 @@ const CategoryComponent = () => {
             }}
           >
             <Link
-              to={`/category/${product.name}`}
+              to={`/category/${product.categoryName}/${product._id}`}
               style={{ textDecoration: "none", color: "#333" }}
             >
               <div style={{ width: "80%", margin: "auto" }}>
@@ -81,7 +79,7 @@ const CategoryComponent = () => {
                   alt={product.name || "Product Image"}
                 />
               </div>
-              <div style={{ textAlign: "center" }}>{product.name}</div>
+              <div style={{ textAlign: "center" }}>{product.categoryName}</div>
             </Link>
           </div>
         ))}

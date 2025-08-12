@@ -1,5 +1,5 @@
 import { Col, message, Row } from "antd";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import * as ShopServices from "../../../services/customer/ShopServices";
 import { isJsonString } from "../../../utils";
@@ -70,7 +70,7 @@ const ShopDetailPage = ({ children }) => {
     }
   };
 
-  const fetchDetailShop = async () => {
+  const fetchDetailShop = async (id) => {
     try {
       const data = await ShopServices.getDetailShop(id);
 
@@ -92,10 +92,8 @@ const ShopDetailPage = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchDetailShop();
+    fetchDetailShop(id);
   }, [id]);
-
-  console.log(shopDetail);
 
   return (
     <>
@@ -300,7 +298,8 @@ const ShopDetailPage = ({ children }) => {
       </div>
 
       <div style={{ backgroundColor: "#f3f3f3" }}>
-        <div style={{ width: "1200px", margin: "auto", padding: "20px 0" }}>
+        <div style={{ maxWidth: "1200px", margin: "auto", padding: "20px 0" }}>
+          {/* {children} */}
           {children}
         </div>
       </div>

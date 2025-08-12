@@ -168,13 +168,19 @@ const SearchPage = () => {
                       objectFit: "contain",
                     }}
                     src={`${imageURL}${product.images[0]}`}
-                    alt={product.productName}
+                    alt="ảnh sản phẩm"
                   />
                   <div
                     style={{
-                      padding: "10px",
-                      textTransform: "uppercase",
-                      maxWidth: "100%",
+                      padding: "0 4px",
+                      marginBottom: "20px",
+                      fontSize: "18px",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      minHeight: "48px",
                     }}
                   >
                     {product.productName}

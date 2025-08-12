@@ -3,6 +3,7 @@ import { GrNext, GrPrevious } from "react-icons/gr";
 import { Link } from "react-router-dom";
 import * as ProductServices from "../../../../services/shared/ProductServices";
 import { ImageCart } from "./style";
+import * as ValidateToken from "../../../../utils/tokenUtils";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/products-img/`;
 
@@ -17,11 +18,19 @@ const TopSearchComponent = () => {
   // Hàm fetch dữ liệu sản phẩm
   const fetchAllProduct = async () => {
     try {
-      const res = await ProductServices.getAllTopSearch();
-      setProducts(res.data || []); // Nếu không có data thì set rỗng
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await ProductServices.getAllTopSearch(accessToken);
+
+      // Chuyển ProductViewLog => chỉ lấy productId + thêm count
+      const formatted = (res || []).map((item) => ({
+        ...item.productId,
+        count: item.count,
+      }));
+
+      setProducts(formatted);
     } catch (error) {
       console.error("Lỗi khi gọi API sản phẩm:", error);
-      setProducts([]); // Gọi thất bại cũng để rỗng
+      setProducts([]);
     }
   };
 
@@ -92,6 +101,7 @@ const TopSearchComponent = () => {
                   padding: "10px",
                   boxSizing: "border-box",
                   textAlign: "center",
+                  // border: "0.5px solid #333",
                 }}
               >
                 <Link
@@ -101,12 +111,11 @@ const TopSearchComponent = () => {
                   <ImageCart>
                     <img
                       src={
-                        Array.isArray(product.images) &&
-                        product.images.length > 0
+                        product.images?.length > 0
                           ? `${imageURL}${product.images[0]}`
                           : "https://www.nhathuocduochanoi.com.vn/images/default.jpg"
                       }
-                      alt={product.product_name}
+                      alt={product.productName}
                       style={{
                         width: "100%",
                         height: "180px",
@@ -114,8 +123,18 @@ const TopSearchComponent = () => {
                       }}
                     />
                   </ImageCart>
-
-                  <h5>{product.product_name}</h5>
+                  <h5
+                    style={{
+                      marginTop: "15px",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {product.productName}
+                  </h5>
                 </Link>
               </div>
             ))

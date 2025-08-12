@@ -66,9 +66,9 @@ const ProfileComponent = () => {
     formData.append("image", file);
 
     // Log FormData để kiểm tra
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }
+    // for (let [key, value] of formData.entries()) {
+    //   console.log(`${key}: ${value}`);
+    // }
 
     // Gửi request lên server để tải ảnh lên
     try {

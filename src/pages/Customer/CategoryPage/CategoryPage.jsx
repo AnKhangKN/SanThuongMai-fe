@@ -24,8 +24,9 @@ const CategoryPage = () => {
   const [sortedProducts, setSortedProducts] = useState([]);
   const [sortBy, setSortBy] = useState("price");
   const [selectedButton, setSelectedButton] = useState(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const itemsPerPage = 10;
-  const { "name-category": keyword } = useParams(); // Dùng để lấy danh mục từ URL
+  const { categoryId } = useParams(); // Dùng để lấy danh mục từ URL
   const navigate = useNavigate();
 
   const images = [slide_1, slide_2, slide_3, slide_4, slide_5, slide_6];
@@ -39,12 +40,11 @@ const CategoryPage = () => {
   );
 
   // Lấy sản phẩm theo danh mục từ API
-  const fetchProductsByCategory = async () => {
+  const fetchProductsByCategory = async (categoryId) => {
     try {
-      const res = await ProductServices.getSearchCategory(keyword);
-
-      setProducts(res.data); // Cập nhật danh sách sản phẩm
-      setSortedProducts(res.data);
+      const res = await ProductServices.getSearchCategory(categoryId);
+      setProducts(res); // Cập nhật danh sách sản phẩm
+      setSortedProducts(res);
     } catch (error) {
       console.error("Lỗi khi gọi sản phẩm theo danh mục:", error);
     }
@@ -52,20 +52,30 @@ const CategoryPage = () => {
 
   const fetchAllCategory = async () => {
     const res = await ProductServices.getAllCategoryHome();
-    setCategory(res.data);
+    console.log("category: ", res);
+    setCategory(res);
+  };
+
+  const handleCategoryClick = (categoryName, categoryId) => {
+    setSelectedCategoryId(categoryId);
+    navigate(`/category/${categoryName}/${categoryId}`); // Cập nhật URL với tên danh mục
+    fetchProductsByCategory(categoryId); // Gọi lại API để lấy sản phẩm theo danh mục
   };
 
   // Lấy sản phẩm khi thay đổi danh mục (hoặc khi trang được load lần đầu)
   useEffect(() => {
-    fetchProductsByCategory(); // Fetch sản phẩm theo từ khóa danh mục trong URL
+    if (categoryId) {
+      setSelectedCategoryId(categoryId);
+      fetchProductsByCategory(categoryId);
+    }
     fetchAllCategory();
-  }, [keyword]);
+  }, [categoryId]);
 
   // Hàm sắp xếp theo giá
   const sortProductsByPrice = (order) => {
     const sorted = [...products].sort((a, b) => {
-      const priceA = a.details[0]?.price || 0; // Kiểm tra giá sản phẩm
-      const priceB = b.details[0]?.price || 0;
+      const priceA = a.priceOptions[0]?.finalPrice || 0; // Kiểm tra giá sản phẩm
+      const priceB = b.priceOptions[0]?.finalPrice || 0;
 
       return order === "asc" ? priceA - priceB : priceB - priceA;
     });
@@ -117,11 +127,6 @@ const CategoryPage = () => {
     setVisibleCount((prev) => prev + 6);
   };
 
-  const handleCategoryClick = (categoryName) => {
-    navigate(`/category/${categoryName}`); // Cập nhật URL với tên danh mục
-    fetchProductsByCategory(categoryName); // Gọi lại API để lấy sản phẩm theo danh mục
-  };
-
   return (
     <div
       style={{
@@ -157,11 +162,31 @@ const CategoryPage = () => {
               {/* Hiển thị danh mục */}
               {category.slice(0, visibleCount).map((categoryItem) => (
                 <div
-                  key={categoryItem.name}
-                  style={{ padding: "5px 0", cursor: "pointer" }}
-                  onClick={() => handleCategoryClick(categoryItem.name)} // Truyền categoryItem.name để tìm sản phẩm
+                  key={categoryItem._id}
+                  style={{
+                    padding: "5px 0",
+                    cursor: "pointer",
+                    borderBottom:
+                      selectedCategoryId === categoryItem._id
+                        ? "2px solid #194a7a"
+                        : "none",
+                    fontWeight:
+                      selectedCategoryId === categoryItem._id
+                        ? "bold"
+                        : "normal",
+                    color:
+                      selectedCategoryId === categoryItem._id
+                        ? "#194a7a"
+                        : "inherit",
+                  }}
+                  onClick={() =>
+                    handleCategoryClick(
+                      categoryItem.categoryName,
+                      categoryItem._id
+                    )
+                  }
                 >
-                  {categoryItem.name}
+                  {categoryItem.categoryName}
                 </div>
               ))}
 
@@ -308,7 +333,7 @@ const CategoryPage = () => {
                             objectFit: "contain",
                           }}
                           src={`${imageURL}${product.images[0]}`}
-                          alt={product.product_name}
+                          alt={product.productName}
                         />
                       </div>
 
@@ -317,17 +342,25 @@ const CategoryPage = () => {
                           style={{
                             marginTop: "5px",
                             textTransform: "uppercase",
+                            display: "-webkit-box",
+                            WebkitBoxOrient: "vertical",
+                            WebkitLineClamp: 2,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          {product.product_name}
+                          {product.productName}
                         </div>
+
                         <div
                           style={{
                             color: "red",
                             marginTop: "20px",
                           }}
                         >
-                          {product?.details[0]?.price}đ
+                          {product?.priceOptions?.[0]?.finalPrice?.toLocaleString() ||
+                            0}
+                          đ
                         </div>
                       </div>
                     </div>

@@ -14,7 +14,7 @@ const ProductsShopPage = () => {
   const [loading, setLoading] = useState(true);
   const itemsPerRow = 4;
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (id) => {
     setLoading(true);
     try {
       const res = await ShopServices.getDetailShop(id);
@@ -33,7 +33,7 @@ const ProductsShopPage = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(id);
   }, [id]);
 
   const handleLoadMore = () => {

@@ -15,6 +15,7 @@ const SearchInputComponent = ({
         height: "30px",
         padding: "0px 20px",
         width: "100%",
+        fontSize: "1.4rem",
       }}
       value={value}
       onChange={onChange}

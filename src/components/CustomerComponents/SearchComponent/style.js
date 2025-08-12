@@ -5,7 +5,6 @@ export const SearchResultItem = styled.div`
 
   &:hover {
     padding: 5px 20px;
-    color: #fff;
-    background-color: #333;
+    background-color: #a5a5a5ff;
   }
 `;

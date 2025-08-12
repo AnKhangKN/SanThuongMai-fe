@@ -36,10 +36,15 @@ export const getSearchProducts = async (keyword) => {
   }
 };
 
-export const getAllTopSearch = async () => {
+export const getAllTopSearch = async (accessToken) => {
   try {
     const res = await axios.get(
-      `${process.env.REACT_APP_API_URL}/shared/top-search-product`
+      `${process.env.REACT_APP_API_URL}/shared/top-search-product`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
     );
     return res.data;
   } catch (error) {
@@ -60,13 +65,11 @@ export const getAllCategoryHome = async () => {
   }
 };
 
-export const getSearchCategory = async (keyword) => {
+export const getSearchCategory = async (categoryId) => {
+  console.log(categoryId);
   try {
     const res = await axios.get(
-      `${process.env.REACT_APP_API_URL}/shared/search-category`,
-      {
-        params: { keyword }, // truyền keyword dưới dạng query string
-      }
+      `${process.env.REACT_APP_API_URL}/shared/search-category/${categoryId}`
     );
     return res.data;
   } catch (error) {
@@ -95,6 +98,18 @@ export const getSuggestProduct = async (productId) => {
     return res.data;
   } catch (error) {
     console.error("Failed to fetch search products:", error);
+    throw error;
+  }
+};
+
+export const getSuggestSearchKeyWord = async () => {
+  try {
+    const res = await axios.get(
+      `${process.env.REACT_APP_API_URL}/shared/suggest/search`
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
     throw error;
   }
 };

@@ -83,7 +83,7 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/category/:name-category",
+    path: "/category/:categoryName/:categoryId",
     page: CategoryPage,
     isShowHeader: true,
   },

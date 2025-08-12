@@ -34,7 +34,11 @@ export const refreshToken = async () => {
 
 export const logoutUser = async () => {
   const res = await axios.post(
-    `${process.env.REACT_APP_API_URL}/shared/auth/logout`
+    `${process.env.REACT_APP_API_URL}/shared/auth/logout`,
+    {},
+    {
+      withCredentials: true,
+    }
   );
   return res.data;
 };
