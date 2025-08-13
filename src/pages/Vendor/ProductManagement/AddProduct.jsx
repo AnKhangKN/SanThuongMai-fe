@@ -9,11 +9,13 @@ import {
   Space,
   message,
   Row,
+  Col,
 } from "antd";
 import {
   UploadOutlined,
   MinusCircleOutlined,
-} from '@ant-design/icons';
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { PlusOutlined } from "@ant-design/icons";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as ProductServices from "../../../services/vendor/ProductService";
@@ -28,27 +30,27 @@ const AddProduct = () => {
   const [fileList, setFileList] = useState([]);
   const [labels, setLabels] = useState({});
   const [applyToAll, setApplyToAll] = useState({
-  price: null,
-  salePrice: null,
-  stock: null,
-});
+    price: null,
+    salePrice: null,
+    stock: null,
+  });
   const [categories, setCategories] = useState([]);
   const [activeCombinations, setActiveCombinations] = useState({});
 
   const handleDecoded = () => {
-  const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
 
-  let decoded = {};
-  try {
-    if (token) {
-      decoded = jwtDecode(token);
+    let decoded = {};
+    try {
+      if (token) {
+        decoded = jwtDecode(token);
+      }
+    } catch (err) {
+      console.error("Lỗi khi decode token:", err.message || err);
     }
-  } catch (err) {
-    console.error("Lỗi khi decode token:", err.message || err);
-  }
 
-  return { decoded, storageData: token };
-};
+    return { decoded, storageData: token };
+  };
 
   const fetchUserId = useCallback(async () => {
     try {
@@ -60,8 +62,6 @@ const AddProduct = () => {
         accessToken = res?.access_token;
         localStorage.setItem("access_token", JSON.stringify(accessToken));
         decoded = jwtDecode(accessToken);
-
-        
       }
     } catch (error) {
       console.error("Lỗi khi decode user_id:", error);
@@ -73,46 +73,45 @@ const AddProduct = () => {
   }, [fetchUserId]);
 
   const beforeUpload = (file) => {
-      const isImage = file.type.startsWith("image/");
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isImage) {
-        message.error("Chỉ được upload file ảnh!");
-        return Upload.LIST_IGNORE;
-      }
-      if (!isLt2M) {
-        message.error("Ảnh phải nhỏ hơn 2MB!");
-        return Upload.LIST_IGNORE;
-      }
-      return true;
-    
-  }
+    const isImage = file.type.startsWith("image/");
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isImage) {
+      message.error("Chỉ được upload file ảnh!");
+      return Upload.LIST_IGNORE;
+    }
+    if (!isLt2M) {
+      message.error("Ảnh phải nhỏ hơn 2MB!");
+      return Upload.LIST_IGNORE;
+    }
+    return true;
+  };
 
   const getBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-  
-  const handleChange = async ({ fileList: newFileList }) => {
-  // Thêm preview cho ảnh mới
-  const updatedList = await Promise.all(
-    newFileList.map(async (file) => {
-      if (!file.url && !file.preview) {
-        file.preview = await getBase64(file.originFileObj);
-      }
-      return file;
-    })
-  );
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
 
-  setFileList(updatedList);
-  form.setFieldsValue({ images: updatedList });
-};
+  const handleChange = async ({ fileList: newFileList }) => {
+    // Thêm preview cho ảnh mới
+    const updatedList = await Promise.all(
+      newFileList.map(async (file) => {
+        if (!file.url && !file.preview) {
+          file.preview = await getBase64(file.originFileObj);
+        }
+        return file;
+      })
+    );
+
+    setFileList(updatedList);
+    form.setFieldsValue({ images: updatedList });
+  };
 
   const fetchCategories = async () => {
     try {
-      const {decoded, storageData} = await handleDecoded();
+      const { decoded, storageData } = await handleDecoded();
       const accessToken = storageData;
 
       if (decoded?.exp < Date.now() / 1000) {
@@ -122,7 +121,7 @@ const AddProduct = () => {
         decoded = jwtDecode(accessToken);
       }
       const categories = await CategoryServices.getAllCategory(accessToken);
-       if (categories.data.data.status === "OK") {
+      if (categories.data.data.status === "OK") {
         setCategories(categories.data.data.data);
       } else {
         message.error("Không thể tải loại sản phẩm");
@@ -138,94 +137,98 @@ const AddProduct = () => {
   }, []);
 
   useEffect(() => {
-  const classifications = form.getFieldValue("classifications") || [];
-  const [first, second] = classifications;
-  const options1 = first?.options || [];
-  const options2 = second?.options || [];
-
-  const combinations = options1.flatMap((opt1) =>
-    (options2.length ? options2 : [null]).map((opt2) => {
-      const key = `${opt1}-${opt2 || ""}`;
-      return key;
-    })
-  );
-
-  const defaultState = {};
-  combinations.forEach((key) => {
-    defaultState[key] = true;
-  });
-
-  setActiveCombinations(defaultState);
-}, [form.getFieldValue("classifications")]);
-
-const onFinish = async (values) => {
-  try {
-    let { storageData, decoded } = handleDecoded();
-    let accessToken = storageData;
-
-    // Kiểm tra token hết hạn
-    if (decoded?.exp < Date.now() / 1000) {
-      const res = await AuthServices.refreshToken();
-      accessToken = res?.access_token;
-      localStorage.setItem("access_token", JSON.stringify(accessToken));
-      decoded = jwtDecode(accessToken);
-    }
-
-    // Lấy dữ liệu từ form
     const classifications = form.getFieldValue("classifications") || [];
-    const priceOptions = form.getFieldValue("priceOptions") || [];
+    const [first, second] = classifications;
+    const options1 = first?.options || [];
+    const options2 = second?.options || [];
 
-    // Kiểm tra biến thể
-    if (!priceOptions.length) {
-      message.error("Phải có ít nhất 1 biến thể sản phẩm");
-      return;
-    }
+    const combinations = options1.flatMap((opt1) =>
+      (options2.length ? options2 : [null]).map((opt2) => {
+        const key = `${opt1}-${opt2 || ""}`;
+        return key;
+      })
+    );
 
-    const transformedPriceOptions = (priceOptions || [])
-  .filter((opt) => {
-    const key = opt.attributes.map(a => a.value).join("-") + (opt.attributes.length === 1 ? "-" : "");
-    return activeCombinations[key];
-  })
-  .map((opt) => ({
-    attributes: opt.attributes || [],
-    price: opt.price,
-    salePrice: opt.salePrice,
-    stock: opt.stock,
-  }));
-if (!transformedPriceOptions.length) {
-  message.error("Bạn phải chọn ít nhất một biến thể để bán.");
-  return;
-}
-
-    const formData = new FormData();
-    formData.append("productName", values.productName);
-    formData.append("description", values.description || "");
-    formData.append("categoryId", values.category);
-    formData.append("status", values.status || "active");
-    formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
-
-    // Thêm ảnh
-    fileList.forEach((file) => {
-      formData.append("productImages", file.originFileObj);
+    const defaultState = {};
+    combinations.forEach((key) => {
+      defaultState[key] = true;
     });
 
-    // Gọi API
-    const response = await ProductServices.createProduct(accessToken, formData);
-    message.success("Thêm sản phẩm thành công!");
-    form.resetFields();
-    setFileList([]);
-  } catch (error) {
-    console.error("Lỗi khi thêm sản phẩm:", error);
-    message.error("Thêm sản phẩm thất bại!");
-  }
-};
-const handleChangeLabel = (index, value) => {
+    setActiveCombinations(defaultState);
+  }, [form.getFieldValue("classifications")]);
+
+  const onFinish = async (values) => {
+    try {
+      let { storageData, decoded } = handleDecoded();
+      let accessToken = storageData;
+
+      // Kiểm tra token hết hạn
+      if (decoded?.exp < Date.now() / 1000) {
+        const res = await AuthServices.refreshToken();
+        accessToken = res?.access_token;
+        localStorage.setItem("access_token", JSON.stringify(accessToken));
+        decoded = jwtDecode(accessToken);
+      }
+
+      // Lấy dữ liệu từ form
+      const classifications = form.getFieldValue("classifications") || [];
+      const priceOptions = form.getFieldValue("priceOptions") || [];
+
+      // Kiểm tra biến thể
+      if (!priceOptions.length) {
+        message.error("Phải có ít nhất 1 biến thể sản phẩm");
+        return;
+      }
+
+      const transformedPriceOptions = (priceOptions || [])
+        .filter((opt) => {
+          const key =
+            opt.attributes.map((a) => a.value).join("-") +
+            (opt.attributes.length === 1 ? "-" : "");
+          return activeCombinations[key];
+        })
+        .map((opt) => ({
+          attributes: opt.attributes || [],
+          price: opt.price,
+          salePrice: opt.salePrice,
+          stock: opt.stock,
+        }));
+      if (!transformedPriceOptions.length) {
+        message.error("Bạn phải chọn ít nhất một biến thể để bán.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("productName", values.productName);
+      formData.append("description", values.description || "");
+      formData.append("categoryId", values.category);
+      formData.append("status", values.status || "active");
+      formData.append("priceOptions", JSON.stringify(transformedPriceOptions));
+
+      // Thêm ảnh
+      fileList.forEach((file) => {
+        formData.append("productImages", file.originFileObj);
+      });
+
+      // Gọi API
+      const response = await ProductServices.createProduct(
+        accessToken,
+        formData
+      );
+      message.success("Thêm sản phẩm thành công!");
+      form.resetFields();
+      setFileList([]);
+    } catch (error) {
+      console.error("Lỗi khi thêm sản phẩm:", error);
+      message.error("Thêm sản phẩm thất bại!");
+    }
+  };
+  const handleChangeLabel = (index, value) => {
     setLabels((prev) => ({
       ...prev,
       [index]: value,
     }));
   };
-
 
   return (
     <div>
@@ -252,11 +255,13 @@ const handleChangeLabel = (index, value) => {
         <Form.Item
           label="Hình ảnh sản phẩm"
           name="images"
-          rules={[{ required: true, message: "Vui lòng thêm hình ảnh sản phẩm" }]}
+          rules={[
+            { required: true, message: "Vui lòng thêm hình ảnh sản phẩm" },
+          ]}
           valuePropName="fileList"
           getValueFromEvent={(e) => e.fileList}
         >
-        <Upload
+          <Upload
             listType="picture-card"
             fileList={fileList}
             onChange={handleChange}
@@ -275,14 +280,14 @@ const handleChangeLabel = (index, value) => {
               }
             }}
           >
-          {fileList.length < 5 && (
-            <div>
-              <UploadOutlined />
-              <div style={{ marginTop: 8 }}>Thêm ảnh</div>
-            </div>
-          )}
-        </Upload>
-      </Form.Item>
+            {fileList.length < 5 && (
+              <div>
+                <UploadOutlined />
+                <div style={{ marginTop: 8 }}>Thêm ảnh</div>
+              </div>
+            )}
+          </Upload>
+        </Form.Item>
 
         <Form.Item
           label="Loại sản phẩm"
@@ -306,7 +311,7 @@ const handleChangeLabel = (index, value) => {
           <TextArea rows={4} />
         </Form.Item>
 
-        <h4>Thông tin bán hàng</h4>
+        <h4 style={{ marginBottom: 12 }}>Thông tin bán hàng</h4>
         <Form.List name="classifications">
           {(fields, { add, remove }) => (
             <>
@@ -314,71 +319,110 @@ const handleChangeLabel = (index, value) => {
                 <div
                   key={field.key}
                   style={{
-                    border: "1px solid #ccc",
+                    border: "1px solid #d9d9d9",
                     padding: 16,
                     marginBottom: 16,
+                    borderRadius: 8,
+                    background: "#fafafa",
                   }}
                 >
-                  <Form.Item
-                    {...field}
-                    name={[field.name, "name"]}
-                    label={`Tên phân loại ${index + 1}`}
-                    rules={[{ required: true, message: "Nhập tên phân loại" }]}
-                  >
-                    <Input
-                      placeholder="VD: Màu sắc, Kích thước"
-                      onChange={(e) => handleChangeLabel(index, e.target.value)}
-                    />
-                  </Form.Item>
+                  {/* Hàng nhập tên phân loại và nút xóa */}
+                  <Row gutter={12} align="middle" style={{ marginBottom: 8 }}>
+                    <Col flex="auto">
+                      <Form.Item
+                        {...field}
+                        name={[field.name, "name"]}
+                        label={`Tên phân loại ${index + 1}`}
+                        rules={[
+                          { required: true, message: "Nhập tên phân loại" },
+                        ]}
+                      >
+                        <Input
+                          placeholder="VD: Màu sắc, Kích thước"
+                          onChange={(e) =>
+                            handleChangeLabel(index, e.target.value)
+                          }
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col>
+                      <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => {
+                          remove(field.name);
+                          const updated = { ...labels };
+                          delete updated[index];
+                          setLabels(updated);
+                        }}
+                      />
+                    </Col>
+                  </Row>
 
+                  {/* Danh sách tùy chọn dạng grid 2 cột */}
                   <Form.List name={[field.name, "options"]}>
-                    {(optionFields, { add: addOption, remove: removeOption }) => (
+                    {(
+                      optionFields,
+                      { add: addOption, remove: removeOption }
+                    ) => (
                       <>
-                        {optionFields.map((opt, idx) => (
-                          <Space key={opt.key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
-                            <Form.Item
-                              name={opt.name}
-                              rules={[{ required: true, message: "Nhập tùy chọn" }]}
-                            >
-                              <Input placeholder="VD: Đỏ, Xanh, S, M" />
-                            </Form.Item>
+                        <Row gutter={[12, 8]}>
+                          {optionFields.map((opt, idx) => (
+                            <Col xs={24} sm={12} key={opt.key}>
+                              <Row gutter={8} align="middle">
+                                <Col flex="auto">
+                                  <Form.Item
+                                    name={opt.name}
+                                    rules={[
+                                      {
+                                        required: true,
+                                        message: "Nhập tùy chọn",
+                                      },
+                                    ]}
+                                    style={{ marginBottom: 0 }}
+                                  >
+                                    <Input placeholder="VD: Đỏ, Xanh, S, M" />
+                                  </Form.Item>
+                                </Col>
+                                <Col>
+                                  <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => removeOption(opt.name)}
+                                  />
+                                </Col>
+                              </Row>
+                            </Col>
+                          ))}
+                        </Row>
 
-                            {/* Nút xóa */}
-                            <Button
-                              type="link"
-                              danger
-                              onClick={() => removeOption(opt.name)}
-                            >
-                              Xóa
-                            </Button>
-                          </Space>
-                        ))}
-
-                        <Button type="dashed" onClick={() => addOption()} block icon={<PlusOutlined />}>
-                          + Thêm tùy chọn
+                        <Button
+                          type="dashed"
+                          onClick={() => addOption()}
+                          icon={<PlusOutlined />}
+                          block
+                          style={{ marginTop: 8 }}
+                        >
+                          Thêm tùy chọn
                         </Button>
                       </>
                     )}
                   </Form.List>
-
-                  <Button
-                    type="link"
-                    danger
-                    onClick={() => {
-                      remove(field.name);
-                      const updated = { ...labels };
-                      delete updated[index];
-                      setLabels(updated);
-                    }}
-                  >
-                    Xóa phân loại
-                  </Button>
                 </div>
               ))}
+
+              {/* Nút thêm phân loại */}
               {fields.length < 2 && (
                 <Form.Item>
-                  <Button type="dashed" onClick={() => add()} block>
-                    + Thêm phân loại
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    Thêm phân loại
                   </Button>
                 </Form.Item>
               )}
@@ -386,25 +430,33 @@ const handleChangeLabel = (index, value) => {
           )}
         </Form.List>
 
-        <h5 style={{ textAlign: 'start' }}>Thông tin chung cho tất cả phân loại</h5>
-        <Space style={{ display: 'flex', marginBottom: 16 }} align="start">
+        <h5 style={{ textAlign: "start" }}>
+          Thông tin chung cho tất cả phân loại
+        </h5>
+        <Space style={{ display: "flex", marginBottom: 16 }} align="start">
           <InputNumber
             placeholder="Giá"
             min={0}
             value={applyToAll.price}
-            onChange={(value) => setApplyToAll(prev => ({ ...prev, price: value }))}
+            onChange={(value) =>
+              setApplyToAll((prev) => ({ ...prev, price: value }))
+            }
           />
           <InputNumber
             placeholder="Giá khuyến mãi"
             min={0}
             value={applyToAll.salePrice}
-            onChange={(value) => setApplyToAll(prev => ({ ...prev, salePrice: value }))}
+            onChange={(value) =>
+              setApplyToAll((prev) => ({ ...prev, salePrice: value }))
+            }
           />
           <InputNumber
             placeholder="Tồn kho"
             min={0}
             value={applyToAll.stock}
-            onChange={(value) => setApplyToAll(prev => ({ ...prev, stock: value }))}
+            onChange={(value) =>
+              setApplyToAll((prev) => ({ ...prev, stock: value }))
+            }
           />
           <Button
             onClick={() => {
@@ -417,7 +469,8 @@ const handleChangeLabel = (index, value) => {
               const combinations = options1.flatMap((opt1) =>
                 (options2.length ? options2 : [null]).map((opt2) => {
                   const attrs = [{ name: first?.name || "", value: opt1 }];
-                  if (opt2) attrs.push({ name: second?.name || "", value: opt2 });
+                  if (opt2)
+                    attrs.push({ name: second?.name || "", value: opt2 });
                   return { key: `${opt1}-${opt2 || ""}`, attributes: attrs };
                 })
               );
@@ -455,38 +508,57 @@ const handleChangeLabel = (index, value) => {
             return combinations.length ? (
               <>
                 <h5 style={{ textAlign: "start" }}>Bảng phân loại chi tiết</h5>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr>
                         <th>Chọn</th>
-                          {combinations[0].attributes.map((attr, i) => (
-                            <th key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.name}</th>
-                          ))}
-                        <th style={{ border: '1px solid #ccc', padding: 8 }}>Giá</th>
-                        <th style={{ border: '1px solid #ccc', padding: 8 }}>Giá khuyến mãi</th>
-                        <th style={{ border: '1px solid #ccc', padding: 8 }}>Tồn kho</th>
+                        {combinations[0].attributes.map((attr, i) => (
+                          <th
+                            key={i}
+                            style={{ border: "1px solid #ccc", padding: 8 }}
+                          >
+                            {attr.name}
+                          </th>
+                        ))}
+                        <th style={{ border: "1px solid #ccc", padding: 8 }}>
+                          Giá
+                        </th>
+                        <th style={{ border: "1px solid #ccc", padding: 8 }}>
+                          Giá khuyến mãi
+                        </th>
+                        <th style={{ border: "1px solid #ccc", padding: 8 }}>
+                          Tồn kho
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {combinations.map(({ key, attributes }, index) => (
-                          <tr key={key} style={{ opacity: activeCombinations[key] ? 1 : 0.5 }}>
-                            <td style={{ border: '1px solid #ccc', padding: 8 }}>
-                              <input
-                                type="checkbox"
-                                checked={activeCombinations[key]}
-                                onChange={(e) =>
-                                  setActiveCombinations(prev => ({
-                                    ...prev,
-                                    [key]: e.target.checked
-                                  }))
-                                }
-                              />
+                        <tr
+                          key={key}
+                          style={{ opacity: activeCombinations[key] ? 1 : 0.5 }}
+                        >
+                          <td style={{ border: "1px solid #ccc", padding: 8 }}>
+                            <input
+                              type="checkbox"
+                              checked={activeCombinations[key]}
+                              onChange={(e) =>
+                                setActiveCombinations((prev) => ({
+                                  ...prev,
+                                  [key]: e.target.checked,
+                                }))
+                              }
+                            />
+                          </td>
+                          {attributes.map((attr, i) => (
+                            <td
+                              key={i}
+                              style={{ border: "1px solid #ccc", padding: 8 }}
+                            >
+                              {attr.value}
                             </td>
-                            {attributes.map((attr, i) => (
-                              <td key={i} style={{ border: '1px solid #ccc', padding: 8 }}>{attr.value}</td>
                           ))}
-                          <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                          <td style={{ border: "1px solid #ccc", padding: 8 }}>
                             <Form.Item
                               name={["priceOptions", index, "price"]}
                               rules={[{ required: true, message: "Nhập giá" }]}
@@ -494,7 +566,7 @@ const handleChangeLabel = (index, value) => {
                               <InputNumber placeholder="Giá" min={0} />
                             </Form.Item>
                           </td>
-                          <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                          <td style={{ border: "1px solid #ccc", padding: 8 }}>
                             <Form.Item
                               name={["priceOptions", index, "salePrice"]}
                               rules={[{ type: "number", min: 0 }]}
@@ -502,14 +574,20 @@ const handleChangeLabel = (index, value) => {
                               <InputNumber placeholder="Khuyến mãi" min={0} />
                             </Form.Item>
                           </td>
-                          <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                          <td style={{ border: "1px solid #ccc", padding: 8 }}>
                             <Form.Item
                               name={["priceOptions", index, "stock"]}
-                              rules={[{ required: true, message: "Nhập tồn kho" }]}
+                              rules={[
+                                { required: true, message: "Nhập tồn kho" },
+                              ]}
                             >
                               <InputNumber placeholder="Tồn kho" min={0} />
                             </Form.Item>
-                            <Form.Item name={["priceOptions", index, "attributes"]} hidden initialValue={attributes}>
+                            <Form.Item
+                              name={["priceOptions", index, "attributes"]}
+                              hidden
+                              initialValue={attributes}
+                            >
                               <Input type="hidden" />
                             </Form.Item>
                           </td>
