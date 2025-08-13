@@ -121,6 +121,7 @@ const ChatShopPage = () => {
       <div
         style={{
           display: "flex",
+          fontSize: "14px",
           flexDirection: "column",
           height: "80vh",
           border: "1px solid #ccc",
@@ -184,7 +185,8 @@ const ChatShopPage = () => {
           <input
             style={{
               flex: 1,
-              padding: "8px 12px",
+
+              padding: "8px 20px",
               border: "1px solid #ccc",
               borderRadius: "20px",
             }}
