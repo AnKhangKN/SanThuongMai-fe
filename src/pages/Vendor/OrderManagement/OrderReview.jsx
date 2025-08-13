@@ -269,7 +269,7 @@ const OrderReview = () => {
             </Button>
           )}
 
-          {record.status === "returned" && (
+          {/* {record.status === "returned" && (
             <>
               {!record.refundHandled ? (
                 <>
@@ -297,7 +297,7 @@ const OrderReview = () => {
                 <Tag color="green">Đã xử lý</Tag>
               )}
             </>
-          )}
+          )} */}
         </Space>
       ),
     },
