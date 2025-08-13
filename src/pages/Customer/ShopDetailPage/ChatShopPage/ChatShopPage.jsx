@@ -85,7 +85,7 @@ const ChatShopPage = () => {
       await ChatServices.sendMessage(token, payload);
       socket.emit("sendMessage", payload);
 
-      setMessages((prev) => [...prev, { text, senderId: userId }]);
+      // setMessages((prev) => [...prev, { text, senderId: userId }]);
       setInput("");
       scrollToBottom();
     } catch (err) {

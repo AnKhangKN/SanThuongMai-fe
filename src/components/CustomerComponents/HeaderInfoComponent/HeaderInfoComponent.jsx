@@ -117,9 +117,19 @@ const HeaderInfoComponent = () => {
                 </div>
               </div>
 
-              <div style={{ flex: "0 0 60%" }}>
-                {item.productName || "Tên sản phẩm"}
+              <div
+                style={{
+                  flex: "0 0 60%",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {item.productName}
               </div>
+
               <div style={{ flex: "0 0 25%", textAlign: "end" }}>
                 {item.finalPrice.toLocaleString()} đ
               </div>
