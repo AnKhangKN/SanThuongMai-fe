@@ -4,11 +4,11 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import * as ShopServices from "../../../services/customer/ShopServices";
 import { isJsonString } from "../../../utils";
 import { jwtDecode } from "jwt-decode";
-import * as AuthServices from "../../../services/shared/AuthServices";
 import * as UserServices from "../../../services/customer/UserServices";
 import { useDispatch, useSelector } from "react-redux";
 import { FiPlus } from "react-icons/fi";
 import { updateUser } from "../../../redux/slices/userSlice";
+import * as ValidateToken from "../../../utils/tokenUtils";
 import { MdCheck } from "react-icons/md";
 
 const imageURL = `${process.env.REACT_APP_API_URL}/avatar/`;
@@ -26,33 +26,20 @@ const ShopDetailPage = ({ children }) => {
 
   // Hàm kiểm tra tab đang chọn
   const isActive = (path) => location.pathname.includes(path);
-
-  const decodeToken = () => {
-    let storageToken = localStorage.getItem("access_token");
-    if (storageToken && isJsonString(storageToken)) {
-      const token = JSON.parse(storageToken);
-      const decoded = jwtDecode(token);
-      return { decoded, token };
-    }
-    return { decoded: null, token: null };
-  };
+  console.log(shopDetail);
 
   const handleAddWishList = async () => {
     try {
-      let { decoded, token } = decodeToken();
+      const accessToken = await ValidateToken.getValidAccessToken();
 
-      if (!token || (decoded && decoded.exp < Date.now() / 1000)) {
-        const refreshed = await AuthServices.refreshToken();
-        token = refreshed?.access_token;
-        localStorage.setItem("access_token", JSON.stringify(token));
-      }
+      const shopId = shopDetail?._id;
+      const shopName = shopDetail?.shopName;
+      const images = shopDetail?.shopAvatar;
 
-      const owner_id = id;
-      const shop_name = shopDetail?.shop?.name;
-
-      const response = await UserServices.addWishlist(token, {
-        owner_id,
-        shop_name,
+      const response = await UserServices.addWishlist(accessToken, {
+        shopId,
+        shopName,
+        images,
       });
 
       if (!response) {
@@ -64,7 +51,7 @@ const ShopDetailPage = ({ children }) => {
       const updatedWishlist = response?.data || [];
 
       // Cập nhật Redux với wishlist mới
-      dispatch(updateUser({ wishlist: updatedWishlist }));
+      dispatch(updateUser({ wishShops: updatedWishlist }));
     } catch (err) {
       console.error("Lỗi khi lấy giỏ hàng:", err);
     }
@@ -97,11 +84,10 @@ const ShopDetailPage = ({ children }) => {
 
   return (
     <>
-      <div style={{ marginTop: "120px" }}>
+      <div style={{ marginTop: "120px", fontSize: "14px" }}>
         <div
           style={{
-            width: "1200px",
-            maxWidth: "100%",
+            maxWidth: "1200px",
             margin: "auto",
             padding: "20px 0px",
           }}
@@ -149,34 +135,34 @@ const ShopDetailPage = ({ children }) => {
                     <button
                       style={{
                         padding: "5px 10px",
-                        background: user.wishlist.some(
-                          (wishlist) => wishlist.owner_id === id
+                        background: user.wishShops.some(
+                          (wishShop) => wishShop.shopId === id
                         )
                           ? "#aaa" // Màu xám nếu đã theo dõi
                           : "#194a7a",
                         border: "none",
                         color: "#fff",
-                        cursor: user.wishlist.some(
-                          (wishlist) => wishlist.owner_id === id
+                        cursor: user.wishShops.some(
+                          (wishShop) => wishShop.shopId === id
                         )
                           ? "not-allowed"
                           : "pointer",
                       }}
                       onClick={() => {
                         if (
-                          !user.wishlist.some(
-                            (wishlist) => wishlist.owner_id === id
+                          !user.wishShops.some(
+                            (wishShop) => wishShop.shopId === id
                           )
                         ) {
                           handleAddWishList();
                         }
                       }}
-                      disabled={user.wishlist.some(
-                        (wishlist) => wishlist.owner_id === id
+                      disabled={user.wishShops.some(
+                        (wishShop) => wishShop.shopId === id
                       )}
                     >
-                      {user.wishlist.some(
-                        (wishlist) => wishlist.owner_id === id
+                      {user.wishShops.some(
+                        (wishShop) => wishShop.shopId === id
                       ) ? (
                         <>
                           <div
@@ -204,21 +190,6 @@ const ShopDetailPage = ({ children }) => {
                           </div>
                         </>
                       )}
-                    </button>
-
-                    <button
-                      style={{
-                        padding: "5px 10px",
-                        background: "#194a7a",
-                        border: "none",
-                        color: "#fff",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => {
-                        navigate(`/shop/${id}/chat`);
-                      }}
-                    >
-                      Chat
                     </button>
                   </div>
                 </div>
@@ -265,6 +236,7 @@ const ShopDetailPage = ({ children }) => {
             <div
               key={tab}
               style={{
+                fontSize: "14px",
                 cursor: "pointer",
                 paddingBottom: "10px",
                 position: "relative",

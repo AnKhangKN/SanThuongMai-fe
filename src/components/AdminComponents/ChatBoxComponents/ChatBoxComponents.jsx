@@ -150,7 +150,9 @@ const ChatBoxComponents = ({ onClose }) => {
       <ChatContainer>
         <ChatHeader>
           <span>
-            {chatList.find((u) => u._id === receiverUserId)?.fullName || "Chat"}
+            {chatList.find((u) => u._id === receiverUserId)?.fullName ||
+              chatList.find((u) => u._id === receiverUserId)?.email ||
+              "Chat"}
           </span>
           <FaTimes style={{ cursor: "pointer" }} onClick={onClose} />
         </ChatHeader>

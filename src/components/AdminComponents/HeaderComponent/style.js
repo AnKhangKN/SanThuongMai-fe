@@ -23,6 +23,7 @@ export const IconContainer = styled.div`
 export const AccountText = styled.p`
   position: relative;
   color: rgb(155, 155, 155);
+  line-height: 46px;
   margin-right: 20px;
   &::after {
     content: "";
@@ -101,6 +102,7 @@ export const ModalChatBox = styled.div`
 
 export const WrapperInformation = styled.div`
   display: flex;
+  font-size: 16px;
   align-items: center;
   position: relative;
 `;

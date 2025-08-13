@@ -7,7 +7,8 @@ const initialState = {
   img: "", // ảnh đại diện (avatar)
   phone: "",
   wallet: "",
-  wishlist: [],
+  wishShops: [],
+  wishProducts: [],
   following: "",
   isAdmin: false,
   isVendor: false,
@@ -26,7 +27,8 @@ export const userSlice = createSlice({
         avatar = "", // <-- avatar field từ backend
         phone = "",
         wallet = "",
-        wishlist = [],
+        wishShops = [],
+        wishProducts = [],
         following = "",
         isAdmin = false,
         isVendor = false,
@@ -47,7 +49,8 @@ export const userSlice = createSlice({
 
       state.phone = phone;
       state.wallet = wallet;
-      state.wishlist = wishlist;
+      state.wishShops = wishShops;
+      state.wishProducts = wishProducts;
       state.following = following;
       state.isAdmin = isAdmin;
       state.isVendor = isVendor;
@@ -56,8 +59,15 @@ export const userSlice = createSlice({
     resetUser: (state) => {
       Object.assign(state, initialState);
     },
+
+    removeWishShop(state, action) {
+      const shopId = action.payload;
+      state.wishShops = state.wishShops.filter(
+        (shop) => shop.shopId !== shopId
+      );
+    },
   },
 });
 
-export const { updateUser, resetUser } = userSlice.actions;
+export const { updateUser, resetUser, removeWishShop } = userSlice.actions;
 export default userSlice.reducer;
