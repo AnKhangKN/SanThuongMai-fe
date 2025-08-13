@@ -27,7 +27,7 @@ export const getAllProducts = async (accessToken) => {
 export const updateProduct = async (id, data, token) => {
   return await axios.put(
     `${process.env.REACT_APP_API_URL}/vendor/update-product`,
-    { ...data, id }, // 👈 THÊM id vào body
+    { ...data, id },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -62,6 +62,19 @@ export const filterProductsPrice = async (accessToken, minPrice, maxPrice) => {
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+};
+
+export const updateProductImages = async (id, formData, token) => {
+  return await axios.put(
+    `${process.env.REACT_APP_API_URL}/vendor/update-product-image/${id}`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
     }
   );

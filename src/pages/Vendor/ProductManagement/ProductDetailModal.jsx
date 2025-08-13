@@ -30,7 +30,6 @@ const ProductDetailModal = ({
   onUpdateSuccess,
   category,
 }) => {
-  // if (!product) return null;
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
@@ -662,25 +661,23 @@ const ProductDetailModal = ({
                 try {
                   const token = await handleDecoded();
 
-                  // Tạo FormData
                   const formData = new FormData();
-                  // Ảnh mới
+
                   fileList.forEach((file) => {
                     if (file.originFileObj) {
-                      formData.append("newImages", file.originFileObj);
+                      formData.append("productImages", file.originFileObj);
                     }
                   });
-                  // Ảnh bị xóa
                   formData.append(
                     "removedImages",
                     JSON.stringify(removedImages)
                   );
 
-                  // await ProductService.updateProductImages(
-                  //   product._id,
-                  //   formData,
-                  //   token
-                  // );
+                  await ProductService.updateProductImages(
+                    product._id,
+                    formData,
+                    token
+                  );
                   message.success("Cập nhật hình ảnh thành công");
                   onUpdateSuccess();
                 } catch (err) {
